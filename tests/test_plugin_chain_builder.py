@@ -83,8 +83,10 @@ def test_chain_builder_deduplicates_categories():
 
     result = PluginChainBuilder().build(mix, context)
 
-    assert len(result.steps) == 1
-    assert result.steps[0].plugin_category == "eq"
+    # Distinct EQ targets are preserved; only identical (category, target)
+    # duplicates are collapsed.
+    assert len(result.steps) == 2
+    assert all(step.plugin_category == "eq" for step in result.steps)
 
 
 def test_chain_builder_limits_to_six_steps():

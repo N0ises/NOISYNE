@@ -27,6 +27,13 @@ class SoundFileProvider(AudioBackend):
             "sample_rate": sample_rate,
         }
 
+    def duration(self, path: Path) -> float:
+        """Read stream metadata without materializing audio samples."""
+        info = sf.info(path)
+        if info.samplerate <= 0:
+            raise ValueError(f"Audio file has an invalid sample rate: {path}")
+        return float(info.frames / info.samplerate)
+
     def save(
         self,
         data,

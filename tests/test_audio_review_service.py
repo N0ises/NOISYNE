@@ -52,7 +52,7 @@ class StubReportBuilder:
         self.report = report
         self.summary = None
 
-    def build(self, analysis, engineering, context, summary: str) -> SoundBrainReport:
+    def build(self, analysis, engineering, context, summary: str, analysis_dict=None) -> SoundBrainReport:
         self.summary = summary
         return self.report
 
@@ -71,7 +71,7 @@ def create_analysis() -> AnalysisResult:
     return AnalysisResult(
         tempo=120.0,
         pitch=440.0,
-        key="A",
+        key="A major",
         lufs=-14.0,
         peak=0.8,
         rms=0.2,
@@ -134,7 +134,7 @@ def test_review_runs_deterministic_flow_without_semantic_model() -> None:
     )
 
     assert result.audio is audio
-    assert result.analysis.key == "A"
+    assert result.analysis.key == "A major"
     assert result.context is context
     assert result.engineering is engineering
     assert result.report is report

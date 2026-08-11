@@ -1,0 +1,23 @@
+# SoundBrain Runtime Configuration
+runtime:
+  device: auto
+  dtype: auto
+  lazy_load: true
+  model_root: ../Models
+  model_cache_dir: data/cache/models
+  cache_dir: data/cache
+  log_dir: logs
+  report_dir: reports
+
+llm:
+  provider: qwen
+  model: local-model
+  base_url: http://127.0.0.1:1234/v1
+  api_key: lm-studio
+  temperature: 0.0
+  top_p: 0.9
+  max_tokens: 1024
+
+logging:
+  level: INFO
+  format: text

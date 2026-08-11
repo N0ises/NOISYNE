@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from .models import ParameterRecommendation, ProcessingGoal
 from .taxonomy import (
+    CATEGORY_CLIP,
     CATEGORY_COMPRESSOR,
     CATEGORY_EQ,
+    CATEGORY_GAIN,
     CATEGORY_IMAGER,
     CATEGORY_LIMITER,
     CATEGORY_SATURATION,
@@ -25,6 +27,10 @@ class ParameterGenerator:
             return self._compressor_parameters(goal)
         if category == CATEGORY_LIMITER:
             return self._limiter_parameters(goal)
+        if category == CATEGORY_GAIN:
+            return self._gain_parameters(goal)
+        if category == CATEGORY_CLIP:
+            return self._clip_parameters(goal)
         if category == CATEGORY_IMAGER:
             return self._imager_parameters(goal)
         if category == CATEGORY_TRANSIENT_SHAPER:

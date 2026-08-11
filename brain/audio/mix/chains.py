@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from brain.audio.context.models import AudioContext
 
 from .models import PrioritizedIssue, ProcessingStep, RootCauseResult
@@ -11,6 +13,17 @@ class ProcessingChainRecommender:
 
     Sprint 5 uses high-level plugin-type suggestions only. No models are loaded.
     """
+
+    # Exact title mapping for the V1 rule-engine issue titles.
+    _TITLE_TO_TARGET: dict[str, str] = {
+        "loudness too quiet": "loudness",
+        "loudness too loud": "gain_reduction",
+        "dynamic range": "dynamics",
+        "dynamics": "dynamics",
+        "clipping": "clipping",
+        "phase correlation": "stereo_image",
+        "stereo width": "stereo_image",
+    }
 
     def recommend(
         self,
@@ -48,30 +61,39 @@ class ProcessingChainRecommender:
         return steps
 
     def _target(self, title: str) -> str:
-        title = title.lower()
+        normalized = title.lower().strip()
+        if normalized in self._TITLE_TO_TARGET:
+            return self._TITLE_TO_TARGET[normalized]
 
-        if any(keyword in title for keyword in ("harsh", "high", "sibilance", "brightness")):
+        # Whole-word fallback for legacy / descriptive titles.
+        if self._whole_word(normalized, ("harsh", "sibilance", "brightness")):
             return "frequency_balance"
 
-        if any(keyword in title for keyword in ("loudness", "lufs", "limit", "gain")):
+        if self._whole_word(normalized, ("loudness", "lufs")):
             return "loudness"
 
-        if any(keyword in title for keyword in ("dynamic", "compression", "punch", "flat")):
+        if self._whole_word(normalized, ("dynamic", "dynamics", "compression", "punch", "flat")):
             return "dynamics"
 
-        if any(keyword in title for keyword in ("stereo", "width", "phase", "mono")):
+        if self._whole_word(normalized, ("stereo", "width", "phase", "mono")):
             return "stereo_image"
 
-        if any(keyword in title for keyword in ("transient", "attack", "smack")):
+        if self._whole_word(normalized, ("transient", "attack", "smack")):
             return "transients"
 
         return "tonal_balance"
+
+    @staticmethod
+    def _whole_word(text: str, words: tuple[str, ...]) -> bool:
+        return any(re.search(rf"\b{re.escape(word)}\b", text) for word in words)
 
     def _plugin_type(self, target: str) -> str:
         mapping = {
             "frequency_balance": "EQ",
             "loudness": "Limiter",
+            "gain_reduction": "Gain Utility",
             "dynamics": "Compressor",
+            "clipping": "Gain Utility",
             "stereo_image": "Imager",
             "transients": "Transient Shaper",
             "tonal_balance": "EQ",

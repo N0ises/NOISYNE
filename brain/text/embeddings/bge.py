@@ -4,6 +4,7 @@ import numpy as np
 
 from sentence_transformers import SentenceTransformer
 
+from brain.infrastructure.config import settings
 from brain.runtime import ModelRuntime
 
 from .base import TextEmbeddingModel
@@ -12,17 +13,18 @@ from .models import EmbeddingCapability
 
 class BGEEmbedding(TextEmbeddingModel):
 
-    MODEL_NAME = "BAAI/bge-m3"
-
     def __init__(self, runtime: ModelRuntime | None = None) -> None:
         self._runtime = runtime or ModelRuntime.shared()
 
     @property
     def _assets(self):
+        model_entry = settings.models.text_embedding
         return self._runtime.load(
-            model_name=self.MODEL_NAME,
+            model_name=model_entry.name,
             model_cls=SentenceTransformer,
             backend="sentence-transformers",
+            revision=model_entry.revision,
+            trust_remote_code=model_entry.trust_remote_code,
         )
 
     @property

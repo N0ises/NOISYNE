@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from brain.audio.analysis.models import AnalysisResult
 from brain.audio.context.models import AudioContext
 
@@ -10,6 +12,8 @@ from .models import (
 
 
 class RuleEngine:
+
+    CLIPPING_THRESHOLD = 0.99997
 
     def evaluate(
         self,
@@ -23,6 +27,30 @@ class RuleEngine:
         float,
     ]:
 
+        if self._is_silent(analysis):
+
+            strengths = []
+            issues = [
+                Issue(
+                    title="Silence",
+                    severity="high",
+                    description="The signal is effectively silent or has no measurable loudness.",
+                    recommendation="Verify the source audio is not empty or muted before mastering.",
+                ),
+            ]
+            recommendations = []
+            score = 5.0
+
+            if context and not context.is_full_mix:
+                strengths.append("Stem loudness is informational because the input is silent.")
+
+            return (
+                strengths,
+                issues,
+                recommendations,
+                score,
+            )
+
         if context and not context.is_full_mix:
 
             return self._evaluate_stem(
@@ -33,6 +61,18 @@ class RuleEngine:
             analysis
         )
 
+    @staticmethod
+    def _is_silent(
+        analysis: AnalysisResult,
+    ) -> bool:
+
+        if analysis.rms <= 1e-6:
+            return True
+
+        if math.isinf(analysis.lufs) or math.isnan(analysis.lufs):
+            return True
+
+        return False
 
     # =====================================
     # Full Mix / Master Rules
@@ -54,10 +94,34 @@ class RuleEngine:
         # Loudness
         # -------------------------
 
-        if -14.5 <= analysis.lufs <= -9.0:
+        if math.isnan(analysis.lufs) or math.isinf(analysis.lufs):
+
+            strengths.append(
+                "Loudness could not be measured; skipping loudness scoring."
+            )
+
+        elif -14.5 <= analysis.lufs <= -9.0:
 
             strengths.append(
                 "Loudness is well balanced."
+            )
+
+        elif analysis.lufs < -14.5:
+
+            score -= 8
+
+            issues.append(
+                Issue(
+                    title="Loudness too quiet",
+                    severity="medium",
+                    description=(
+                        "Integrated loudness is below the expected range "
+                        "for a full mix."
+                    ),
+                    recommendation=(
+                        "Increase gain and apply tasteful limiting."
+                    ),
+                )
             )
 
         else:
@@ -66,14 +130,14 @@ class RuleEngine:
 
             issues.append(
                 Issue(
-                    title="Loudness",
+                    title="Loudness too loud",
                     severity="medium",
                     description=(
-                        "Integrated loudness is outside the expected range "
+                        "Integrated loudness is above the expected range "
                         "for a full mix."
                     ),
                     recommendation=(
-                        "Review overall gain and limiting decisions."
+                        "Reduce output gain; do not add more limiting."
                     ),
                 )
             )
@@ -111,7 +175,7 @@ class RuleEngine:
         # Peak / Clipping
         # -------------------------
 
-        if analysis.peak > 1.0:
+        if analysis.peak >= self.CLIPPING_THRESHOLD:
 
             score -= 10
 
@@ -120,7 +184,7 @@ class RuleEngine:
                     title="Clipping",
                     severity="high",
                     description=(
-                        "Peak level exceeds 0 dBFS. "
+                        "Peak level is at or near 0 dBFS. "
                         "Possible digital clipping or "
                         "inter-sample peak distortion."
                     ),
@@ -141,7 +205,13 @@ class RuleEngine:
         # Phase Correlation
         # -------------------------
 
-        if analysis.phase >= 0.7:
+        if math.isnan(analysis.phase):
+
+            strengths.append(
+                "Mono/stereo metrics not applicable."
+            )
+
+        elif analysis.phase >= 0.7:
 
             strengths.append(
                 "Stereo phase correlation is strong."
@@ -187,7 +257,13 @@ class RuleEngine:
         # Stereo Width
         # -------------------------
 
-        if analysis.stereo_width >= 0.10:
+        if math.isnan(analysis.stereo_width):
+
+            strengths.append(
+                "Mono/stereo metrics not applicable."
+            )
+
+        elif analysis.stereo_width >= 0.10:
 
             strengths.append(
                 "Stereo image is acceptable."
@@ -264,7 +340,7 @@ class RuleEngine:
             )
 
 
-        if analysis.peak < 1.0:
+        if analysis.peak < self.CLIPPING_THRESHOLD:
 
             strengths.append(
                 "No digital clipping detected."

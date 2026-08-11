@@ -16,7 +16,7 @@ class StereoWidthAnalysis(BaseAnalyzer):
         samples = np.asarray(audio.samples)
 
         if samples.ndim != 2 or samples.shape[1] != 2:
-            return 0.0
+            return float("nan")
 
         left = samples[:, 0].astype(np.float32)
         right = samples[:, 1].astype(np.float32)

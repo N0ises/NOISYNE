@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from brain.audio.analysis.models import AnalysisResult
 from brain.audio.context.models import AudioContext
 from brain.audio.engineer.models import EngineerResult
@@ -68,6 +70,19 @@ class RootCauseAnalyzer:
                 )
             )
 
+        if self._loudness_excess(analysis, context, issue_titles):
+            causes.append(
+                RootCause(
+                    symptom="mix is louder than the delivery target",
+                    likely_causes=[
+                        "excessive limiting",
+                        "aggressive gain staging",
+                    ],
+                    priority="high",
+                    confidence=0.80,
+                )
+            )
+
         if self._narrow_or_phase_issues(analysis, context, issue_titles):
             causes.append(
                 RootCause(
@@ -104,11 +119,9 @@ class RootCauseAnalyzer:
         context: AudioContext,
         issue_titles: set[str],
     ) -> bool:
-        return any(
-            keyword in title
-            for keyword in ("harsh", "high", "brightness", "sibilance")
-            for title in issue_titles
-        ) or (analysis.spectral_centroid > 5000.0 and "harsh" in context.notes)
+        return self._whole_word_match(issue_titles, ("harsh", "sibilance", "brightness")) or (
+            analysis.spectral_centroid > 5000.0 and any("harsh" in note.lower() for note in context.notes)
+        )
 
     def _over_compression(
         self,
@@ -116,11 +129,9 @@ class RootCauseAnalyzer:
         context: AudioContext,
         issue_titles: set[str],
     ) -> bool:
-        return any(
-            keyword in title
-            for keyword in ("dynamic", "compression", "flat", "punch")
-            for title in issue_titles
-        ) or (analysis.dynamic_range < 6.0 and analysis.lufs > -12.0)
+        return {"dynamic range", "dynamics"} & issue_titles or (
+            analysis.dynamic_range < 6.0 and analysis.lufs > -12.0
+        )
 
     def _loudness_shortfall(
         self,
@@ -128,11 +139,19 @@ class RootCauseAnalyzer:
         context: AudioContext,
         issue_titles: set[str],
     ) -> bool:
-        return any(
-            keyword in title
-            for keyword in ("loudness", "lufs", "quiet", "limit")
-            for title in issue_titles
-        ) or (context.is_full_mix and analysis.lufs < -16.0)
+        return "loudness too quiet" in issue_titles or (
+            context.is_full_mix and analysis.lufs < -16.0
+        )
+
+    def _loudness_excess(
+        self,
+        analysis: AnalysisResult,
+        context: AudioContext,
+        issue_titles: set[str],
+    ) -> bool:
+        return "loudness too loud" in issue_titles or (
+            context.is_full_mix and analysis.lufs > -8.0
+        )
 
     def _narrow_or_phase_issues(
         self,
@@ -140,8 +159,12 @@ class RootCauseAnalyzer:
         context: AudioContext,
         issue_titles: set[str],
     ) -> bool:
-        return any(
-            keyword in title
-            for keyword in ("stereo", "phase", "mono", "width")
-            for title in issue_titles
+        return self._whole_word_match(
+            issue_titles, ("phase correlation", "stereo width", "mono", "width")
         ) or (analysis.stereo_width < 0.3 and analysis.phase < 0.5)
+
+    @staticmethod
+    def _whole_word_match(titles: set[str], words: tuple[str, ...]) -> bool:
+        return any(
+            re.search(rf"\b{re.escape(word)}\b", title) for title in titles for word in words
+        )

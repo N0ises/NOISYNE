@@ -78,26 +78,31 @@ class CLAPEmbedding(AudioEmbeddingModel):
 
         model = self._audio_assets.model
 
-        target_sample_rate = 48000
+        target_sample_rate = settings.audio.clap_target_sample_rate
         samples = audio.samples
         sample_rate = audio.metadata.sample_rate
 
+        waveform = (
+            samples.squeeze()
+            if hasattr(samples, "squeeze")
+            else np.asarray(samples).squeeze()
+        )
+        waveform = np.asarray(waveform, dtype=np.float32)
+
+        # CLAP expects a mono signal regardless of input channel count.
+        if waveform.ndim > 1:
+            waveform = np.mean(waveform, axis=1)
+
         if sample_rate != target_sample_rate:
-            waveform = (
-                samples.squeeze()
-                if hasattr(samples, "squeeze")
-                else np.asarray(samples).squeeze()
-            )
-            waveform = np.asarray(waveform, dtype=np.float32)
-            if waveform.ndim > 1:
-                waveform = np.mean(waveform, axis=1)
             tensor = torch.tensor(waveform, dtype=torch.float32).unsqueeze(0)
             tensor = torchaudio.transforms.Resample(
                 orig_freq=sample_rate,
                 new_freq=target_sample_rate,
             )(tensor)
-            samples = tensor.squeeze(0).numpy()
+            waveform = tensor.squeeze(0).numpy()
             sample_rate = target_sample_rate
+
+        samples = waveform
 
         inputs = processor(
             audio=samples,

@@ -2,14 +2,19 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from brain.infrastructure.config import settings
 from brain.providers.base import BaseAIProvider
 
 from .builder import PromptBuilder
 from .guards.output import OutputGuard
 from .models import (
+    AudioFact,
+    EngineeringFinding,
     ReasoningContext,
     ReasoningPrompt,
+    ReasoningRecommendation,
     ReasoningResult,
+    StructuredReasoningResponse,
 )
 from .parser import ResponseParser
 
@@ -48,17 +53,22 @@ class LLMReasoningProvider(BaseReasoningProvider):
         self,
         prompt: ReasoningPrompt,
     ) -> ReasoningResult:
-        response = self._provider.generate(
-            self._request_cls(
-                system_prompt=prompt.system,
-                user_prompt=prompt.user,
-            )
-        )
+        request_kwargs: dict = {
+            "system_prompt": prompt.system,
+            "user_prompt": prompt.user,
+            "temperature": settings.llm.temperature,
+            "top_p": settings.llm.top_p,
+        }
+        if hasattr(settings.llm, "max_tokens"):
+            request_kwargs["max_tokens"] = settings.llm.max_tokens
+
+        response = self._provider.generate(self._request_cls(**request_kwargs))
 
         return ReasoningResult(
             answer=response.text,
             confidence=response.confidence,
             reasoning=[f"Provider: {response.provider}"],
+            finish_reason=response.finish_reason,
         )
 
 
@@ -74,6 +84,45 @@ class ReasoningEngine:
         self._output_guard = OutputGuard()
         self._parser = ResponseParser()
 
+    def _filter_structured(
+        self,
+        structured: StructuredReasoningResponse,
+    ) -> StructuredReasoningResponse:
+        """Apply the output guard to each text field individually."""
+
+        def _guard(text: str) -> str:
+            return self._output_guard.filter(text)
+
+        filtered_facts = [
+            AudioFact(
+                name=_guard(fact.name),
+                value=_guard(fact.value),
+            )
+            for fact in structured.facts
+        ]
+
+        filtered_findings = [
+            EngineeringFinding(
+                title=_guard(finding.title),
+                severity=_guard(finding.severity),
+                description=_guard(finding.description),
+                recommendation=_guard(finding.recommendation),
+            )
+            for finding in structured.findings
+        ]
+
+        filtered_recommendations = [
+            ReasoningRecommendation(text=_guard(item.text))
+            for item in structured.recommendations
+        ]
+
+        return StructuredReasoningResponse(
+            facts=filtered_facts,
+            findings=filtered_findings,
+            recommendations=filtered_recommendations,
+            conclusion=_guard(structured.conclusion),
+        )
+
     def ask(
         self,
         context: ReasoningContext,
@@ -81,10 +130,29 @@ class ReasoningEngine:
         prompt = self._builder.build(context)
         result = self._provider.generate(prompt)
 
-        filtered_answer = self._output_guard.filter(result.answer)
-        parsed_result = self._parser.parse(filtered_answer)
+        raw_answer = result.answer
+        parsed_result = self._parser.parse(raw_answer)
 
-        parsed_result.confidence = result.confidence
-        parsed_result.reasoning.extend(result.reasoning)
+        confidence = result.confidence
+        reasoning = [f"Raw answer: {raw_answer}"] if raw_answer else ["Raw answer: <empty>"]
+        reasoning.extend(result.reasoning)
+
+        if result.finish_reason == "length":
+            confidence = max(0.0, confidence - 0.25)
+            reasoning.append("Warning: LLM response was truncated (finish_reason=length).")
+
+        if parsed_result.structured is not None:
+            filtered_structured = self._filter_structured(parsed_result.structured)
+            parsed_result = ReasoningResult(
+                answer=self._output_guard.filter(
+                    self._parser._render(filtered_structured)
+                ),
+                confidence=confidence,
+                reasoning=reasoning,
+                structured=filtered_structured,
+            )
+        else:
+            parsed_result.confidence = confidence
+            parsed_result.reasoning = reasoning
 
         return parsed_result

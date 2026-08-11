@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import ClassVar
 
 from brain.audio.engineer.models import EngineerResult, Issue
@@ -26,6 +27,17 @@ class PriorityEngine:
         "fix first": 1.0,
         "fine tune": 0.6,
         "optional": 0.3,
+    }
+
+    # Exact title mapping for the V1 rule-engine issue titles.
+    _TITLE_TO_CATEGORY: dict[str, str] = {
+        "loudness too quiet": "fix first",
+        "loudness too loud": "fix first",
+        "dynamic range": "fix first",
+        "dynamics": "fix first",
+        "clipping": "fix first",
+        "phase correlation": "fine tune",
+        "stereo width": "fine tune",
     }
 
     def prioritize(
@@ -69,21 +81,28 @@ class PriorityEngine:
         return result
 
     def _category(self, issue: Issue) -> str:
-        title = issue.title.lower()
+        title = issue.title.lower().strip()
+        if title in self._TITLE_TO_CATEGORY:
+            return self._TITLE_TO_CATEGORY[title]
 
-        if any(keyword in title for keyword in ("clip", "phase", "mono", "inversion")):
+        # Whole-word fallback to avoid substring collisions like "required" -> "eq".
+        if self._whole_word(title, ("clip", "phase", "mono", "inversion")):
             return "fix first"
 
-        if any(keyword in title for keyword in ("loudness", "lufs", "limit", "dynamic")):
+        if self._whole_word(title, ("loudness", "lufs", "limit", "dynamic", "dynamics")):
             return "fix first"
 
-        if any(keyword in title for keyword in ("frequency", "eq", "balance", "harsh")):
+        if self._whole_word(title, ("frequency", "eq", "balance", "harsh", "sibilance")):
             return "fine tune"
 
-        if any(keyword in title for keyword in ("stereo", "width", "ambience")):
+        if self._whole_word(title, ("stereo", "width", "ambience")):
             return "fine tune"
 
         return "optional"
+
+    @staticmethod
+    def _whole_word(text: str, words: tuple[str, ...]) -> bool:
+        return any(re.search(rf"\b{re.escape(word)}\b", text) for word in words)
 
     def _severity_weight(self, severity: str) -> float:
         return self._SEVERITY_WEIGHT.get(severity.lower(), 0.3)

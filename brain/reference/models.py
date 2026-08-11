@@ -49,6 +49,8 @@ class ReferenceMetric:
 
     passed: bool
 
+    severity: Severity
+
 
 @dataclass(slots=True)
 class ReferenceIntent:

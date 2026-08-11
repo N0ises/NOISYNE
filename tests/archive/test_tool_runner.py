@@ -1,6 +1,6 @@
 from brain.tool_runner import run_tool
 
-audio = "tests/audio.wav"
+audio = "tests/assets/test.wav"
 
 tools = [
     "pitch_detection",

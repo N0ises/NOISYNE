@@ -99,9 +99,16 @@ def _cmd_reference(args: argparse.Namespace) -> int:
 
     service = SoundBrainService()
     try:
-        service.analyze(request)
+        response = service.analyze(request)
     except Exception as exc:  # noqa: BLE001 — CLI top-level catch-all for user-facing error message
         print(f"Reference comparison failed: {exc}", file=sys.stderr)
+        return 1
+
+    if response.comparison is None:
+        print(
+            "Reference comparison failed: no comparison produced.",
+            file=sys.stderr,
+        )
         return 1
 
     print(f"Reference reports saved to: {args.output}")

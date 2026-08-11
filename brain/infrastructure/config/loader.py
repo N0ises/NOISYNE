@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os
+import re
+import sys
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +12,7 @@ from brain.infrastructure.config.models import (
     AudioConfig,
     ChromaConfig,
     EmbeddingConfig,
+    LLMConfig,
     LoggingConfig,
     ModelEntry,
     ModelsConfig,
@@ -24,24 +29,66 @@ except (
     yaml = None
 
 
-def _project_root() -> Path:
-    """Return the repository root (directory containing pyproject.toml)."""
-    return Path(__file__).resolve().parents[3]
+_ENV_ROOT = "SOUNDBRAIN_ROOT"
 
 
-def _config_dir() -> Path:
-    return _project_root() / "configs"
+def _application_root() -> Path:
+    """Return the application root used to resolve relative config paths.
+
+    Resolution order:
+
+    1. The ``SOUNDBRAIN_ROOT`` environment variable, if set.
+    2. The directory containing ``pyproject.toml`` or ``configs/`` when running
+       from a source checkout.
+    3. The parent directory of the installed ``brain`` package (e.g.
+       ``site-packages`` for a wheel install).
+
+    This keeps runtime paths stable regardless of the current working directory.
+    """
+    env_root = os.environ.get(_ENV_ROOT)
+    if env_root:
+        return Path(env_root).expanduser().resolve()
+
+    config_module = sys.modules.get("brain.infrastructure.config")
+    if config_module is None:
+        raise RuntimeError(
+            "Cannot determine SoundBrain application root: "
+            "brain.infrastructure.config has not been imported."
+        )
+    config_file = getattr(config_module, "__file__", None)
+    if config_file is None:
+        raise RuntimeError(
+            "Cannot determine SoundBrain application root from the packaged "
+            f"configuration location. Set the {_ENV_ROOT} environment variable."
+        )
+    config_dir = Path(config_file).resolve().parent
+
+    for parent in config_dir.parents:
+        if (parent / "pyproject.toml").is_file() or (parent / "configs").is_dir():
+            return parent
+
+    # Installed wheel: the packaged config lives under
+    # .../site-packages/brain/infrastructure/config. The parent of the ``brain``
+    # package (.../site-packages or the project root) is the stable root.
+    return config_dir.parents[2].parent
 
 
-def _load_yaml(path: Path) -> dict[str, Any]:
-    """Load a YAML file, returning an empty dict if it is missing or empty.
+def _load_yaml(name: str) -> dict[str, Any]:
+    """Load a packaged YAML resource, returning an empty dict if it is empty.
 
     Raises yaml.YAMLError if the file exists but contains invalid YAML so that
     configuration problems fail fast instead of silently falling back to defaults.
     """
-    if yaml is None or not path.exists():
-        return {}
-    text = path.read_text(encoding="utf-8")
+    if yaml is None:
+        raise RuntimeError("PyYAML is required to load SoundBrain configuration.")
+    resource = resources.files("brain.infrastructure.config").joinpath(
+        "resources", f"{name}.yaml"
+    )
+    if not resource.is_file():
+        raise FileNotFoundError(
+            f"Required SoundBrain configuration resource is missing: {name}.yaml"
+        )
+    text = resource.read_text(encoding="utf-8")
     if not text.strip():
         return {}
     data = yaml.safe_load(text)
@@ -62,7 +109,7 @@ def _deep_update(
 
 
 def _expand_path(value: str | Path | None, root: Path) -> Path | None:
-    """Resolve a config path relative to the project root."""
+    """Resolve a config path relative to the application root."""
     if value is None:
         return None
     path = Path(str(value)).expanduser()
@@ -74,7 +121,7 @@ def _expand_path(value: str | Path | None, root: Path) -> Path | None:
 def _model_entry(data: dict[str, Any] | None, default: ModelEntry) -> ModelEntry:
     if not data:
         return default
-    return ModelEntry(
+    entry = ModelEntry(
         name=data.get("name", default.name),
         backend=data.get("backend", default.backend),
         revision=data.get("revision", default.revision),
@@ -83,23 +130,31 @@ def _model_entry(data: dict[str, Any] | None, default: ModelEntry) -> ModelEntry
             default.trust_remote_code,
         ),
     )
+    if entry.trust_remote_code and not re.fullmatch(
+        r"[0-9a-fA-F]{40}", entry.revision or ""
+    ):
+        raise ValueError(
+            f"Model '{entry.name}' enables trust_remote_code but does not specify "
+            "a 40-character immutable commit revision."
+        )
+    return entry
 
 
 def load_settings() -> AppConfig:
-    """Load configuration from configs/*.yaml and return a populated AppConfig.
+    """Load packaged configuration and return a populated AppConfig.
 
-    Missing or invalid YAML files fall back to DEFAULT_SETTINGS so the
-    application can start even when the config directory is absent.
+    Missing configuration files fail fast so an installed release cannot
+    silently run with defaults that differ from its declared configuration.
     """
-    root = _project_root()
-    config_dir = _config_dir()
+    root = _application_root()
 
     merged: dict[str, Any] = {}
     for name in ("runtime", "models", "audio"):
-        merged = _deep_update(merged, _load_yaml(config_dir / f"{name}.yaml"))
+        merged = _deep_update(merged, _load_yaml(name))
 
     runtime_data = merged.get("runtime", {})
     logging_data = merged.get("logging", {})
+    llm_data = merged.get("llm", {})
     audio_data = merged.get("audio", {})
     models_data = merged.get("models", {})
 
@@ -107,6 +162,7 @@ def load_settings() -> AppConfig:
     default_logging = DEFAULT_SETTINGS.logging
     default_audio = DEFAULT_SETTINGS.audio
     default_models = DEFAULT_SETTINGS.models
+    default_llm = DEFAULT_SETTINGS.llm
 
     text_embedding_entry = _model_entry(
         models_data.get("text_embedding"),
@@ -174,7 +230,15 @@ def load_settings() -> AppConfig:
             ),
             text_embedding=text_embedding_entry,
         ),
-        llm=DEFAULT_SETTINGS.llm,
+        llm=LLMConfig(
+            provider=llm_data.get("provider", default_llm.provider),
+            model=llm_data.get("model", default_llm.model),
+            base_url=llm_data.get("base_url", default_llm.base_url),
+            api_key=llm_data.get("api_key", default_llm.api_key),
+            temperature=llm_data.get("temperature", default_llm.temperature),
+            top_p=llm_data.get("top_p", default_llm.top_p),
+            max_tokens=llm_data.get("max_tokens", default_llm.max_tokens),
+        ),
         embedding=EmbeddingConfig(
             # Model names are kept as-is so ModelRepository can resolve
             # local folders under models/ or fall back to HuggingFace IDs.

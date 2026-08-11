@@ -9,7 +9,7 @@ from brain.application.soundbrain_service import (
     SoundBrainService,
 )
 
-AUDIO_PATH = Path("tests/audio.wav")
+AUDIO_PATH = Path("tests/assets/test.wav")
 
 
 @pytest.mark.skipif(
@@ -43,7 +43,7 @@ def test_soundbrain_service_integration_deterministic():
     assert response.comparison is None
 
     # Without reasoning, ai_summary should be the validated intent text.
-    assert "Integration test" in report.ai_summary or report.ai_summary == ""
+    assert "integration test" in report.ai_summary or report.ai_summary == ""
 
 
 @pytest.mark.skipif(
@@ -86,7 +86,7 @@ def test_soundbrain_service_integration_with_mix_intelligence():
     assert report.confidence_scores
 
     # Reasoning is disabled, so ai_summary should be the validated intent text or empty.
-    assert report.ai_summary == "" or "integration" not in report.ai_summary.lower()
+    assert report.ai_summary == "" or "integration" in report.ai_summary.lower()
 
 
 @pytest.mark.skipif(

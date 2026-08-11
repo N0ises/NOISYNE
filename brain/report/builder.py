@@ -23,6 +23,7 @@ class ReportBuilder:
         engineer,
         audio_context,
         ai_answer: str,
+        analysis_dict: dict | None = None,
     ) -> SoundBrainReport:
 
 
@@ -130,6 +131,9 @@ class ReportBuilder:
 
 
             ai_summary=validated_summary,
+
+
+            analysis=analysis_dict,
 
 
         )

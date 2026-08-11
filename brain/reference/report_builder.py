@@ -2,12 +2,18 @@ from __future__ import annotations
 
 from dataclasses import asdict
 import json
+import logging
+import math
 from pathlib import Path
+from typing import Any
 
 from .models import (
     EngineerDecision,
     ReferenceReport,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class ReferenceReportBuilder:
@@ -32,19 +38,41 @@ class ReferenceReportBuilder:
             exist_ok=True,
         )
 
+        data = self._sanitize_nonfinite(self.build_json(report))
+
         with output.open(
             "w",
             encoding="utf-8",
         ) as fp:
 
             json.dump(
-                self.build_json(report),
+                data,
                 fp,
                 indent=4,
                 ensure_ascii=False,
+                allow_nan=False,
             )
 
         return output
+
+    def _sanitize_nonfinite(
+        self,
+        data: Any,
+    ) -> Any:
+
+        if isinstance(data, float):
+            if math.isfinite(data):
+                return data
+            logger.warning("Replacing non-finite float %r with None for JSON export.", data)
+            return None
+
+        if isinstance(data, list):
+            return [self._sanitize_nonfinite(item) for item in data]
+
+        if isinstance(data, dict):
+            return {key: self._sanitize_nonfinite(value) for key, value in data.items()}
+
+        return data
 
     def build_markdown(
         self,

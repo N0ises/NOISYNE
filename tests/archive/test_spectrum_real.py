@@ -2,6 +2,6 @@ from brain.tools.spectrum_analysis import analyze_spectrum
 
 print(
     analyze_spectrum(
-        "tests/audio.wav"
+        "tests/assets/test.wav"
     )
 )

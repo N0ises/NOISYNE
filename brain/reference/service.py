@@ -120,26 +120,61 @@ class ReferenceService:
 
         current_analysis = self.analyzer.analyze(current)
 
-        averaged_metrics = self._average_analyses(reference_analyses)
+        current_metrics = asdict(current_analysis)
 
-        comparison = self._compare_metrics(
-            reference=averaged_metrics,
-            current=asdict(current_analysis),
-            reference_paths=reference_paths,
-            metric_variance=self._metric_variance(reference_analyses),
-            current_audio=current,
-        )
-
-        comparison.reference_similarities = self._per_reference_similarities(
+        reference_similarities = self._per_reference_similarities(
             reference_analyses,
             current_analysis,
             reference_paths,
         )
 
+        # Choose the reference most similar to the current mix as the primary
+        # comparison target. Averaged/variance metrics are kept only for
+        # informational reporting.
+        if reference_analyses:
+            primary_index = self._closest_reference_index(
+                reference_similarities,
+                reference_paths,
+            )
+            primary_reference = asdict(reference_analyses[primary_index])
+        else:
+            primary_reference = {}
+
+        comparison = self._compare_metrics(
+            reference=primary_reference,
+            current=current_metrics,
+            reference_paths=reference_paths,
+            metric_variance=self._metric_variance(reference_analyses),
+            current_audio=current,
+        )
+
+        comparison.reference_similarities = reference_similarities
+
+        # Surface averaged metrics and variance in the report weaknesses for
+        # informational purposes.
+        averaged_metrics = self._average_analyses(reference_analyses)
+
         return self._build_report(
             comparison,
             intent=intent,
+            averaged_metrics=averaged_metrics,
         )
+
+    def _closest_reference_index(
+        self,
+        reference_similarities: dict[str, float],
+        reference_paths: list[str],
+    ) -> int:
+
+        if not reference_paths:
+            return 0
+
+        best_path = max(
+            reference_paths,
+            key=lambda path: reference_similarities.get(path, -1.0),
+        )
+
+        return reference_paths.index(best_path)
 
     def compare(
         self,
@@ -174,6 +209,7 @@ class ReferenceService:
         return self._build_report(
             comparison,
             intent=intent,
+            averaged_metrics=None,
         )
 
     def _compare_metrics(
@@ -232,6 +268,7 @@ class ReferenceService:
         self,
         comparison: ReferenceComparison,
         intent: ReferenceIntent | None,
+        averaged_metrics: dict | None = None,
     ) -> ReferenceReport:
 
         engineering_result = self.engineering.process(comparison.metrics)
@@ -288,6 +325,23 @@ class ReferenceService:
                 if text:
 
                     next_actions.append(text)
+
+        if averaged_metrics:
+            weaknesses.append(
+                f"Averaged reference LUFS: {averaged_metrics.get('lufs', 0.0):.2f}."
+            )
+
+        if comparison.metric_variance:
+            high_variance = sorted(
+                comparison.metric_variance.items(),
+                key=lambda item: item[1],
+                reverse=True,
+            )[:3]
+
+            for name, value in high_variance:
+                weaknesses.append(
+                    f"Reference variance for {name}: {value:.4f}."
+                )
 
         return ReferenceReport(
             comparison=comparison,

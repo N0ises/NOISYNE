@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,7 +17,7 @@ from brain.reference.models import (
 from brain.reference.reasoner import ReferenceReasoner
 from brain.reference.service import ReferenceService
 
-AUDIO_PATH = Path("tests/audio.wav")
+AUDIO_PATH = Path("tests/assets/test.wav")
 
 
 def _analysis(
@@ -28,7 +29,7 @@ def _analysis(
     return AnalysisResult(
         tempo=120.0,
         pitch=440.0,
-        key="C",
+        key="C major",
         lufs=lufs,
         peak=peak,
         rms=rms,
@@ -123,9 +124,20 @@ def test_multi_reference_computes_similarity_and_variance():
     assert all(0.0 <= sim <= 100.0 for sim in report.comparison.reference_similarities.values())
 
     lufs_metric = next(metric for metric in report.comparison.metrics if metric.name == "lufs")
-    assert lufs_metric.reference == -12.0
+    # With multi-reference aggregation the closest reference is used as the
+    # primary comparison target. Current LUFS is -16.0; ref_c at -14.0 is closest.
+    assert lufs_metric.reference == -14.0
     assert report.comparison.metric_variance["lufs"] > 0.0
     assert report.comparison.segment_deviations
+
+    # The per-reference similarity map should report every reference.
+    similarities = report.comparison.reference_similarities
+    assert set(similarities.keys()) == {
+        "reference_a.wav",
+        "reference_b.wav",
+        "reference_c.wav",
+    }
+    assert similarities["reference_c.wav"] == max(similarities.values())
 
 
 def test_segment_deviation_structure_for_failed_metric():
@@ -212,3 +224,115 @@ def test_low_confidence_decision_is_insufficient_evidence():
     categorized = reasoner._categorize(decision, intent=None)
 
     assert categorized.decision_type == DecisionType.INSUFFICIENT_EVIDENCE
+
+
+# Regression tests for V1 reference comparison stabilization
+
+from brain.reference.comparator import ReferenceComparator
+from brain.reference.report_builder import ReferenceReportBuilder
+
+
+def test_reference_metric_includes_severity():
+    comparator = ReferenceComparator()
+    reference = {"lufs": -14.0}
+    current = {"lufs": -22.0}
+
+    comparison = comparator.compare_metrics(reference, current)
+
+    assert comparison.metrics
+    metric = comparison.metrics[0]
+    assert metric.severity is not None
+    assert metric.severity in (Severity.HIGH, Severity.CRITICAL)
+
+
+def test_per_metric_tolerances_are_used():
+    comparator = ReferenceComparator()
+    reference = {"lufs": -14.0, "spectral_centroid": 2000.0}
+    current = {"lufs": -14.5, "spectral_centroid": 2050.0}
+
+    comparison = comparator.compare_metrics(reference, current)
+
+    lufs = next(metric for metric in comparison.metrics if metric.name == "lufs")
+    centroid = next(
+        metric for metric in comparison.metrics if metric.name == "spectral_centroid"
+    )
+
+    assert lufs.tolerance == 1.0
+    assert lufs.unit == "LU"
+    assert lufs.passed is True
+
+    assert centroid.tolerance == 100.0
+    assert centroid.unit == "Hz"
+    assert centroid.passed is True
+
+
+def test_phase_tolerance_uses_normalized_scale():
+    comparator = ReferenceComparator()
+    reference = {"phase": 0.0}
+    current = {"phase": 0.09}
+
+    comparison = comparator.compare_metrics(reference, current)
+
+    phase = next(metric for metric in comparison.metrics if metric.name == "phase")
+    assert phase.tolerance == 0.1
+    assert phase.unit == "normalized"
+    assert phase.passed is True
+
+
+def test_category_scores_use_category_means():
+    comparator = ReferenceComparator()
+    reference = {
+        "lufs": -14.0,
+        "peak": -1.0,
+        "spectral_centroid": 2000.0,
+    }
+    current = {
+        "lufs": -15.0,
+        "peak": -1.5,
+        "spectral_centroid": 3000.0,
+    }
+
+    comparison = comparator.compare_metrics(reference, current)
+
+    # LUFS differs by 1 -> similarity 90; peak differs by 0.5 -> similarity 95.
+    # Both are loudness, so loudness_score should be their mean: 92.5.
+    assert comparison.loudness_score == 92.5
+    # Spectral centroid differs by 1000 -> similarity 0; it's alone in frequency.
+    assert comparison.frequency_score == 0.0
+
+
+def test_report_builder_replaces_nonfinite_floats(tmp_path: Path):
+    from brain.reference.models import ReferenceComparison, ReferenceReport
+
+    comparison = ReferenceComparison(
+        similarity=float("nan"),
+        confidence=float("inf"),
+        frequency_score=88.0,
+        dynamic_score=87.0,
+        stereo_score=90.0,
+        loudness_score=86.0,
+        transient_score=87.0,
+        phase_score=92.0,
+        tonal_score=88.0,
+        semantic_score=85.0,
+        band_differences=[],
+        engineer_decisions=[],
+        metrics=[],
+    )
+    report = ReferenceReport(
+        comparison=comparison,
+        summary="Test",
+        strengths=[],
+        weaknesses=[],
+        priorities=[],
+        next_actions=[],
+    )
+
+    output = tmp_path / "report.json"
+    builder = ReferenceReportBuilder()
+    builder.save_json(report, output)
+
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert data["comparison"]["similarity"] is None
+    assert data["comparison"]["confidence"] is None
+    assert data["comparison"]["frequency_score"] == 88.0

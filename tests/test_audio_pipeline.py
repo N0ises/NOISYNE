@@ -8,20 +8,17 @@ from brain.audio.pipeline import AudioPipeline
 
 
 AUDIO_PATH = Path("tests/assets/test.wav")
-FALLBACK_PATH = Path("tests/audio.wav")
 
 
 @pytest.mark.skipif(
-    not AUDIO_PATH.exists() and not FALLBACK_PATH.exists(),
-    reason="No test audio file is available",
+    not AUDIO_PATH.exists(),
+    reason="Committed fixture tests/assets/test.wav is not available",
 )
 def test_audio_pipeline_index_and_search():
-    audio_path = AUDIO_PATH if AUDIO_PATH.exists() else FALLBACK_PATH
-
     pipeline = AudioPipeline()
 
     pipeline.index(
-        audio_path,
+        AUDIO_PATH,
         audio_id="song_001",
         metadata={
             "title": "Test Song",
@@ -30,7 +27,7 @@ def test_audio_pipeline_index_and_search():
         document="First indexed audio",
     )
 
-    result = pipeline.search(audio_path)
+    result = pipeline.search(AUDIO_PATH)
 
     assert len(result.ids) >= 1, "Search should return at least one indexed audio"
     assert "song_001" in result.ids, "Indexed audio should be found by identity search"

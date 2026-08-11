@@ -3,9 +3,9 @@
   "tests": [
     {
       "name": "single_reference_loudness",
-      "current": "tests/audio.wav",
+      "current": "tests/assets/test.wav",
       "references": [
-        "tests/audio.wav"
+        "tests/assets/test.wav"
       ],
       "intent": {
         "genre": "pop",
@@ -23,10 +23,10 @@
     },
     {
       "name": "multi_reference_consistency",
-      "current": "tests/audio.wav",
+      "current": "tests/assets/test.wav",
       "references": [
-        "tests/audio.wav",
-        "tests/audio.wav"
+        "tests/assets/test.wav",
+        "tests/assets/test.wav"
       ],
       "intent": {
         "genre": "electronic",

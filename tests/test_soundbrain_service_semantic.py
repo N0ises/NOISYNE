@@ -11,7 +11,7 @@ from brain.application.soundbrain_service import (
 from brain.infrastructure.config import settings
 
 
-AUDIO_PATH = Path("tests/audio.wav")
+AUDIO_PATH = Path("tests/assets/test.wav")
 CLAP_MODEL_DIR = Path(settings.runtime.model_root) / settings.models.clap.name
 
 

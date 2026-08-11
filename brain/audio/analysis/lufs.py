@@ -25,8 +25,13 @@ class LUFSAnalyzer(BaseAnalyzer):
             audio.metadata.sample_rate,
         )
 
-        loudness = meter.integrated_loudness(
-            samples,
-        )
+        try:
+            loudness = meter.integrated_loudness(
+                samples,
+            )
+        except ValueError:
+            # BS.1770 requires at least one full gating block (~0.4 s).
+            # Very short inputs cannot produce a valid integrated loudness.
+            return float("nan")
 
         return float(loudness)

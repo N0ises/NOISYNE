@@ -14,7 +14,18 @@ from .models import (
 )
 from .parameter_generator import ParameterGenerator
 from .selector import PluginSelector
-from .taxonomy import CATEGORY_TO_TYPE, CATEGORY_UTILITY
+from .taxonomy import (
+    CATEGORY_CLIP,
+    CATEGORY_COMPRESSOR,
+    CATEGORY_EQ,
+    CATEGORY_GAIN,
+    CATEGORY_IMAGER,
+    CATEGORY_LIMITER,
+    CATEGORY_SATURATION,
+    CATEGORY_TO_TYPE,
+    CATEGORY_TRANSIENT_SHAPER,
+    CATEGORY_UTILITY,
+)
 
 
 class PluginChainBuilder:
@@ -42,14 +53,17 @@ class PluginChainBuilder:
     ) -> PluginIntelligenceResult:
         goals = self._build_goals(mix_result)
         steps: list[PluginIntelligenceStep] = []
-        seen_categories: set[str] = set()
+        seen_keys: set[tuple[str, str]] = set()
         order = 1
 
         for goal in goals:
             category = self._category_for_goal(goal)
-            if category in seen_categories:
+            # Deduplicate by (category, target) so distinct issues in the same
+            # category are preserved, but identical duplicates are dropped.
+            key = (category, goal.target)
+            if key in seen_keys:
                 continue
-            seen_categories.add(category)
+            seen_keys.add(key)
 
             plugin_type = CATEGORY_TO_TYPE.get(category, "Utility")
             parameters = self._parameter_generator.generate(goal, category)
@@ -113,25 +127,49 @@ class PluginChainBuilder:
                 return cause
         return None
 
+    # Exact title mapping for V1 rule-engine issue titles.
+    _TITLE_TO_CATEGORY: dict[str, str] = {
+        "loudness too quiet": CATEGORY_LIMITER,
+        "loudness too loud": CATEGORY_GAIN,
+        "dynamic range": CATEGORY_COMPRESSOR,
+        "dynamics": CATEGORY_COMPRESSOR,
+        "clipping": CATEGORY_CLIP,
+        "phase correlation": CATEGORY_IMAGER,
+        "stereo width": CATEGORY_IMAGER,
+        "harsh high end": CATEGORY_EQ,
+        "sibilance": CATEGORY_EQ,
+        "harsh highs": CATEGORY_EQ,
+    }
+
     def _category_for_goal(self, goal: ProcessingGoal) -> str:
-        target = goal.target.lower()
-        description = goal.description.lower()
+        target = goal.target.lower().strip()
+        if target in self._TITLE_TO_CATEGORY:
+            return self._TITLE_TO_CATEGORY[target]
+
+        description = goal.description.lower().strip()
         text = f"{target} {description}"
 
-        if any(k in text for k in ("harsh", "high", "sibilance", "brightness", "frequency", "eq")):
-            return "eq"
-        if any(k in text for k in ("loudness", "lufs", "limit", "gain")):
-            return "limiter"
-        if any(k in text for k in ("dynamic", "compression", "punch", "flat")):
-            return "compressor"
-        if any(k in text for k in ("stereo", "width", "phase", "mono")):
-            return "imager"
-        if any(k in text for k in ("transient", "attack", "smack")):
-            return "transient_shaper"
-        if any(k in text for k in ("warmth", "saturation", "harmonic")):
-            return "saturation"
+        # Whole-word fallback to avoid substring collisions (e.g. "required" -> "eq").
+        if self._whole_word(text, ("harsh", "sibilance", "brightness", "frequency", "eq")):
+            return CATEGORY_EQ
+        if self._whole_word(text, ("loudness", "lufs")):
+            return CATEGORY_LIMITER
+        if self._whole_word(text, ("dynamic", "dynamics", "compression", "punch", "flat")):
+            return CATEGORY_COMPRESSOR
+        if self._whole_word(text, ("stereo", "width", "phase", "mono")):
+            return CATEGORY_IMAGER
+        if self._whole_word(text, ("transient", "attack", "smack")):
+            return CATEGORY_TRANSIENT_SHAPER
+        if self._whole_word(text, ("warmth", "saturation", "harmonic")):
+            return CATEGORY_SATURATION
 
         return CATEGORY_UTILITY
+
+    @staticmethod
+    def _whole_word(text: str, words: tuple[str, ...]) -> bool:
+        import re
+
+        return any(re.search(rf"\b{re.escape(word)}\b", text) for word in words)
 
     def _impact(self, confidence: float) -> str:
         if confidence >= 0.85:

@@ -74,8 +74,8 @@ def test_reference_command_exports_reference_reports(
     exit_code = main.main(
         [
             "reference",
-            "tests/audio.wav",
-            "tests/audio.wav",
+            "tests/assets/test.wav",
+            "tests/assets/test.wav",
             "--genre",
             "pop",
             "--target",

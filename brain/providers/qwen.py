@@ -107,7 +107,8 @@ class QwenProvider(BaseAIProvider):
 
         choice = choices[0]
         message = choice.get("message", {})
-        answer = message.get("content", "")
+        content = message.get("content") or ""
+        answer = content.strip()
         finish_reason = choice.get("finish_reason")
         usage = data.get("usage", {})
         tokens_used = usage.get("total_tokens")

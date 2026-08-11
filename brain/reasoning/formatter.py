@@ -162,7 +162,7 @@ class ReasoningFormatter:
 
             ("LUFS", "lufs", "LUFS", ".2f"),
 
-            ("Peak", "peak", "dBFS", ".4f"),
+            ("Peak", "peak", "linear", ".4f"),
 
             ("RMS", "rms", "", ".4f"),
 
@@ -172,7 +172,7 @@ class ReasoningFormatter:
 
             ("Stereo Width", "stereo_width", "", ".4f"),
 
-            ("Phase Correlation", "phase_correlation", "", ".4f"),
+            ("Phase Correlation", "phase", "", ".4f"),
 
             ("Spectral Centroid", "spectral_centroid", "Hz", ".2f"),
 
@@ -186,11 +186,11 @@ class ReasoningFormatter:
 
             ("Zero Crossing Rate", "zero_crossing_rate", "", ".6f"),
 
-            ("MFCC Count", "mfcc_count", "", ""),
+            ("MFCC Count", "mfcc", "", ""),
 
-            ("Chroma Count", "chroma_count", "", ""),
+            ("Chroma Count", "chroma", "", ""),
 
-            ("Onsets", "onsets", "", ""),
+            ("Onsets", "onset_count", "", ""),
 
         ]
 
@@ -209,6 +209,21 @@ class ReasoningFormatter:
 
                 continue
 
+
+
+            if isinstance(value, list):
+
+                if not value:
+
+                    continue
+
+                value = f"len={len(value)}, mean={sum(value) / len(value):.4f}"
+
+                lines.append(
+                    f"{name}: {value}"
+                )
+
+                continue
 
 
             if fmt:

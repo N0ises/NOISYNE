@@ -25,4 +25,10 @@ class TempoAnalyzer(BaseAnalyzer):
             sr=audio.metadata.sample_rate,
         )
 
-        return float(tempo)
+        # librosa may return a scalar or an ndarray depending on the version.
+        tempo = float(np.atleast_1d(tempo)[0])
+
+        if tempo == 0.0:
+            return 0.0
+
+        return tempo

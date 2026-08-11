@@ -116,3 +116,5 @@ class ReasoningResult:
     reasoning: list[str]
 
     structured: StructuredReasoningResponse | None = None
+
+    finish_reason: str | None = None

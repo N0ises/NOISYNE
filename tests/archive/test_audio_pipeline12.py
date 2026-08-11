@@ -2,7 +2,7 @@ from brain.audio.pipeline import analyze_audio
 
 
 results = analyze_audio(
-    "tests/audio.wav",
+    "tests/assets/test.wav",
     analyses=[
         "pitch",
         "lufs",

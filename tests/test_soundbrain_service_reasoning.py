@@ -11,7 +11,7 @@ from brain.application.soundbrain_service import (
 )
 
 
-AUDIO_PATH = Path("tests/audio.wav")
+AUDIO_PATH = Path("tests/assets/test.wav")
 
 
 @dataclass

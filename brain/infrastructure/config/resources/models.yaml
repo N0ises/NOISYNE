@@ -1,0 +1,22 @@
+# SoundBrain Model Registry
+models:
+  clap:
+    name: clap-htsat-unfused
+    backend: transformers
+    revision: null
+    trust_remote_code: false
+  qwen:
+    name: lmstudio-community/Qwen2.5-7B-Instruct
+    backend: transformers
+    revision: null
+    trust_remote_code: false
+  bge_reranker:
+    name: bge-reranker-v2-m3
+    backend: sentence-transformers
+    revision: null
+    trust_remote_code: false
+  text_embedding:
+    name: Qwen3-Embedding-0.6B
+    backend: sentence-transformers
+    revision: null
+    trust_remote_code: false

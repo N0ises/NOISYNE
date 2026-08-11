@@ -21,9 +21,9 @@ models:
     name: lmstudio-community/Qwen2.5-7B-Instruct
     backend: transformers
     revision: null
-    # trust_remote_code is enabled for this model because it ships custom tokenizer
-    # configuration code. Use a pinned revision in production environments.
-    trust_remote_code: true
+    # Remote model code is disabled by default. If this is enabled, revision must
+    # be set to an immutable commit hash.
+    trust_remote_code: false
 
   bge_reranker:
     # Cross-encoder reranker used by the RAG retrieval stage.

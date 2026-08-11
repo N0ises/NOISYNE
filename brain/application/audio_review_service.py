@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from brain.audio.analysis import AudioAnalyzer
@@ -73,6 +73,7 @@ class AudioReviewService:
             engineering,
             context,
             request.summary,
+            analysis_dict=asdict(analysis),
         )
 
         if request.output_path is not None:

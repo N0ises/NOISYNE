@@ -1,0 +1,10 @@
+# SoundBrain Audio Processing Defaults
+audio:
+  sample_rate: 48000
+  clap_target_sample_rate: 48000
+  max_duration_seconds: 300
+  n_fft: 2048
+  hop_length: 512
+  n_mels: 128
+  n_mfcc: 13
+  n_chroma: 12

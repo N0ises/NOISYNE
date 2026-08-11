@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from .models import SoundBrainReport
 
@@ -11,6 +12,10 @@ class ReportExporter:
         self,
         report: SoundBrainReport,
     ) -> dict:
+        analysis = report.analysis
+        if analysis is not None:
+            analysis = self._sanitize_floats(analysis)
+
         return {
             "metadata": {
                 "audio_type": report.audio_type,
@@ -22,6 +27,7 @@ class ReportExporter:
                 "status": report.status,
                 "warnings": report.warnings,
             },
+            "analysis": analysis,
             "intelligence": {
                 "semantic_labels": [
                     {
@@ -88,6 +94,20 @@ class ReportExporter:
             "recommendations": report.recommendations,
             "summary": report.ai_summary,
         }
+
+    def _sanitize_floats(self, data):
+        """Replace non-finite floats with None for JSON-safe serialization."""
+        import math
+
+        if isinstance(data, float):
+            if not math.isfinite(data):
+                return None
+            return data
+        if isinstance(data, dict):
+            return {key: self._sanitize_floats(value) for key, value in data.items()}
+        if isinstance(data, list):
+            return [self._sanitize_floats(item) for item in data]
+        return data
 
     def _serialize_plugin_intelligence(
         self,
@@ -161,13 +181,22 @@ class ReportExporter:
         target.parent.mkdir(parents=True, exist_ok=True)
         # Atomic write: write to a temporary file in the same directory and rename
         # so consumers never see a partially-written report.
-        temp_path = target.with_suffix(target.suffix + ".tmp")
-        temp_path.write_text(
-            json.dumps(
-                data,
-                indent=4,
-                ensure_ascii=False,
-            ),
+        with NamedTemporaryFile(
+            mode="w",
             encoding="utf-8",
-        )
-        temp_path.replace(target)
+            dir=target.parent,
+            prefix=f".{target.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temp_file:
+            temp_path = Path(temp_file.name)
+            try:
+                json.dump(data, temp_file, indent=4, ensure_ascii=False, allow_nan=False)
+            except Exception:
+                temp_path.unlink(missing_ok=True)
+                raise
+        try:
+            temp_path.replace(target)
+        except Exception:
+            temp_path.unlink(missing_ok=True)
+            raise

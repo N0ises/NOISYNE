@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from brain.audio.analysis.models import AnalysisResult
 
 from .models import AudioContext
@@ -30,7 +32,12 @@ class ContextRuleEngine:
         # Stereo
         # -------------------------
 
-        if analysis.stereo_width < 0.15:
+        stereo_width_defined = (
+            not math.isnan(analysis.stereo_width)
+            and not math.isinf(analysis.stereo_width)
+        )
+
+        if stereo_width_defined and analysis.stereo_width < 0.15:
 
             notes.append(
                 "Very narrow stereo image detected."
@@ -72,11 +79,17 @@ class ContextRuleEngine:
         # Context Detection
         # -------------------------
 
-        if (
-            analysis.onset_count < 80
-            and analysis.spectral_centroid < 1500
-            and analysis.stereo_width < 0.15
-        ):
+        # Stem classification requires strong, simultaneous stem indicators.
+        # NaN/undefined stereo width is treated as mono/undefined and must not
+        # force a stem classification.
+        strong_stem_indicators = (
+            analysis.onset_count < 40
+            and analysis.spectral_centroid < 1200
+            and stereo_width_defined
+            and analysis.stereo_width < 0.05
+        )
+
+        if strong_stem_indicators:
 
             audio_type = "stem"
 

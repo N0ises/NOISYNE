@@ -14,8 +14,6 @@ from .models import (
 
 class ReferenceComparator:
 
-    DEFAULT_TOLERANCE = 1.0
-
     BAND_LIMITS = (
         ("Sub", 20, 60),
         ("Bass", 60, 120),
@@ -25,6 +23,28 @@ class ReferenceComparator:
         ("High", 6000, 12000),
         ("Air", 12000, 20000),
     )
+
+    # Per-metric tolerance table. Keys are normalized metric names.
+    METRIC_TOLERANCES = {
+        "lufs": (1.0, "LU"),
+        "peak": (1.0, "dB"),
+        "rms": (1.0, "dB"),
+        "tempo": (1.0, "BPM"),
+        "spectral_centroid": (100.0, "Hz"),
+        "spectral_bandwidth": (100.0, "Hz"),
+        "spectral_rolloff": (100.0, "Hz"),
+        "stereo_width": (0.1, "normalized"),
+        "phase": (0.1, "normalized"),
+        "spectral_flatness": (0.1, "normalized"),
+        "zero_crossing_rate": (0.1, "normalized"),
+        "dynamic_range": (2.0, "dB"),
+        "crest_factor": (2.0, "dB"),
+        "onset_count": (10.0, "count"),
+    }
+
+    # Fallback tolerances when a metric is not explicitly configured.
+    DEFAULT_TOLERANCE = 1.0
+    DEFAULT_UNIT = ""
 
     def compare_metrics(
         self,
@@ -37,6 +57,9 @@ class ReferenceComparator:
         bands: list[BandDifference] = []
 
         scores: list[float] = []
+        category_scores: dict[Category, list[float]] = {
+            category: [] for category in Category
+        }
 
         for key, ref_value in reference.items():
 
@@ -53,7 +76,11 @@ class ReferenceComparator:
 
             diff = cur_value - ref_value
 
-            passed = abs(diff) <= self.DEFAULT_TOLERANCE
+            tolerance, unit = self._tolerance_and_unit(key)
+
+            passed = abs(diff) <= tolerance
+
+            severity = self._severity(diff)
 
             metrics.append(
                 ReferenceMetric(
@@ -61,9 +88,10 @@ class ReferenceComparator:
                     reference=float(ref_value),
                     current=float(cur_value),
                     difference=float(diff),
-                    tolerance=self.DEFAULT_TOLERANCE,
+                    tolerance=tolerance,
                     passed=passed,
-                    unit="",
+                    unit=unit,
+                    severity=severity,
                 )
             )
 
@@ -74,20 +102,22 @@ class ReferenceComparator:
 
             scores.append(similarity)
 
-            severity = self._severity(diff)
+            category = self._category(key)
+            category_scores[category].append(similarity)
 
             if not passed:
 
                 decisions.append(
                     EngineerDecision(
                         title=f"{key} Adjustment",
-                        description=f"{key} differs by {diff:.2f}",
-                        category=self._category(key),
+                        description=f"{key} differs by {diff:.2f} {unit}",
+                        category=category,
                         severity=severity,
                         confidence=0.90,
                         recommendation=self._recommendation(
                             key,
                             diff,
+                            unit,
                         ),
                     )
                 )
@@ -105,20 +135,35 @@ class ReferenceComparator:
             else 100.0
         )
 
+        def _category_score(category: Category) -> float:
+            values = category_scores[category]
+            return sum(values) / len(values) if values else overall
+
         return ReferenceComparison(
             similarity=overall,
             confidence=0.95,
-            frequency_score=overall,
-            dynamic_score=overall,
-            stereo_score=overall,
-            loudness_score=overall,
-            transient_score=overall,
-            phase_score=overall,
-            tonal_score=overall,
+            frequency_score=_category_score(Category.FREQUENCY),
+            dynamic_score=_category_score(Category.DYNAMICS),
+            stereo_score=_category_score(Category.STEREO),
+            loudness_score=_category_score(Category.LOUDNESS),
+            transient_score=_category_score(Category.TRANSIENT),
+            phase_score=_category_score(Category.PHASE),
+            tonal_score=_category_score(Category.TONAL),
             semantic_score=overall,
             band_differences=bands,
             engineer_decisions=decisions,
             metrics=metrics,
+        )
+
+    def _tolerance_and_unit(
+        self,
+        metric: str,
+    ) -> tuple[float, str]:
+
+        key = metric.lower()
+        return self.METRIC_TOLERANCES.get(
+            key,
+            (self.DEFAULT_TOLERANCE, self.DEFAULT_UNIT),
         )
 
     def _compare_bands(
@@ -190,17 +235,23 @@ class ReferenceComparator:
         if "crest" in metric:
             return Category.DYNAMICS
 
+        if "dynamic" in metric:
+            return Category.DYNAMICS
+
         if "stereo" in metric:
             return Category.STEREO
 
         if "phase" in metric:
             return Category.PHASE
 
-        if "transient" in metric:
+        if "transient" in metric or "onset" in metric:
             return Category.TRANSIENT
 
-        if "freq" in metric:
+        if "spectral" in metric or "zero_crossing" in metric:
             return Category.FREQUENCY
+
+        if "tempo" in metric or "pitch" in metric or "key" in metric:
+            return Category.TONAL
 
         return Category.TONAL
 
@@ -208,16 +259,17 @@ class ReferenceComparator:
         self,
         metric: str,
         difference: float,
+        unit: str,
     ) -> str:
 
         if difference > 0:
 
             return (
                 f"Reduce {metric} "
-                f"by approximately {abs(difference):.2f}"
+                f"by approximately {abs(difference):.2f} {unit}"
             )
 
         return (
             f"Increase {metric} "
-            f"by approximately {abs(difference):.2f}"
+            f"by approximately {abs(difference):.2f} {unit}"
         )

@@ -4,6 +4,8 @@ from __future__ import annotations
 CATEGORY_EQ = "eq"
 CATEGORY_COMPRESSOR = "compressor"
 CATEGORY_LIMITER = "limiter"
+CATEGORY_GAIN = "gain"
+CATEGORY_CLIP = "clip"
 CATEGORY_IMAGER = "imager"
 CATEGORY_TRANSIENT_SHAPER = "transient_shaper"
 CATEGORY_SATURATION = "saturation"
@@ -13,6 +15,8 @@ CATEGORY_TO_TYPE = {
     CATEGORY_EQ: "EQ",
     CATEGORY_COMPRESSOR: "Compressor",
     CATEGORY_LIMITER: "Limiter",
+    CATEGORY_GAIN: "Gain Utility",
+    CATEGORY_CLIP: "Gain Utility",
     CATEGORY_IMAGER: "Imager",
     CATEGORY_TRANSIENT_SHAPER: "Transient Shaper",
     CATEGORY_SATURATION: "Saturation",
@@ -36,6 +40,13 @@ PARAMETER_RANGES: dict[str, dict[str, tuple[float, float]]] = {
         "ceiling": (-3.0, -0.1),
         "release": (1.0, 5000.0),
         "lookahead": (0.0, 20.0),
+    },
+    CATEGORY_GAIN: {
+        "output_gain": (-24.0, 6.0),
+    },
+    CATEGORY_CLIP: {
+        "output_gain": (-24.0, 6.0),
+        "ceiling": (-3.0, -0.1),
     },
     CATEGORY_IMAGER: {
         "width": (0.0, 200.0),

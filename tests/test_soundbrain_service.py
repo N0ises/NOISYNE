@@ -15,7 +15,7 @@ from brain.application.soundbrain_service import (
 )
 from brain.reference.models import ReferenceComparison, ReferenceReport
 
-AUDIO_PATH = Path("tests/audio.wav")
+AUDIO_PATH = Path("tests/assets/test.wav")
 
 
 def _fake_review_result() -> AudioReviewResult:

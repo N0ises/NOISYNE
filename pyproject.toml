@@ -50,16 +50,29 @@ dependencies = [
     "langchain-text-splitters",
     "openai",
     "requests",
-    "pymupdf",
-    "marker-pdf",
-    "paddleocr",
     "pydantic",
     "PyYAML",
     "tqdm",
 ]
 
+[project.optional-dependencies]
+# PDF/OCR ingestion is only required for RAG corpus building, not for the core
+# V1 analyze/reference runtime. Install with `pip install soundbrain[pdf]`.
+pdf = [
+    "pymupdf",
+    "marker-pdf",
+    "paddleocr",
+]
+
 [tool.setuptools]
 include-package-data = true
+py-modules = ["main"]
+
+[project.scripts]
+soundbrain = "brain.cli:main"
+
+[tool.setuptools.package-data]
+"brain.infrastructure.config" = ["resources/*.yaml"]
 
 [tool.setuptools.packages.find]
 include = ["brain*"]

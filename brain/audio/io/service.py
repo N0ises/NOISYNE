@@ -4,6 +4,7 @@ from pathlib import Path
 
 from brain.audio.io.models import AudioData, AudioMetadata
 from brain.audio.io.providers.soundfile_provider import SoundFileProvider
+from brain.infrastructure.config import settings
 
 
 class AudioIOService:
@@ -22,6 +23,14 @@ class AudioIOService:
     ) -> AudioData:
 
         path = Path(path)
+
+        duration = self._backend.duration(path)
+        max_duration = settings.audio.max_duration_seconds
+        if duration > max_duration:
+            raise ValueError(
+                f"Audio file duration ({duration:.2f}s) exceeds the configured "
+                f"maximum of {max_duration}s: {path}"
+            )
 
         raw = self._backend.load(path)
 

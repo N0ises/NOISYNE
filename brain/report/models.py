@@ -59,3 +59,5 @@ class SoundBrainReport:
     status: str = "ok"
 
     warnings: list[str] = field(default_factory=list)
+
+    analysis: dict | None = None

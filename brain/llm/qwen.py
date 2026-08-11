@@ -13,6 +13,7 @@ def _assets():
         model_name=MODEL_NAME,
         model_cls=AutoModelForCausalLM,
         tokenizer_cls=AutoTokenizer,
+        revision=settings.models.qwen.revision,
         trust_remote_code=settings.models.qwen.trust_remote_code,
         model_options={
             "device_map": "auto",
