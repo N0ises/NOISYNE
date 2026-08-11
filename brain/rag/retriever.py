@@ -1,3 +1,4 @@
+from brain.rag.scoring import score_from_distance
 from brain.rag.vectordb import collection
 
 
@@ -22,7 +23,7 @@ def retrieve(query: str, k: int = 10):
                 "text": doc,
                 "source": meta.get("source", ""),
                 "page": meta.get("page", 0),
-                "score": round(1 - float(distance), 4),
+                "score": score_from_distance(float(distance), metric="cosine"),
             }
         )
 

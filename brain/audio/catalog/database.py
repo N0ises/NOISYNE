@@ -3,8 +3,10 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from brain.infrastructure.config import get_application_root
 
-DATABASE_PATH = Path("data/index.db")
+
+DATABASE_PATH = get_application_root() / "data" / "index.db"
 
 
 class CatalogDatabase:

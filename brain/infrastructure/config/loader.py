@@ -32,7 +32,7 @@ except (
 _ENV_ROOT = "SOUNDBRAIN_ROOT"
 
 
-def _application_root() -> Path:
+def get_application_root() -> Path:
     """Return the application root used to resolve relative config paths.
 
     Resolution order:
@@ -146,7 +146,7 @@ def load_settings() -> AppConfig:
     Missing configuration files fail fast so an installed release cannot
     silently run with defaults that differ from its declared configuration.
     """
-    root = _application_root()
+    root = get_application_root()
 
     merged: dict[str, Any] = {}
     for name in ("runtime", "models", "audio"):

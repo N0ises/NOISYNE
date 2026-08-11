@@ -44,6 +44,23 @@ class ChromaProvider(BaseVectorProvider):
             documents=documents,
         )
 
+    def upsert(
+        self,
+        collection: str,
+        ids: list[str],
+        embeddings: list[list[float]] | None = None,
+        metadatas=None,
+        documents=None,
+    ):
+        col = self.get_collection(collection)
+
+        col.upsert(
+            ids=ids,
+            embeddings=embeddings,
+            metadatas=metadatas,
+            documents=documents,
+        )
+
     def update(
         self,
         collection: str,

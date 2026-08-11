@@ -3,12 +3,12 @@ from __future__ import annotations
 from chromadb import PersistentClient
 from chromadb.api.types import EmbeddingFunction
 
-from brain.infrastructure.config import settings
+from brain.infrastructure.config import get_application_root, settings
 
 
 client = PersistentClient(
     path=str(
-        settings.chroma.path
+        get_application_root() / settings.chroma.path
     )
 )
 
@@ -56,6 +56,7 @@ collection = (
     client.get_or_create_collection(
         name=settings.chroma.collection,
         embedding_function=embedding_function,
+        metadata={"hnsw:space": "cosine"},
     )
 )
 

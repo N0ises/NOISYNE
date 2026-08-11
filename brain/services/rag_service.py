@@ -78,9 +78,12 @@ class RAGService:
     def build_context(
         self,
         query: str,
+        *,
+        results: list[SearchResult] | None = None,
     ) -> str:
 
-        results = self.search(query)
+        if results is None:
+            results = self.search(query)
 
         if not results:
             return ""
@@ -108,8 +111,7 @@ class RAGService:
     ) -> dict[str, Any]:
 
         results = self.search(question)
-
-        context = self.build_context(question)
+        context = self.build_context(question, results=results)
 
         return {
             "question": question,

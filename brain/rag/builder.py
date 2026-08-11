@@ -1,20 +1,10 @@
-from uuid import uuid4
-
+from brain.rag.ingestion import ingest_chunks
 from brain.rag.loader import load_documents
 from brain.rag.splitter import split_documents
 from brain.rag.vectordb import collection
 
-BATCH_SIZE = 64
-
 
 def build_database(data_path: str):
-
-    print("=" * 80)
-    print("CLEARING DATABASE")
-    print("=" * 80)
-
-    print("Delete data/chroma manually before rebuilding.")
-    print()
 
     print("=" * 80)
     print("LOADING DOCUMENTS")
@@ -31,26 +21,14 @@ def build_database(data_path: str):
     chunks = split_documents(docs)
     print(f"Created {len(chunks)} chunks")
 
-    texts = [chunk.page_content for chunk in chunks]
-    metadatas = [chunk.metadata for chunk in chunks]
-    ids = [str(uuid4()) for _ in chunks]
-
     print()
     print("=" * 80)
-    print("ADDING TO CHROMA")
+    print("INGESTING INTO CHROMA")
     print("=" * 80)
 
-    total = len(chunks)
+    sources_updated, total = ingest_chunks(collection, chunks)
 
-    for i in range(0, total, BATCH_SIZE):
-
-        collection.add(
-            ids=ids[i:i + BATCH_SIZE],
-            documents=texts[i:i + BATCH_SIZE],
-            metadatas=metadatas[i:i + BATCH_SIZE],
-        )
-
-        print(f"Added {min(i + BATCH_SIZE, total)}/{total}")
+    print(f"Updated {sources_updated} sources / {total} chunks")
 
     print()
     print("=" * 80)

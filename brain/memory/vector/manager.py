@@ -29,7 +29,11 @@ class VectorManager:
         record: VectorRecord,
     ) -> None:
 
-        self.collection.provider.add(
+        # Chroma's raw ``add()`` fails or silently no-ops on duplicate ids
+        # depending on the version. Use upsert so repeated adds of the same
+        # record id update the existing vector instead of creating stale
+        # duplicates.
+        self.collection.provider.upsert(
             collection=self.collection.name,
             ids=[record.id],
             embeddings=[record.embedding],
