@@ -4,6 +4,8 @@ import hashlib
 from collections import defaultdict
 from typing import Any
 
+from .errors import IngestionError
+
 
 def _source_fingerprint(source: str) -> str:
     """Return a short, deterministic identifier for a source path/name."""
@@ -13,6 +15,19 @@ def _source_fingerprint(source: str) -> str:
 def _chunk_id(source: str, index: int) -> str:
     """Return a deterministic chunk id for a source + chunk index."""
     return f"{_source_fingerprint(source)}:{index}"
+
+
+def _flatten_ids(raw_ids) -> list[str]:
+    """Normalize Chroma's list-of-lists-or-list ids into a flat list."""
+    flat: list[str] = []
+    if not raw_ids:
+        return flat
+    for item in raw_ids:
+        if isinstance(item, list):
+            flat.extend(item)
+        elif isinstance(item, str):
+            flat.append(item)
+    return flat
 
 
 def ingest_chunks(
@@ -26,6 +41,9 @@ def ingest_chunks(
     removed before the new representation is upserted. Chunk ids are derived
     deterministically from the source and chunk index, so repeated ingestion of
     an unchanged source updates the same records and does not duplicate them.
+
+    If stale-chunk removal fails for a source, the function raises
+    :class:`IngestionError` instead of silently leaving stale data behind.
 
     Returns ``(sources_updated, chunks_upserted)``.
     """
@@ -41,23 +59,21 @@ def ingest_chunks(
     for source, items in by_source.items():
         # Remove any stale chunks belonging to this source. Using a metadata
         # filter means we do not need to know the exact ids or chunk count from
-        # the previous ingestion.
+        # the previous ingestion. If this lookup or deletion fails, we must not
+        # silently continue because stale chunks would remain while the caller
+        # is told ingestion succeeded.
         try:
             existing = collection.get(where={"source": source})
-            existing_ids = existing.get("ids")
+            existing_ids = _flatten_ids(existing.get("ids"))
             if existing_ids:
-                flat_ids = [
-                    item
-                    for sublist in existing_ids
-                    for item in (sublist if isinstance(sublist, list) else [sublist])
-                ]
-                if flat_ids:
-                    collection.delete(ids=flat_ids)
-        except Exception:
-            # Deleting stale chunks is best-effort; if the provider does not
-            # support metadata filtering, the upsert below will still overwrite
-            # the deterministic ids that overlap.
-            pass
+                collection.delete(ids=existing_ids)
+        except Exception as exc:
+            raise IngestionError(
+                reason="stale_deletion_failed",
+                source=source,
+                message="Could not remove stale chunks for the source before upsert.",
+                details=exc,
+            ) from exc
 
         ids: list[str] = []
         documents: list[str] = []

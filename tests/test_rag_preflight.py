@@ -208,6 +208,27 @@ def test_chunk_id_is_deterministic():
     assert a.startswith(_source_fingerprint("source.pdf"))
 
 
+def test_ingest_chunks_fail_when_stale_deletion_fails():
+    """Ingestion must not report success if stale chunks cannot be removed."""
+    from brain.rag.errors import IngestionError
+
+    class _FailingCollection(_FakeChromaCollection):
+        def get(self, where=None):
+            raise RuntimeError("metadata filter not supported")
+
+    col = _FailingCollection()
+    chunks = [
+        _Chunk("first chunk from A", {"source": "docA.pdf"}),
+    ]
+
+    with pytest.raises(IngestionError) as exc_info:
+        ingest_chunks(col, chunks)
+
+    err = exc_info.value
+    assert err.reason == "stale_deletion_failed"
+    assert err.source == "docA.pdf"
+
+
 # ---------------------------------------------------------------------------
 # Redundant retrieve/rerank
 # ---------------------------------------------------------------------------

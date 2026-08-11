@@ -70,7 +70,7 @@ def get_application_root() -> Path:
     # Installed wheel: the packaged config lives under
     # .../site-packages/brain/infrastructure/config. The parent of the ``brain``
     # package (.../site-packages or the project root) is the stable root.
-    return config_dir.parents[2].parent
+    return config_dir.parents[2]
 
 
 def _load_yaml(name: str) -> dict[str, Any]:
