@@ -75,12 +75,17 @@ class ReferenceComparator:
                 continue
 
             diff = cur_value - ref_value
+            abs_diff = abs(diff)
 
             tolerance, unit = self._tolerance_and_unit(key)
 
-            passed = abs(diff) <= tolerance
+            # Dimensionless, tolerance-aware comparison.
+            effective_tolerance = tolerance if tolerance > 0 else self.DEFAULT_TOLERANCE
+            normalized_error = abs_diff / effective_tolerance
 
-            severity = self._severity(diff)
+            passed = normalized_error <= 1.0
+
+            severity = self._severity(diff, normalized_error)
 
             metrics.append(
                 ReferenceMetric(
@@ -95,15 +100,20 @@ class ReferenceComparator:
                 )
             )
 
+            # 0 difference -> 100; exactly at tolerance -> 50;
+            # 2x tolerance -> 0. Greater deviations clamp to 0.
             similarity = max(
                 0.0,
-                100.0 - abs(diff) * 10,
+                100.0 - normalized_error * 50.0,
             )
 
             scores.append(similarity)
 
             category = self._category(key)
             category_scores[category].append(similarity)
+
+            # Record the metric-level similarity for consumers/UI.
+            metrics[-1].similarity = similarity
 
             if not passed:
 
@@ -198,20 +208,28 @@ class ReferenceComparator:
     def _severity(
         self,
         difference: float,
+        normalized_error: float | None = None,
     ) -> Severity:
 
-        value = abs(difference)
+        # For metric-level comparisons, use the tolerance-aware normalized
+        # deviation so that LUFS, Hz, BPM and normalized metrics are scored on
+        # the same dimensionless scale. Legacy callers without a tolerance
+        # (e.g., band differences) fall back to raw thresholds.
+        if normalized_error is not None:
+            value = normalized_error
+        else:
+            value = abs(difference)
 
-        if value < 1:
+        if value <= 0.5:
             return Severity.INFO
 
-        if value < 2:
+        if value <= 1.0:
             return Severity.LOW
 
-        if value < 4:
+        if value <= 2.0:
             return Severity.MEDIUM
 
-        if value < 6:
+        if value <= 3.0:
             return Severity.HIGH
 
         return Severity.CRITICAL

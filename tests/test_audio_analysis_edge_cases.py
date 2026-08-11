@@ -322,7 +322,7 @@ class TestKeyDetection:
 
         assert "major" in result or "minor" in result
 
-    def test_empty_signal_defaults_to_c_major(self, monkeypatch):
+    def test_empty_or_zero_chroma_returns_unknown(self, monkeypatch):
         import librosa
 
         def fake_chroma_stft(*, y, sr):
@@ -333,7 +333,7 @@ class TestKeyDetection:
         audio = _audio(np.zeros(44100))
         result = KeyAnalysis().analyze(audio)
 
-        assert result == "C major"
+        assert result == "unknown"
 
 
 class TestCLAPDownmix:

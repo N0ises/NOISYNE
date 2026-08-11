@@ -51,6 +51,8 @@ class ReferenceMetric:
 
     severity: Severity
 
+    similarity: float = 0.0
+
 
 @dataclass(slots=True)
 class ReferenceIntent:

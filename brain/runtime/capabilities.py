@@ -222,9 +222,9 @@ registry.register(
 registry.register(
     Capability(
         name="report_generation",
-        description="Structured JSON and Markdown report generation",
+        description="Structured JSON report generation",
         status=CapabilityStatus.PRODUCTION,
-        requirements="Pydantic report models; deterministic output formatting",
+        requirements="Pydantic report models; deterministic JSON export. Reference comparison additionally emits Markdown via ReferenceReportBuilder.",
         tested_in_freeze=True,
     )
 )

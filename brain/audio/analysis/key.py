@@ -52,16 +52,16 @@ class KeyAnalysis(BaseAnalyzer):
         )
 
         if np.sum(chroma_mean) <= 0.0:
-            return self.KEYS[0] + " major"
+            return "unknown"
 
         chroma_mean = chroma_mean / np.linalg.norm(chroma_mean)
 
         best_score = -1.0
-        best_key = self.KEYS[0] + " major"
+        best_key = "unknown"
 
         for i, key in enumerate(self.KEYS):
-            major_profile = np.roll(self.MAJOR_PROFILE, -i)
-            minor_profile = np.roll(self.MINOR_PROFILE, -i)
+            major_profile = np.roll(self.MAJOR_PROFILE, i)
+            minor_profile = np.roll(self.MINOR_PROFILE, i)
 
             major_score = np.corrcoef(chroma_mean, major_profile)[0, 1]
             minor_score = np.corrcoef(chroma_mean, minor_profile)[0, 1]

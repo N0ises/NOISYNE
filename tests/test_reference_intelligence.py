@@ -4,6 +4,8 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
+
 from brain.audio.analysis.models import AnalysisResult
 from brain.audio.io.models import AudioData, AudioMetadata
 from brain.reference.models import (
@@ -294,10 +296,12 @@ def test_category_scores_use_category_means():
 
     comparison = comparator.compare_metrics(reference, current)
 
-    # LUFS differs by 1 -> similarity 90; peak differs by 0.5 -> similarity 95.
-    # Both are loudness, so loudness_score should be their mean: 92.5.
-    assert comparison.loudness_score == 92.5
-    # Spectral centroid differs by 1000 -> similarity 0; it's alone in frequency.
+    # Tolerance-aware similarity:
+    #   LUFS diff 1 / tolerance 1 -> normalized 1 -> similarity 50.
+    #   peak diff 0.5 / tolerance 1 -> normalized 0.5 -> similarity 75.
+    # Both are loudness, so loudness_score should be their mean: 62.5.
+    assert comparison.loudness_score == 62.5
+    # Spectral centroid diff 1000 / tolerance 100 -> normalized 10 -> similarity 0.
     assert comparison.frequency_score == 0.0
 
 
@@ -336,3 +340,89 @@ def test_report_builder_replaces_nonfinite_floats(tmp_path: Path):
     assert data["comparison"]["similarity"] is None
     assert data["comparison"]["confidence"] is None
     assert data["comparison"]["frequency_score"] == 88.0
+
+
+def test_similarity_is_tolerance_aware_at_boundary():
+    """A difference exactly equal to tolerance must PASS with non-catastrophic similarity/severity."""
+    comparator = ReferenceComparator()
+    comparison = comparator.compare_metrics(
+        reference={"lufs": -14.0},
+        current={"lufs": -15.0},
+    )
+
+    metric = comparison.metrics[0]
+    assert metric.passed is True
+    assert metric.severity == Severity.LOW
+    assert metric.similarity == pytest.approx(50.0)
+
+
+def test_similarity_and_severity_beyond_tolerance():
+    """A difference of 2x tolerance must FAIL with 0 similarity and elevated severity."""
+    comparator = ReferenceComparator()
+    comparison = comparator.compare_metrics(
+        reference={"lufs": -14.0},
+        current={"lufs": -16.0},
+    )
+
+    metric = comparison.metrics[0]
+    assert metric.passed is False
+    assert metric.severity == Severity.MEDIUM
+    assert metric.similarity == pytest.approx(0.0)
+
+
+def test_bpm_tolerance_aware():
+    """BPM uses its own 1-BPM tolerance, not the universal raw scale."""
+    comparator = ReferenceComparator()
+    # Exactly at tolerance -> pass, similarity 50.
+    comparison = comparator.compare_metrics(
+        reference={"tempo": 120.0},
+        current={"tempo": 121.0},
+    )
+    metric = comparison.metrics[0]
+    assert metric.tolerance == 1.0
+    assert metric.unit == "BPM"
+    assert metric.passed is True
+    assert metric.similarity == pytest.approx(50.0)
+    assert metric.severity == Severity.LOW
+
+    # Well within tolerance -> high similarity.
+    comparison = comparator.compare_metrics(
+        reference={"tempo": 120.0},
+        current={"tempo": 120.5},
+    )
+    metric = comparison.metrics[0]
+    assert metric.passed is True
+    assert metric.similarity == pytest.approx(75.0)
+    assert metric.severity == Severity.INFO
+
+
+def test_hz_metric_tolerance_aware():
+    """A Hz metric difference within tolerance should pass with reasonable similarity."""
+    comparator = ReferenceComparator()
+    comparison = comparator.compare_metrics(
+        reference={"spectral_centroid": 2000.0},
+        current={"spectral_centroid": 2050.0},
+    )
+
+    metric = comparison.metrics[0]
+    assert metric.tolerance == 100.0
+    assert metric.unit == "Hz"
+    assert metric.passed is True
+    assert metric.similarity == pytest.approx(75.0)
+    assert metric.severity == Severity.INFO
+
+
+def test_normalized_metric_tolerance_aware():
+    """Normalized metrics (e.g., stereo_width) use their own small tolerance."""
+    comparator = ReferenceComparator()
+    comparison = comparator.compare_metrics(
+        reference={"stereo_width": 0.5},
+        current={"stereo_width": 0.54},
+    )
+
+    metric = comparison.metrics[0]
+    assert metric.tolerance == 0.1
+    assert metric.unit == "normalized"
+    assert metric.passed is True
+    assert metric.similarity == pytest.approx(80.0)
+    assert metric.severity == Severity.INFO
