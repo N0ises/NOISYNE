@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import replace
+from pathlib import Path
 
 from .contracts import (
     AnalysisViewResult,
@@ -67,6 +68,15 @@ class PresentationStore:
 
     def set_session(self, session: SessionState) -> None:
         self._publish(replace(self._state, session=session, navigation=session.navigation))
+
+    def select_audio(self, path: Path | None) -> None:
+        self.set_session(self._state.session.select_audio(path))
+
+    def select_references(self, paths: tuple[Path, ...]) -> None:
+        self.set_session(self._state.session.select_references(paths))
+
+    def select_report(self, path: Path | None) -> None:
+        self.set_session(self._state.session.select_report(path))
 
     def begin_operation(
         self,

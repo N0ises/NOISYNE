@@ -22,7 +22,7 @@ from .paths import session_state_path
 from .presentation import build_shell_view_state
 from .presentation_state import NotificationLevel, PresentationState
 from .presentation_store import PresentationStore
-from .session_persistence import SessionRepository
+from .session_persistence import SessionPersistenceBinding, SessionRepository
 from .state import ApplicationLifecycle, ApplicationStateStore
 from .worker_binding import WorkerStateBinding
 from .workers import WorkerExecutor
@@ -91,6 +91,7 @@ def run(
     presentation_store = PresentationStore(PresentationState.from_session(loaded.session))
     if loaded.warning:
         presentation_store.add_notification(NotificationLevel.WARNING, loaded.warning)
+    session_binding = SessionPersistenceBinding(repository, presentation_store)
 
     executor = WorkerExecutor()
     state_store = ApplicationStateStore()
@@ -149,10 +150,8 @@ def run(
     finally:
         executor.wait_for_done()
         boundary.uninstall()
-        try:
-            repository.save(presentation_store.state.session)
-        except OSError:
-            logger.exception("Desktop session state could not be saved.")
+        session_binding.save_current()
+        session_binding.close()
     return exit_code or qt_exit_code
 
 

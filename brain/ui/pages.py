@@ -106,6 +106,9 @@ class PageHost(QStackedWidget):
     report_open_directory_requested = Signal(object)
     settings_refresh_requested = Signal()
     runtime_refresh_requested = Signal()
+    session_audio_selected = Signal(object)
+    session_references_selected = Signal(object)
+    session_report_selected = Signal(object)
 
     def __init__(
         self,
@@ -124,9 +127,13 @@ class PageHost(QStackedWidget):
             elif page_id is PageId.ANALYZE:
                 page = AnalyzePage(tokens=tokens)
                 page.analysis_requested.connect(self.analysis_requested)
+                page.source_selected.connect(self.session_audio_selected)
+                page.references_selected.connect(self.session_references_selected)
             elif page_id is PageId.REFERENCES:
                 page = ReferencePage(tokens=tokens)
                 page.comparison_requested.connect(self.reference_comparison_requested)
+                page.current_selected.connect(self.session_audio_selected)
+                page.references_selected.connect(self.session_references_selected)
             elif page_id is PageId.INTELLIGENCE:
                 page = IntelligencePage(tokens=tokens)
             elif page_id is PageId.KNOWLEDGE:
@@ -137,6 +144,7 @@ class PageHost(QStackedWidget):
                 page.preview_requested.connect(self.report_preview_requested)
                 page.export_requested.connect(self.report_export_requested)
                 page.open_directory_requested.connect(self.report_open_directory_requested)
+                page.report_selected.connect(self.session_report_selected)
             elif page_id is PageId.SETTINGS:
                 page = SettingsPage(tokens=tokens)
                 page.refresh_settings_requested.connect(self.settings_refresh_requested)

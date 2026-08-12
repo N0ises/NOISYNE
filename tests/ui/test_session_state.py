@@ -28,3 +28,12 @@ def test_reference_selection_deduplicates_paths(tmp_path) -> None:
 
     assert session.selected_references == (reference,)
     assert len(session.recent_references) == 1
+
+
+def test_recent_references_are_bounded_and_most_recent_first(tmp_path) -> None:
+    references = tuple(tmp_path / f"reference-{index}.wav" for index in range(4))
+
+    session = SessionState(recent_limit=2).select_references(references)
+
+    assert [item.path for item in session.recent_references] == [references[3], references[2]]
+    assert session.selected_references == references

@@ -36,6 +36,8 @@ AUDIO_PICKER_FILTER = "Common audio files (*.wav *.mp3 *.flac *.ogg *.m4a *.aac)
 
 class AnalyzePage(QScrollArea):
     analysis_requested = Signal(object)
+    source_selected = Signal(object)
+    references_selected = Signal(object)
     page_id = PageId.ANALYZE
 
     def __init__(
@@ -201,10 +203,12 @@ class AnalyzePage(QScrollArea):
     def select_source(self, path: Path | None) -> None:
         self._form = self._form.select_source(path)
         self._render_form()
+        self.source_selected.emit(path)
 
     def select_reference(self, path: Path | None) -> None:
         self._form = self._form.select_reference(path).validate()
         self._render_form()
+        self.references_selected.emit((path,) if path is not None else ())
 
     def review(self) -> None:
         selected = frozenset(
@@ -219,6 +223,12 @@ class AnalyzePage(QScrollArea):
         self._render_form()
 
     def render(self, state: PresentationState) -> None:
+        if self._form.source_path is None and state.session.selected_audio is not None:
+            self._form = self._form.select_source(state.session.selected_audio)
+        if self._form.reference_path is None and state.session.selected_references:
+            self._form = self._form.select_reference(
+                state.session.selected_references[0]
+            ).validate()
         self._form = self._form.with_capabilities(state.runtime.capabilities)
         self._render_features()
         result = state.result

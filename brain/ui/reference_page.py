@@ -35,6 +35,8 @@ AUDIO_PICKER_FILTER = "Common audio files (*.wav *.mp3 *.flac *.ogg *.m4a *.aac)
 
 class ReferencePage(QScrollArea):
     comparison_requested = Signal(object)
+    current_selected = Signal(object)
+    references_selected = Signal(object)
     page_id = PageId.REFERENCES
 
     def __init__(
@@ -191,14 +193,17 @@ class ReferencePage(QScrollArea):
     def select_current(self, path: Path | None) -> None:
         self._form = self._form.select_current(path)
         self._render_form()
+        self.current_selected.emit(path)
 
     def add_references(self, paths: tuple[Path, ...]) -> None:
         self._form = self._form.add_references(paths)
         self._render_form()
+        self.references_selected.emit(self._form.reference_paths)
 
     def remove_reference(self, path: Path) -> None:
         self._form = self._form.remove_reference(path)
         self._render_form()
+        self.references_selected.emit(self._form.reference_paths)
 
     def review(self) -> None:
         self._capture_configuration()
@@ -206,6 +211,10 @@ class ReferencePage(QScrollArea):
         self._render_form()
 
     def render(self, state: PresentationState) -> None:
+        if self._form.current_path is None and state.session.selected_audio is not None:
+            self._form = self._form.select_current(state.session.selected_audio)
+        if not self._form.reference_paths and state.session.selected_references:
+            self._form = self._form.add_references(state.session.selected_references)
         self._form = self._form.with_capabilities(state.runtime.capabilities)
         capability = self._form.capability
         self.capability_badge.setText(capability.availability.value.title())

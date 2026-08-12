@@ -150,6 +150,11 @@ class MainWindow(QMainWindow):
             self._settings_controller.refresh_settings
         )
         self._page_host.runtime_refresh_requested.connect(self._settings_controller.refresh_runtime)
+        self._page_host.session_audio_selected.connect(self._presentation_store.select_audio)
+        self._page_host.session_references_selected.connect(
+            self._presentation_store.select_references
+        )
+        self._page_host.session_report_selected.connect(self._presentation_store.select_report)
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation

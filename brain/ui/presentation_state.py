@@ -387,6 +387,7 @@ class SessionState:
     recent_reports: tuple[RecentReport, ...] = ()
     recent_references: tuple[RecentPath, ...] = ()
     recent_files: tuple[RecentPath, ...] = ()
+    selected_report_path: Path | None = None
     recent_limit: int = 20
 
     def navigate(self, page: PageId) -> SessionState:
@@ -435,6 +436,9 @@ class SessionState:
 
     def with_operation(self, handle: OperationHandle | None) -> SessionState:
         return replace(self, current_operation=handle)
+
+    def select_report(self, path: Path | None) -> SessionState:
+        return replace(self, selected_report_path=path)
 
     def record_analysis(
         self, result: AnalysisViewResult, *, analyzed_at: datetime | None = None

@@ -137,6 +137,38 @@ def test_report_content_is_loaded_only_when_reports_workspace_is_open(qtbot, tmp
     assert requested == [session.recent_reports[0].descriptor]
 
 
+def test_restored_report_selection_does_not_preload_until_workspace_is_open(
+    qtbot, tmp_path
+) -> None:
+    path = tmp_path / "analysis.json"
+    path.write_text("{}", encoding="utf-8")
+    report = _recent(path)
+    page = ReportsPage()
+    qtbot.addWidget(page)
+    requested = []
+    page.preview_requested.connect(requested.append)
+    session = SessionState(recent_reports=(report,), selected_report_path=path)
+
+    page.render(PresentationState(session=session))
+    page.render(PresentationState(session=session))
+    assert page.selected_report == report
+    assert requested == []
+
+    page.render(
+        PresentationState(
+            navigation=NavigationState(current_page=PageId.REPORTS),
+            session=session,
+        )
+    )
+    page.render(
+        PresentationState(
+            navigation=NavigationState(current_page=PageId.REPORTS),
+            session=session,
+        )
+    )
+    assert requested == [report.descriptor]
+
+
 def test_actual_descriptors_metadata_missing_state_and_unsupported_format(qtbot, tmp_path) -> None:
     analysis = tmp_path / "analysis.json"
     reference_json = tmp_path / "reference_report.json"

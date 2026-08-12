@@ -30,6 +30,7 @@ from .presentation_state import (
     RecentReport,
     RuntimePresentationPhase,
     RuntimePresentationState,
+    SessionState,
 )
 
 
@@ -131,7 +132,11 @@ class DashboardPage(QScrollArea):
         self.references_section = DashboardSection(
             "Recent references", object_name="dashboardRecentReferences", tokens=tokens
         )
+        self.session_section = DashboardSection(
+            "Current session", object_name="dashboardCurrentSession", tokens=tokens
+        )
         for section in (
+            self.session_section,
             self.runtime_section,
             self.provider_section,
             self.capabilities_section,
@@ -145,12 +150,37 @@ class DashboardPage(QScrollArea):
         self.render(PresentationState())
 
     def render(self, state: PresentationState) -> None:
+        self._render_session(state.session)
         self._render_runtime(state.runtime)
         self._render_provider(state.runtime)
         self._render_capabilities(state.runtime)
         self._render_analyses(state.session.recent_analyses)
         self._render_reports(state.session.recent_reports)
         self._render_references(state.session.recent_references)
+
+    def _render_session(self, session: SessionState) -> None:
+        items: list[QWidget] = []
+        if session.selected_audio is None:
+            items.append(_detail_label("Source audio: None selected"))
+        else:
+            source_exists = session.selected_audio.exists()
+            items.append(_detail_label(f"Source audio: {session.selected_audio}"))
+            items.append(
+                StatusBadge(
+                    "Available" if source_exists else "Source missing",
+                    VisualState.READY if source_exists else VisualState.UNAVAILABLE,
+                )
+            )
+        if session.selected_references:
+            items.extend(
+                _detail_label(f"Reference: {path} ({'available' if path.exists() else 'missing'})")
+                for path in session.selected_references
+            )
+        else:
+            items.append(_detail_label("References: None selected"))
+        if session.last_knowledge_query:
+            items.append(_detail_label(f"Last knowledge query: {session.last_knowledge_query}"))
+        self.session_section.replace_items(tuple(items))
 
     def _render_runtime(self, runtime: RuntimePresentationState) -> None:
         labels = {

@@ -141,6 +141,17 @@ def runtime_refresh_error(exc: BaseException, *, operation_id: str) -> UiError:
     )
 
 
+def session_persistence_error(exc: BaseException) -> UiError:
+    return UiError(
+        code="session_persistence_failed",
+        category=UiErrorCategory.INTERNAL,
+        user_message="The current desktop session could not be saved.",
+        technical_detail=type(exc).__name__,
+        retryable=True,
+        recovery_actions=(RecoveryAction("retry", "Try again"),),
+    )
+
+
 ExceptionHook = Callable[[type[BaseException], BaseException, TracebackType | None], None]
 
 

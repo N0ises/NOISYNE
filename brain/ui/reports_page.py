@@ -38,6 +38,7 @@ class ReportsPage(QScrollArea):
     preview_requested = Signal(object)
     export_requested = Signal(object)
     open_directory_requested = Signal(object)
+    report_selected = Signal(object)
     page_id = PageId.REPORTS
 
     def __init__(
@@ -54,6 +55,9 @@ class ReportsPage(QScrollArea):
         self._tokens = tokens
         self._reports_signature: tuple = ()
         self._selected: RecentReport | None = None
+        self._workspace_active = False
+        self._synchronizing = False
+        self._preview_requested_path: Path | None = None
 
         content = QWidget()
         layout = QVBoxLayout(content)
@@ -144,13 +148,15 @@ class ReportsPage(QScrollArea):
         return self._selected
 
     def render(self, state: PresentationState) -> None:
-        self._sync_reports(state.session.recent_reports)
-        if (
-            state.navigation.current_page is PageId.REPORTS
-            and self._selected is None
-            and self.report_list.count()
-        ):
+        self._workspace_active = state.navigation.current_page is PageId.REPORTS
+        self._sync_reports(
+            state.session.recent_reports,
+            state.session.selected_report_path,
+        )
+        if self._workspace_active and self._selected is None and self.report_list.count():
             self.report_list.setCurrentRow(0)
+        elif self._workspace_active and self._selected is not None:
+            self._request_preview_if_available()
         preview_state = state.report_preview
         preview = preview_state.preview
         if (
@@ -206,7 +212,11 @@ class ReportsPage(QScrollArea):
         self.report_list.setEnabled(not busy)
         self._update_actions(busy=busy)
 
-    def _sync_reports(self, reports: tuple[RecentReport, ...]) -> None:
+    def _sync_reports(
+        self,
+        reports: tuple[RecentReport, ...],
+        session_selected_path: Path | None,
+    ) -> None:
         signature = tuple(
             (
                 item.descriptor.kind,
@@ -221,7 +231,9 @@ class ReportsPage(QScrollArea):
         )
         if signature == self._reports_signature:
             return
-        selected_path = self._selected.descriptor.path if self._selected else None
+        selected_path = (
+            self._selected.descriptor.path if self._selected is not None else session_selected_path
+        )
         self._reports_signature = signature
         self.report_list.clear()
         self._selected = None
@@ -242,7 +254,11 @@ class ReportsPage(QScrollArea):
         self.empty_label.setVisible(not reports)
         self.report_list.setVisible(bool(reports))
         if reports and selected_row is not None:
-            self.report_list.setCurrentRow(selected_row)
+            self._synchronizing = True
+            try:
+                self.report_list.setCurrentRow(selected_row)
+            finally:
+                self._synchronizing = False
         else:
             self.metadata_label.setText("Select a report to inspect its metadata.")
             self.viewer.clear()
@@ -253,6 +269,10 @@ class ReportsPage(QScrollArea):
     ) -> None:
         report = current.data(Qt.ItemDataRole.UserRole) if current else None
         self._selected = report if isinstance(report, RecentReport) else None
+        self._preview_requested_path = None
+        self.report_selected.emit(
+            self._selected.descriptor.path if self._selected is not None else None
+        )
         self.viewer.clear()
         if self._selected is None:
             self.metadata_label.setText("Select a report to inspect its metadata.")
@@ -266,7 +286,7 @@ class ReportsPage(QScrollArea):
             and descriptor.path.exists()
             and descriptor.path.is_file()
         ):
-            self.preview_requested.emit(descriptor)
+            self._request_preview_if_available()
         elif not self._is_supported(descriptor):
             self._set_status(
                 "Unsupported",
@@ -279,6 +299,20 @@ class ReportsPage(QScrollArea):
                 VisualState.WARNING,
                 "The report file is missing. Re-run its originating workflow if needed.",
             )
+
+    def _request_preview_if_available(self) -> None:
+        if self._synchronizing or self._selected is None:
+            return
+        descriptor = self._selected.descriptor
+        if (
+            self._preview_requested_path == descriptor.path
+            or not self._is_supported(descriptor)
+            or not descriptor.path.exists()
+            or not descriptor.path.is_file()
+        ):
+            return
+        self._preview_requested_path = descriptor.path
+        self.preview_requested.emit(descriptor)
 
     def _render_metadata(self, report: RecentReport, preview=None) -> None:
         descriptor = report.descriptor

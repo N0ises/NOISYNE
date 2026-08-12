@@ -233,6 +233,27 @@ def test_empty_dashboard_has_unknown_and_real_empty_states(qtbot) -> None:
     assert "No recent references" in _labels(dashboard)
 
 
+def test_current_session_surface_retains_missing_paths_without_alarm(qtbot, tmp_path) -> None:
+    source = tmp_path / "missing-source.wav"
+    reference = tmp_path / "missing-reference.wav"
+    state = replace(
+        PresentationState(),
+        session=SessionState(
+            selected_audio=source,
+            selected_references=(reference,),
+            last_knowledge_query="headroom",
+        ),
+    )
+
+    dashboard = _dashboard(qtbot, state)
+    section = dashboard.findChild(DashboardSection, "dashboardCurrentSession")
+
+    assert any(str(source) in label for label in _labels(section))
+    assert f"Reference: {reference} (missing)" in _labels(section)
+    assert "Last knowledge query: headroom" in _labels(section)
+    assert section.findChild(StatusBadge).text() == "Source missing"
+
+
 def test_recent_analysis_uses_session_metadata_and_missing_state(qtbot, tmp_path) -> None:
     analysis = RecentAnalysis(
         source_path=tmp_path / "missing.wav",

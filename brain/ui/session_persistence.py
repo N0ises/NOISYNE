@@ -8,18 +8,24 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING
 
 from .contracts import AnalysisViewResult, ReportDescriptor
 from .presentation_state import (
     NavigationState,
     PageId,
+    PresentationState,
     RecentAnalysis,
     RecentPath,
     RecentReport,
     SessionState,
 )
 
-SCHEMA_VERSION = 1
+if TYPE_CHECKING:
+    from .presentation_store import PresentationStore
+
+SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSIONS = frozenset({1, 2})
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,11 +80,51 @@ class SessionRepository:
     def _quarantine_corrupt_file(self) -> Path | None:
         timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
         backup = self.path.with_name(f"{self.path.stem}.corrupt-{timestamp}{self.path.suffix}")
+        counter = 1
+        while backup.exists():
+            backup = self.path.with_name(
+                f"{self.path.stem}.corrupt-{timestamp}-{counter}{self.path.suffix}"
+            )
+            counter += 1
         try:
             self.path.replace(backup)
         except OSError:
             return None
         return backup
+
+
+class SessionPersistenceBinding:
+    """Persist only meaningful immutable SessionState transitions."""
+
+    def __init__(self, repository: SessionRepository, store: PresentationStore) -> None:
+        self._repository = repository
+        self._store = store
+        self._last_payload = _encode_session(store.state.session)
+        self._unsubscribe = store.subscribe(self._state_changed)
+
+    def save_current(self) -> bool:
+        return self._save(self._store.state.session)
+
+    def close(self) -> None:
+        self._unsubscribe()
+
+    def _state_changed(self, state: PresentationState) -> None:
+        payload = _encode_session(state.session)
+        if payload == self._last_payload:
+            return
+        self._save(state.session)
+
+    def _save(self, session: SessionState) -> bool:
+        try:
+            self._repository.save(session)
+        except OSError as exc:
+            from .errors import session_persistence_error
+
+            self._last_payload = _encode_session(session)
+            self._store.add_error(session_persistence_error(exc))
+            return False
+        self._last_payload = _encode_session(session)
+        return True
 
 
 def _encode_session(session: SessionState) -> dict[str, object]:
@@ -88,7 +134,10 @@ def _encode_session(session: SessionState) -> dict[str, object]:
         "navigation": session.navigation.current_page.value,
         "selected_audio": _path_or_none(session.selected_audio),
         "selected_references": [str(path) for path in session.selected_references],
+        "selected_report_path": _path_or_none(session.selected_report_path),
         "last_analysis": _encode_result(result) if result is not None else None,
+        "last_knowledge_query": session.last_knowledge_query,
+        "recent_knowledge_queries": list(session.recent_knowledge_queries),
         "recent_analyses": [_encode_analysis(item) for item in session.recent_analyses],
         "recent_reports": [_encode_report(item) for item in session.recent_reports],
         "recent_references": [_encode_recent_path(item) for item in session.recent_references],
@@ -97,14 +146,15 @@ def _encode_session(session: SessionState) -> dict[str, object]:
 
 
 def _decode_session(payload: object) -> SessionState:
-    if not isinstance(payload, dict) or payload.get("schema_version") != SCHEMA_VERSION:
+    if not isinstance(payload, dict):
+        raise TypeError("Expected a JSON object.")
+    version = payload.get("schema_version")
+    if version not in SUPPORTED_SCHEMA_VERSIONS:
         raise ValueError("Unsupported desktop session schema.")
     navigation = NavigationState(current_page=PageId(str(payload["navigation"])))
-    selected_audio = _existing_path(payload.get("selected_audio"))
+    selected_audio = _optional_path(payload.get("selected_audio"))
     selected_references = _unique_paths(
-        path
-        for value in _list(payload.get("selected_references"))
-        if (path := _existing_path(value)) is not None
+        Path(_string(value)) for value in _list(payload.get("selected_references"))
     )
     recent_analyses = _unique_items(
         (_decode_analysis(item) for item in _list(payload.get("recent_analyses"))),
@@ -126,7 +176,10 @@ def _decode_session(payload: object) -> SessionState:
         navigation=navigation,
         selected_audio=selected_audio,
         selected_references=selected_references,
+        selected_report_path=_optional_path(payload.get("selected_report_path")),
         last_analysis_result=_decode_result(payload.get("last_analysis")),
+        last_knowledge_query=_string(payload.get("last_knowledge_query", "")),
+        recent_knowledge_queries=_unique_strings(_list(payload.get("recent_knowledge_queries"))),
         recent_analyses=recent_analyses,
         recent_reports=recent_reports,
         recent_references=recent_references,
@@ -259,11 +312,12 @@ def _path_or_none(path: Path | None) -> str | None:
     return str(path) if path is not None else None
 
 
-def _existing_path(value: object) -> Path | None:
+def _optional_path(value: object) -> Path | None:
     if value is None:
         return None
-    path = Path(str(value))
-    return path if path.exists() else None
+    if not isinstance(value, str):
+        raise TypeError("Expected a path string.")
+    return Path(value)
 
 
 def _optional_float(value: object) -> float | None:
@@ -290,3 +344,14 @@ def _unique_items(items, key, limit: int = 20) -> tuple:
         if len(unique) == limit:
             break
     return tuple(unique)
+
+
+def _string(value: object) -> str:
+    if not isinstance(value, str):
+        raise TypeError("Expected a string.")
+    return value
+
+
+def _unique_strings(values: list[object], limit: int = 20) -> tuple[str, ...]:
+    strings = (_string(value) for value in values)
+    return _unique_items((value for value in strings if value.strip()), str, limit)
