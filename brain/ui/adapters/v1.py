@@ -21,6 +21,9 @@ from ..contracts import (
     IntelligenceItem,
     IntelligenceParameter,
     IntelligenceSnapshot,
+    KnowledgeQuery,
+    KnowledgeResultItem,
+    KnowledgeSearchResult,
     MetricValue,
     PathStatus,
     ProductMetadata,
@@ -48,9 +51,11 @@ class V1ApplicationAdapter:
         *,
         metadata: ProductMetadata | None = None,
         service_factory: Callable[[], Any] | None = None,
+        rag_service_factory: Callable[[], Any] | None = None,
     ) -> None:
         self._metadata = metadata or default_product_metadata()
         self._service_factory = service_factory
+        self._rag_service_factory = rag_service_factory
 
     def product_metadata(self) -> ProductMetadata:
         return self._metadata
@@ -313,11 +318,40 @@ class V1ApplicationAdapter:
             reports=reports,
         )
 
+    def search_knowledge(self, query: KnowledgeQuery) -> KnowledgeSearchResult:
+        text = query.text.strip()
+        if not text:
+            raise ValueError("Knowledge query must not be empty.")
+        service = self._knowledge_boundary()
+        results = service.search(text)
+        return KnowledgeSearchResult(
+            query=text,
+            items=tuple(
+                KnowledgeResultItem(
+                    content=str(item.text),
+                    source=str(item.source),
+                    page=int(item.page),
+                    raw_score=float(item.score),
+                    raw_rerank_score=float(item.rerank_score),
+                )
+                for item in results
+            ),
+        )
+
     def _analysis_boundary(self) -> tuple[Any, type[Any]]:
         from brain.application.soundbrain_service import AnalysisRequest, SoundBrainService
 
         factory = self._service_factory or SoundBrainService
         return factory(), AnalysisRequest
+
+    def _knowledge_boundary(self) -> Any:
+        # The V1 RAG facade is the application-level boundary. Its deep imports
+        # stay isolated here so Qt and presentation code remain replaceable.
+        if self._rag_service_factory is not None:
+            return self._rag_service_factory()
+        from brain.services.rag_service import RAGService
+
+        return RAGService()
 
     @classmethod
     def _engineering_intelligence(cls, engineering: Any) -> tuple[IntelligenceItem, ...]:

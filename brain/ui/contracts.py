@@ -336,6 +336,28 @@ class ReferenceViewResult:
     reports: tuple[ReportDescriptor, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class KnowledgeQuery:
+    text: str
+
+
+@dataclass(frozen=True, slots=True)
+class KnowledgeResultItem:
+    content: str
+    source: str
+    page: int | None
+    raw_score: float | None
+    raw_rerank_score: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class KnowledgeSearchResult:
+    query: str
+    items: tuple[KnowledgeResultItem, ...] = ()
+    warnings: tuple[str, ...] = ()
+    reasoning_context: str | None = None
+
+
 @runtime_checkable
 class DesktopApplicationAdapter(Protocol):
     def product_metadata(self) -> ProductMetadata: ...
@@ -349,3 +371,5 @@ class DesktopApplicationAdapter(Protocol):
     def analyze(self, command: AnalysisCommand) -> AnalysisViewResult: ...
 
     def compare_references(self, command: ReferenceComparisonCommand) -> ReferenceViewResult: ...
+
+    def search_knowledge(self, query: KnowledgeQuery) -> KnowledgeSearchResult: ...

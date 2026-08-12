@@ -7,6 +7,7 @@ from dataclasses import replace
 
 from .contracts import (
     AnalysisViewResult,
+    KnowledgeSearchResult,
     OperationEvent,
     OperationHandle,
     OperationState,
@@ -15,6 +16,7 @@ from .contracts import (
     UiError,
 )
 from .presentation_state import (
+    KnowledgeResultPresentationState,
     NotificationLevel,
     PageId,
     PresentationState,
@@ -66,6 +68,7 @@ class PresentationStore:
         cancellable: bool = False,
         tracks_result: bool = True,
         tracks_reference_result: bool = False,
+        tracks_knowledge_result: bool = False,
     ) -> None:
         operation = self._state.operation.begin(handle, cancellable=cancellable)
         self._publish(
@@ -81,6 +84,11 @@ class PresentationStore:
                     ReferenceResultPresentationState.loading(handle.operation_id)
                     if tracks_reference_result
                     else self._state.reference_result
+                ),
+                knowledge_result=(
+                    KnowledgeResultPresentationState.loading(handle.operation_id)
+                    if tracks_knowledge_result
+                    else self._state.knowledge_result
                 ),
                 session=self._state.session.with_operation(handle),
             )
@@ -123,10 +131,12 @@ class PresentationStore:
         tracks_result = result_state.operation_id == event.operation_id
         reference_result = self._state.reference_result
         tracks_reference_result = reference_result.operation_id == event.operation_id
+        knowledge_result = self._state.knowledge_result
+        tracks_knowledge_result = knowledge_result.operation_id == event.operation_id
 
         if event.state is OperationState.COMPLETED:
             if event.result is not None and not isinstance(
-                event.result, (AnalysisViewResult, ReferenceViewResult)
+                event.result, (AnalysisViewResult, ReferenceViewResult, KnowledgeSearchResult)
             ):
                 raise TypeError("Completed UI operations must carry stable result DTOs.")
             if tracks_result and isinstance(event.result, AnalysisViewResult):
@@ -165,6 +175,20 @@ class PresentationStore:
                         message=warning,
                         operation_id=event.operation_id,
                     )
+            elif tracks_knowledge_result and isinstance(event.result, KnowledgeSearchResult):
+                phase = ResultPhase.WARNING if event.result.warnings else ResultPhase.SUCCESS
+                knowledge_result = KnowledgeResultPresentationState(
+                    phase=phase,
+                    operation_id=event.operation_id,
+                    result=event.result,
+                )
+                session = session.record_knowledge_result(event.result)
+                for warning in event.result.warnings:
+                    notifications = notifications.add(
+                        level=NotificationLevel.WARNING,
+                        message=warning,
+                        operation_id=event.operation_id,
+                    )
         elif event.state is OperationState.FAILED and tracks_result:
             result_state = ResultPresentationState(
                 phase=ResultPhase.FAILURE,
@@ -189,6 +213,18 @@ class PresentationStore:
                 operation_id=event.operation_id,
                 error=event.error,
             )
+        elif event.state is OperationState.FAILED and tracks_knowledge_result:
+            knowledge_result = KnowledgeResultPresentationState(
+                phase=ResultPhase.FAILURE,
+                operation_id=event.operation_id,
+                error=event.error,
+            )
+        elif event.state is OperationState.CANCELLED and tracks_knowledge_result:
+            knowledge_result = KnowledgeResultPresentationState(
+                phase=ResultPhase.CANCELLED,
+                operation_id=event.operation_id,
+                error=event.error,
+            )
 
         if event.state is OperationState.FAILED and event.error is not None:
             notifications = notifications.add(
@@ -205,6 +241,7 @@ class PresentationStore:
                 operation=operation,
                 result=result_state,
                 reference_result=reference_result,
+                knowledge_result=knowledge_result,
                 notifications=notifications,
                 session=session,
             )

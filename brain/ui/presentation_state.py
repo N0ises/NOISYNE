@@ -10,6 +10,7 @@ from pathlib import Path
 from .contracts import (
     AnalysisViewResult,
     CapabilitySnapshot,
+    KnowledgeSearchResult,
     OperationEvent,
     OperationHandle,
     OperationState,
@@ -287,6 +288,18 @@ class ReferenceResultPresentationState:
 
 
 @dataclass(frozen=True, slots=True)
+class KnowledgeResultPresentationState:
+    phase: ResultPhase = ResultPhase.EMPTY
+    operation_id: str | None = None
+    result: KnowledgeSearchResult | None = None
+    error: UiError | None = None
+
+    @classmethod
+    def loading(cls, operation_id: str) -> KnowledgeResultPresentationState:
+        return cls(phase=ResultPhase.LOADING, operation_id=operation_id)
+
+
+@dataclass(frozen=True, slots=True)
 class RecentPath:
     path: Path
     last_used_at: datetime
@@ -327,6 +340,8 @@ class SessionState:
     selected_references: tuple[Path, ...] = ()
     last_analysis_result: AnalysisViewResult | None = None
     last_reference_result: ReferenceViewResult | None = None
+    last_knowledge_query: str = ""
+    recent_knowledge_queries: tuple[str, ...] = ()
     current_operation: OperationHandle | None = None
     recent_analyses: tuple[RecentAnalysis, ...] = ()
     recent_reports: tuple[RecentReport, ...] = ()
@@ -448,6 +463,15 @@ class SessionState:
             recent_reports=recent_reports,
         )
 
+    def record_knowledge_result(self, result: KnowledgeSearchResult) -> SessionState:
+        query = result.query.strip()
+        recent = (query, *(item for item in self.recent_knowledge_queries if item != query))
+        return replace(
+            self,
+            last_knowledge_query=query,
+            recent_knowledge_queries=recent[: self.recent_limit],
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class PresentationState:
@@ -457,6 +481,7 @@ class PresentationState:
     runtime: RuntimePresentationState = RuntimePresentationState()
     result: ResultPresentationState = ResultPresentationState()
     reference_result: ReferenceResultPresentationState = ReferenceResultPresentationState()
+    knowledge_result: KnowledgeResultPresentationState = KnowledgeResultPresentationState()
     session: SessionState = SessionState()
 
     @classmethod

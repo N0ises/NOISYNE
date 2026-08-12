@@ -49,6 +49,37 @@ def reference_error(exc: BaseException, *, operation_id: str) -> UiError:
     return unexpected_error(exc, operation_id=operation_id)
 
 
+def knowledge_error(exc: BaseException, *, operation_id: str) -> UiError:
+    """Translate knowledge search failures without leaking backend details."""
+    if isinstance(exc, ValueError):
+        return UiError(
+            code="knowledge_query_invalid",
+            category=UiErrorCategory.VALIDATION,
+            user_message="Enter a knowledge query and try again.",
+            technical_detail=type(exc).__name__,
+            operation_id=operation_id,
+        )
+    if isinstance(exc, (ImportError, FileNotFoundError)):
+        return UiError(
+            code="knowledge_runtime_unavailable",
+            category=UiErrorCategory.CAPABILITY_UNAVAILABLE,
+            user_message="Knowledge search is unavailable on this installation.",
+            technical_detail=type(exc).__name__,
+            retryable=False,
+            operation_id=operation_id,
+            capability_id="rag_retrieval",
+        )
+    return UiError(
+        code="knowledge_retrieval_failed",
+        category=UiErrorCategory.INTERNAL,
+        user_message="Knowledge search could not be completed.",
+        technical_detail=type(exc).__name__,
+        retryable=True,
+        operation_id=operation_id,
+        capability_id="rag_retrieval",
+    )
+
+
 ExceptionHook = Callable[[type[BaseException], BaseException, TracebackType | None], None]
 
 

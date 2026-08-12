@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .contracts import (
     AnalysisViewResult,
+    KnowledgeSearchResult,
     OperationEvent,
     OperationHandle,
     OperationState,
@@ -24,6 +25,7 @@ class WorkerStateBinding:
         *,
         capture_analysis_result: bool = False,
         capture_reference_result: bool = False,
+        capture_knowledge_result: bool = False,
     ) -> None:
         operation_id = task.handle.operation_id
         sequence = 0
@@ -32,6 +34,7 @@ class WorkerStateBinding:
             cancellable=False,
             tracks_result=capture_analysis_result,
             tracks_reference_result=capture_reference_result,
+            tracks_knowledge_result=capture_knowledge_result,
         )
 
         def next_sequence() -> int:
@@ -59,6 +62,8 @@ class WorkerStateBinding:
                 else None
             )
             if capture_reference_result and isinstance(result, ReferenceViewResult):
+                captured = result
+            if capture_knowledge_result and isinstance(result, KnowledgeSearchResult):
                 captured = result
             self._store.apply_operation_event(
                 OperationEvent(

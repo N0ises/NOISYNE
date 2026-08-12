@@ -12,6 +12,7 @@ from .dashboard import DashboardPage
 from .design_system.components import EmptyState, PageHeader
 from .design_system.tokens import DEFAULT_TOKENS, DesignTokens
 from .intelligence_page import IntelligencePage
+from .knowledge_page import KnowledgePage
 from .presentation_state import NAVIGATION_ORDER, PageId, PresentationState
 from .reference_page import ReferencePage
 
@@ -97,6 +98,7 @@ class PageHost(QStackedWidget):
     navigation_requested = Signal(object)
     analysis_requested = Signal(object)
     reference_comparison_requested = Signal(object)
+    knowledge_search_requested = Signal(object)
 
     def __init__(
         self,
@@ -120,6 +122,9 @@ class PageHost(QStackedWidget):
                 page.comparison_requested.connect(self.reference_comparison_requested)
             elif page_id is PageId.INTELLIGENCE:
                 page = IntelligencePage(tokens=tokens)
+            elif page_id is PageId.KNOWLEDGE:
+                page = KnowledgePage(tokens=tokens)
+                page.search_requested.connect(self.knowledge_search_requested)
             else:
                 page = PlaceholderPage(PAGE_DEFINITIONS[page_id], tokens=tokens)
             self._pages[page_id] = page
@@ -152,3 +157,6 @@ class PageHost(QStackedWidget):
         intelligence = self._pages[PageId.INTELLIGENCE]
         if isinstance(intelligence, IntelligencePage):
             intelligence.render(state)
+        knowledge = self._pages[PageId.KNOWLEDGE]
+        if isinstance(knowledge, KnowledgePage):
+            knowledge.render(state)
