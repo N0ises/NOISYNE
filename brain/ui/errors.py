@@ -23,6 +23,19 @@ def unexpected_error(exc: BaseException, *, operation_id: str | None = None) -> 
     )
 
 
+def analysis_error(exc: BaseException, *, operation_id: str) -> UiError:
+    """Translate presentation-safe input rejection without exposing backend types."""
+    if isinstance(exc, (ValueError, FileNotFoundError, IsADirectoryError)):
+        return UiError(
+            code="analysis_input_rejected",
+            category=UiErrorCategory.VALIDATION,
+            user_message="The selected audio could not be analyzed. Check the input and try again.",
+            technical_detail=type(exc).__name__,
+            operation_id=operation_id,
+        )
+    return unexpected_error(exc, operation_id=operation_id)
+
+
 ExceptionHook = Callable[[type[BaseException], BaseException, TracebackType | None], None]
 
 

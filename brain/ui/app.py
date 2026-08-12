@@ -65,11 +65,13 @@ def build_main_window(
     adapter: DesktopApplicationAdapter,
     state_store: ApplicationStateStore | None = None,
     presentation_store: PresentationStore | None = None,
+    executor: WorkerExecutor | None = None,
 ) -> MainWindow:
     store = state_store or ApplicationStateStore()
     ui_store = presentation_store or PresentationStore()
     view_state = build_shell_view_state(adapter.product_metadata(), ui_store.state.navigation)
-    return MainWindow(view_state, store, ui_store)
+    worker_executor = executor or WorkerExecutor()
+    return MainWindow(view_state, store, ui_store, adapter, worker_executor)
 
 
 def run(
@@ -90,14 +92,19 @@ def run(
     if loaded.warning:
         presentation_store.add_notification(NotificationLevel.WARNING, loaded.warning)
 
+    executor = WorkerExecutor()
     state_store = ApplicationStateStore()
-    window = build_main_window(application_adapter, state_store, presentation_store)
+    window = build_main_window(
+        application_adapter,
+        state_store,
+        presentation_store,
+        executor,
+    )
     boundary = ExceptionBoundary(window.show_error)
     boundary.install()
     state_store.set_lifecycle(ApplicationLifecycle.READY, "Ready")
     window.show()
 
-    executor = WorkerExecutor()
     exit_code = 0
 
     def accept_runtime_status(result: object) -> None:

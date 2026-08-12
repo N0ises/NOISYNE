@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .contracts import UiError
+from .analysis_controller import AnalysisController
+from .contracts import DesktopApplicationAdapter, UiError
 from .design_system.components import AppShell, DesignButton, Sidebar
 from .design_system.tokens import DEFAULT_TOKENS
 from .pages import PageHost
@@ -26,6 +27,7 @@ from .shell_surfaces import (
     RuntimeStatusSurface,
 )
 from .state import ApplicationLifecycle, ApplicationState, ApplicationStateStore
+from .workers import WorkerExecutor
 
 
 class MainWindow(QMainWindow):
@@ -36,10 +38,17 @@ class MainWindow(QMainWindow):
         view_state: ShellViewState,
         state_store: ApplicationStateStore,
         presentation_store: PresentationStore,
+        application_adapter: DesktopApplicationAdapter,
+        executor: WorkerExecutor,
     ) -> None:
         super().__init__()
         self._state_store = state_store
         self._presentation_store = presentation_store
+        self._analysis_controller = AnalysisController(
+            application_adapter,
+            presentation_store,
+            executor,
+        )
         tokens = DEFAULT_TOKENS
         self.setObjectName("desktopMainWindow")
         self.setWindowTitle(view_state.window_title)
@@ -105,6 +114,7 @@ class MainWindow(QMainWindow):
         self._notifications.recovery_requested.connect(self.recovery_action_requested)
         self._page_host = PageHost(tokens=tokens)
         self._page_host.navigation_requested.connect(self._presentation_store.navigate)
+        self._page_host.analysis_requested.connect(self._analysis_controller.execute)
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation

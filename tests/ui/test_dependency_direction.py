@@ -18,6 +18,9 @@ def test_qt_and_presentation_modules_do_not_import_deep_backend() -> None:
     ui_root = Path(__file__).parents[2] / "brain" / "ui"
     presentation_files = (
         ui_root / "app.py",
+        ui_root / "analysis_controller.py",
+        ui_root / "analyze_page.py",
+        ui_root / "analyze_state.py",
         ui_root / "dashboard.py",
         ui_root / "main_window.py",
         ui_root / "presentation.py",
@@ -67,6 +70,31 @@ def test_design_system_has_no_absolute_backend_imports() -> None:
                 f"{path.name}: {name}"
                 for name in names
                 if level == 0 and name.startswith("brain.") and not name.startswith("brain.ui")
+            )
+
+    assert violations == []
+
+
+def test_analyze_modules_do_not_import_adapter_or_v1_domain_implementations() -> None:
+    ui_root = Path(__file__).parents[2] / "brain" / "ui"
+    analyze_files = (
+        ui_root / "analysis_controller.py",
+        ui_root / "analyze_page.py",
+        ui_root / "analyze_state.py",
+    )
+    forbidden = (*FORBIDDEN_PREFIXES, "brain.application", "brain.ui.adapters")
+    violations = []
+    for path in analyze_files:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+            else:
+                continue
+            violations.extend(
+                f"{path.name}: {name}" for name in names if name.startswith(forbidden)
             )
 
     assert violations == []

@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 import pytest
 from PySide6.QtWidgets import QLabel, QPushButton
 
+from brain.ui.analyze_page import AnalyzePage
 from brain.ui.app import build_main_window
 from brain.ui.contracts import (
     Availability,
@@ -72,15 +73,16 @@ def _dashboard(qtbot, state: PresentationState | None = None) -> DashboardPage:
     return dashboard
 
 
-def test_only_overview_is_real_dashboard(qtbot) -> None:
+def test_overview_and_analyze_are_real_pages_while_later_pages_are_placeholders(qtbot) -> None:
     host = PageHost()
     qtbot.addWidget(host)
 
     assert isinstance(host.page(PageId.OVERVIEW), DashboardPage)
+    assert isinstance(host.page(PageId.ANALYZE), AnalyzePage)
     assert all(
         isinstance(host.page(page_id), PlaceholderPage)
         for page_id in NAVIGATION_ORDER
-        if page_id is not PageId.OVERVIEW
+        if page_id not in {PageId.OVERVIEW, PageId.ANALYZE}
     )
 
 

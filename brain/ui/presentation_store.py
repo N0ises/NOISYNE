@@ -20,6 +20,7 @@ from .presentation_state import (
     ResultPhase,
     ResultPresentationState,
     RuntimePresentationState,
+    SessionState,
 )
 
 Subscriber = Callable[[PresentationState], None]
@@ -52,6 +53,9 @@ class PresentationStore:
                 session=self._state.session.navigate(page),
             )
         )
+
+    def set_session(self, session: SessionState) -> None:
+        self._publish(replace(self._state, session=session, navigation=session.navigation))
 
     def begin_operation(
         self,

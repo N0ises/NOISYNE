@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QStackedWidget, QVBoxLayout, QWidget
 
+from .analyze_page import AnalyzePage
 from .dashboard import DashboardPage
 from .design_system.components import EmptyState, PageHeader
 from .design_system.tokens import DEFAULT_TOKENS, DesignTokens
@@ -92,6 +93,7 @@ class PlaceholderPage(QWidget):
 
 class PageHost(QStackedWidget):
     navigation_requested = Signal(object)
+    analysis_requested = Signal(object)
 
     def __init__(
         self,
@@ -107,6 +109,9 @@ class PageHost(QStackedWidget):
             if page_id is PageId.OVERVIEW:
                 page = DashboardPage(tokens=tokens)
                 page.navigation_requested.connect(self.navigation_requested)
+            elif page_id is PageId.ANALYZE:
+                page = AnalyzePage(tokens=tokens)
+                page.analysis_requested.connect(self.analysis_requested)
             else:
                 page = PlaceholderPage(PAGE_DEFINITIONS[page_id], tokens=tokens)
             self._pages[page_id] = page
@@ -130,3 +135,6 @@ class PageHost(QStackedWidget):
         dashboard = self._pages[PageId.OVERVIEW]
         if isinstance(dashboard, DashboardPage):
             dashboard.render(state)
+        analyze = self._pages[PageId.ANALYZE]
+        if isinstance(analyze, AnalyzePage):
+            analyze.render(state)
