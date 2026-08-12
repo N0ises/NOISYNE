@@ -29,6 +29,7 @@ from .design_system.components import (
 from .design_system.semantics import VisualState
 from .design_system.tokens import DEFAULT_TOKENS, DesignTokens
 from .presentation_state import PageId, PresentationState, ResultPhase
+from .result_view import AnalysisResultView
 
 AUDIO_PICKER_FILTER = "Common audio files (*.wav *.mp3 *.flac *.ogg *.m4a *.aac);;All files (*)"
 
@@ -162,9 +163,21 @@ class AnalyzePage(QScrollArea):
         self.completion_badge = StatusBadge("Idle", VisualState.IDLE)
         self.completion_message = QLabel("No analysis has run in this session.")
         self.completion_message.setWordWrap(True)
+        self.view_result_button = DesignButton(
+            "View analysis result", variant=ButtonVariant.PRIMARY, tokens=tokens
+        )
+        self.view_result_button.setVisible(False)
         self.completion_card.content_layout.addWidget(self.completion_badge)
         self.completion_card.content_layout.addWidget(self.completion_message)
+        self.completion_card.content_layout.addWidget(
+            self.view_result_button,
+            0,
+            Qt.AlignmentFlag.AlignLeft,
+        )
         layout.addWidget(self.completion_card)
+        self.result_view = AnalysisResultView(tokens=tokens)
+        self.result_view.setVisible(False)
+        layout.addWidget(self.result_view)
         layout.addStretch(1)
         self.setWidget(content)
 
@@ -177,6 +190,8 @@ class AnalyzePage(QScrollArea):
         self.review_button.clicked.connect(self.review)
         self.edit_button.clicked.connect(self._edit)
         self.confirm_button.clicked.connect(self._confirm)
+        self.view_result_button.clicked.connect(self.result_view.show)
+        self.result_view.back_requested.connect(self.result_view.hide)
         self._render_form()
 
     @property
@@ -207,6 +222,7 @@ class AnalyzePage(QScrollArea):
         self._form = self._form.with_capabilities(state.runtime.capabilities)
         self._render_features()
         result = state.result
+        self.result_view.render(result)
         phase_map = {
             ResultPhase.EMPTY: ("Idle", VisualState.IDLE, "No analysis has run in this session."),
             ResultPhase.LOADING: (
@@ -217,7 +233,7 @@ class AnalyzePage(QScrollArea):
             ResultPhase.SUCCESS: (
                 "Result available",
                 VisualState.SUCCESS,
-                "Analysis completed. The result is retained for the Results sprint.",
+                "Analysis completed. The retained result is ready to inspect.",
             ),
             ResultPhase.WARNING: (
                 "Result available with warnings",
@@ -244,6 +260,12 @@ class AnalyzePage(QScrollArea):
         self.completion_badge.setText(text)
         self.completion_badge.set_state(visual)
         self.completion_message.setText(message)
+        result_available = (
+            result.phase in {ResultPhase.SUCCESS, ResultPhase.WARNING} and result.result is not None
+        )
+        self.view_result_button.setVisible(result_available)
+        if not result_available:
+            self.result_view.setVisible(False)
         busy = result.phase is ResultPhase.LOADING
         self.confirm_button.setEnabled(not busy)
         self.review_button.setEnabled(
