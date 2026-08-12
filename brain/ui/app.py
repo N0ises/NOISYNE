@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QApplication
 
 from .adapters import V1ApplicationAdapter
 from .contracts import DesktopApplicationAdapter, ProductMetadata, UiError
+from .design_system.theme import apply_theme
 from .errors import ExceptionBoundary
 from .logging_setup import configure_logging
 from .main_window import MainWindow
@@ -56,6 +57,7 @@ def create_application(metadata: ProductMetadata) -> QApplication:
     QCoreApplication.setOrganizationName(metadata.organization_name)
     if metadata.organization_domain:
         QCoreApplication.setOrganizationDomain(metadata.organization_domain)
+    apply_theme(application)
     return application
 
 

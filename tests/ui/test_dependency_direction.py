@@ -26,6 +26,7 @@ def test_qt_and_presentation_modules_do_not_import_deep_backend() -> None:
         ui_root / "state.py",
         ui_root / "worker_binding.py",
         ui_root / "workers.py",
+        *sorted((ui_root / "design_system").glob("*.py")),
     )
 
     violations = []
@@ -40,6 +41,29 @@ def test_qt_and_presentation_modules_do_not_import_deep_backend() -> None:
                 continue
             violations.extend(
                 f"{path.name}: {name}" for name in names if name.startswith(FORBIDDEN_PREFIXES)
+            )
+
+    assert violations == []
+
+
+def test_design_system_has_no_absolute_backend_imports() -> None:
+    design_root = Path(__file__).parents[2] / "brain" / "ui" / "design_system"
+    violations = []
+    for path in design_root.glob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+                level = 0
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+                level = node.level
+            else:
+                continue
+            violations.extend(
+                f"{path.name}: {name}"
+                for name in names
+                if level == 0 and name.startswith("brain.") and not name.startswith("brain.ui")
             )
 
     assert violations == []

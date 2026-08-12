@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QHBoxLayout,
     QLabel,
-    QListWidget,
     QListWidgetItem,
     QMainWindow,
     QVBoxLayout,
@@ -14,6 +12,9 @@ from PySide6.QtWidgets import (
 )
 
 from .contracts import UiError
+from .design_system.components import AppShell, PageHeader, Sidebar
+from .design_system.gallery import ComponentGallery
+from .design_system.tokens import DEFAULT_TOKENS
 from .presentation import ShellViewState
 from .presentation_state import PageId, PresentationState
 from .presentation_store import PresentationStore
@@ -31,22 +32,26 @@ class MainWindow(QMainWindow):
         self._state_store = state_store
         self._presentation_store = presentation_store
         self._navigation_items = view_state.navigation_items
+        tokens = DEFAULT_TOKENS
         self.setObjectName("desktopMainWindow")
         self.setWindowTitle(view_state.window_title)
-        self.resize(960, 640)
+        self.setMinimumSize(
+            tokens.controls.window_minimum_width,
+            tokens.controls.window_minimum_height,
+        )
+        self.resize(
+            tokens.controls.window_default_width,
+            tokens.controls.window_default_height,
+        )
 
-        self._navigation = QListWidget()
+        self._navigation = Sidebar(tokens=tokens)
         self._navigation.setObjectName("primaryNavigation")
         for navigation_item in view_state.navigation_items:
             item = QListWidgetItem(navigation_item.label)
             item.setData(Qt.ItemDataRole.UserRole, navigation_item.page_id.value)
             self._navigation.addItem(item)
-        self._navigation.setFixedWidth(180)
-
-        self._heading = QLabel(view_state.heading)
-        self._heading.setObjectName("workspaceHeading")
-        self._heading.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self._heading.setStyleSheet("font-size: 24px; font-weight: 600;")
+        self._page_header = PageHeader(view_state.heading, view_state.body, tokens=tokens)
+        self._page_header.setObjectName("workspaceHeading")
 
         self._body = QLabel(view_state.body)
         self._body.setObjectName("workspaceBody")
@@ -54,18 +59,21 @@ class MainWindow(QMainWindow):
         self._body.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         workspace_layout = QVBoxLayout()
-        workspace_layout.addWidget(self._heading)
-        workspace_layout.addWidget(self._body, 1)
+        workspace_layout.setContentsMargins(
+            tokens.spacing.xl,
+            tokens.spacing.xl,
+            tokens.spacing.xl,
+            tokens.spacing.xl,
+        )
+        workspace_layout.setSpacing(tokens.spacing.lg)
+        workspace_layout.addWidget(self._page_header)
+        workspace_layout.addWidget(self._body)
+        workspace_layout.addWidget(ComponentGallery(tokens=tokens), 1)
         workspace = QWidget()
         workspace.setObjectName("centralWorkspace")
         workspace.setLayout(workspace_layout)
 
-        shell_layout = QHBoxLayout()
-        shell_layout.addWidget(self._navigation)
-        shell_layout.addWidget(workspace, 1)
-        shell = QWidget()
-        shell.setLayout(shell_layout)
-        self.setCentralWidget(shell)
+        self.setCentralWidget(AppShell(self._navigation, workspace, tokens=tokens))
 
         self.statusBar().setObjectName("applicationStatus")
         self.statusBar().showMessage(view_state.status_message)
@@ -86,7 +94,8 @@ class MainWindow(QMainWindow):
     def _render_presentation_state(self, state: PresentationState) -> None:
         page = state.navigation.current_page
         label = next(item.label for item in self._navigation_items if item.page_id is page)
-        self._heading.setText(label)
+        self._page_header.set_title(label)
+        self._page_header.set_subtitle(f"{label} foundation is ready.")
         self._body.setText(f"{label} foundation is ready.")
         for row in range(self._navigation.count()):
             item = self._navigation.item(row)
