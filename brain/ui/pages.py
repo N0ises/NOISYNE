@@ -12,6 +12,7 @@ from .dashboard import DashboardPage
 from .design_system.components import EmptyState, PageHeader
 from .design_system.tokens import DEFAULT_TOKENS, DesignTokens
 from .presentation_state import NAVIGATION_ORDER, PageId, PresentationState
+from .reference_page import ReferencePage
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +95,7 @@ class PlaceholderPage(QWidget):
 class PageHost(QStackedWidget):
     navigation_requested = Signal(object)
     analysis_requested = Signal(object)
+    reference_comparison_requested = Signal(object)
 
     def __init__(
         self,
@@ -112,6 +114,9 @@ class PageHost(QStackedWidget):
             elif page_id is PageId.ANALYZE:
                 page = AnalyzePage(tokens=tokens)
                 page.analysis_requested.connect(self.analysis_requested)
+            elif page_id is PageId.REFERENCES:
+                page = ReferencePage(tokens=tokens)
+                page.comparison_requested.connect(self.reference_comparison_requested)
             else:
                 page = PlaceholderPage(PAGE_DEFINITIONS[page_id], tokens=tokens)
             self._pages[page_id] = page
@@ -138,3 +143,6 @@ class PageHost(QStackedWidget):
         analyze = self._pages[PageId.ANALYZE]
         if isinstance(analyze, AnalyzePage):
             analyze.render(state)
+        references = self._pages[PageId.REFERENCES]
+        if isinstance(references, ReferencePage):
+            references.render(state)

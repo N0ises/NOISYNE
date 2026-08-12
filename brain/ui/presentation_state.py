@@ -14,6 +14,7 @@ from .contracts import (
     OperationHandle,
     OperationState,
     RecoveryAction,
+    ReferenceViewResult,
     ReportDescriptor,
     RuntimeState,
     RuntimeStatus,
@@ -274,6 +275,18 @@ class ResultPresentationState:
 
 
 @dataclass(frozen=True, slots=True)
+class ReferenceResultPresentationState:
+    phase: ResultPhase = ResultPhase.EMPTY
+    operation_id: str | None = None
+    result: ReferenceViewResult | None = None
+    error: UiError | None = None
+
+    @classmethod
+    def loading(cls, operation_id: str) -> ReferenceResultPresentationState:
+        return cls(phase=ResultPhase.LOADING, operation_id=operation_id)
+
+
+@dataclass(frozen=True, slots=True)
 class RecentPath:
     path: Path
     last_used_at: datetime
@@ -313,6 +326,7 @@ class SessionState:
     selected_audio: Path | None = None
     selected_references: tuple[Path, ...] = ()
     last_analysis_result: AnalysisViewResult | None = None
+    last_reference_result: ReferenceViewResult | None = None
     current_operation: OperationHandle | None = None
     recent_analyses: tuple[RecentAnalysis, ...] = ()
     recent_reports: tuple[RecentReport, ...] = ()
@@ -406,6 +420,34 @@ class SessionState:
             recent_reports=recent_reports,
         )
 
+    def record_reference_result(
+        self,
+        result: ReferenceViewResult,
+        *,
+        compared_at: datetime | None = None,
+    ) -> SessionState:
+        timestamp = compared_at or datetime.now(UTC)
+        selected = self.select_audio(result.current_path, used_at=timestamp)
+        selected = selected.select_references(result.reference_paths, used_at=timestamp)
+        recent_reports = selected.recent_reports
+        for descriptor in result.reports:
+            report = RecentReport(
+                descriptor=descriptor,
+                created_at=timestamp,
+                exists=descriptor.path.exists(),
+            )
+            recent_reports = _prepend_unique(
+                recent_reports,
+                report,
+                lambda item: _path_key(item.descriptor.path),
+                self.recent_limit,
+            )
+        return replace(
+            selected,
+            last_reference_result=result,
+            recent_reports=recent_reports,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class PresentationState:
@@ -414,6 +456,7 @@ class PresentationState:
     notifications: NotificationState = NotificationState()
     runtime: RuntimePresentationState = RuntimePresentationState()
     result: ResultPresentationState = ResultPresentationState()
+    reference_result: ReferenceResultPresentationState = ReferenceResultPresentationState()
     session: SessionState = SessionState()
 
     @classmethod

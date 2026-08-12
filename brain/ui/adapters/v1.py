@@ -21,6 +21,13 @@ from ..contracts import (
     PathStatus,
     ProductMetadata,
     ProviderStatus,
+    ReferenceBandDifference,
+    ReferenceComparisonCommand,
+    ReferenceFinding,
+    ReferenceMetric,
+    ReferenceSegmentDeviation,
+    ReferenceSimilarity,
+    ReferenceViewResult,
     ReportDescriptor,
     RuntimeState,
     RuntimeStatus,
@@ -178,11 +185,154 @@ class V1ApplicationAdapter:
             reports=reports,
         )
 
+    def compare_references(self, command: ReferenceComparisonCommand) -> ReferenceViewResult:
+        service, request_type = self._analysis_boundary()
+        reference_path: Path | list[Path]
+        if len(command.reference_paths) == 1:
+            reference_path = command.reference_paths[0]
+        else:
+            reference_path = list(command.reference_paths)
+        response = service.analyze(
+            request_type(
+                audio_path=command.current_path,
+                reference_path=reference_path,
+                reference_output_directory=command.output_directory,
+                reference_genre=command.genre or None,
+                reference_mood=command.mood or None,
+                reference_target=command.target or None,
+                reference_focus=list(command.focus_areas),
+            )
+        )
+        comparison = getattr(response, "comparison", None)
+        reports = self._reference_reports(command.output_directory)
+        if comparison is None:
+            return ReferenceViewResult(
+                current_path=command.current_path,
+                reference_paths=command.reference_paths,
+                status=str(response.status),
+                similarity=None,
+                confidence=None,
+                warnings=tuple(str(item) for item in response.warnings),
+                reports=reports,
+            )
+
+        scores = tuple(
+            MetricValue(name, float(getattr(comparison, field_name)))
+            for name, field_name in (
+                ("frequency_score", "frequency_score"),
+                ("dynamic_score", "dynamic_score"),
+                ("stereo_score", "stereo_score"),
+                ("loudness_score", "loudness_score"),
+                ("transient_score", "transient_score"),
+                ("phase_score", "phase_score"),
+                ("tonal_score", "tonal_score"),
+                ("semantic_score", "semantic_score"),
+            )
+        )
+        metrics = tuple(
+            ReferenceMetric(
+                name=str(item.name),
+                current=float(item.current),
+                reference=float(item.reference),
+                difference=float(item.difference),
+                unit=str(item.unit),
+                tolerance=float(item.tolerance),
+                passed=bool(item.passed),
+                severity=self._enum_value(item.severity),
+                similarity=float(item.similarity),
+            )
+            for item in comparison.metrics
+        )
+        bands = tuple(
+            ReferenceBandDifference(
+                band=str(item.band),
+                start_hz=float(item.start_hz),
+                end_hz=float(item.end_hz),
+                reference_energy=float(item.reference_energy),
+                current_energy=float(item.current_energy),
+                difference_db=float(item.difference_db),
+                severity=self._enum_value(item.severity),
+            )
+            for item in comparison.band_differences
+        )
+        findings = tuple(
+            ReferenceFinding(
+                title=str(item.title),
+                description=str(item.description),
+                category=self._enum_value(item.category),
+                severity=self._enum_value(item.severity),
+                confidence=float(item.confidence),
+                recommendation=str(item.recommendation),
+                decision_type=self._enum_value(item.decision_type),
+            )
+            for item in comparison.engineer_decisions
+        )
+        per_reference = tuple(
+            ReferenceSimilarity(Path(path), float(similarity))
+            for path, similarity in comparison.reference_similarities.items()
+        )
+        segments = tuple(
+            ReferenceSegmentDeviation(
+                start_time=float(item.start_time),
+                end_time=float(item.end_time),
+                metric=str(item.metric),
+                reference_value=float(item.reference_value),
+                current_value=float(item.current_value),
+                severity=str(item.severity),
+            )
+            for item in comparison.segment_deviations
+        )
+        variances = tuple(
+            MetricValue(str(name), float(value))
+            for name, value in comparison.metric_variance.items()
+        )
+        return ReferenceViewResult(
+            current_path=command.current_path,
+            reference_paths=command.reference_paths,
+            status=str(response.status),
+            similarity=float(comparison.similarity),
+            confidence=float(comparison.confidence),
+            scores=scores,
+            metric_variances=variances,
+            metrics=metrics,
+            band_differences=bands,
+            findings=findings,
+            reference_similarities=per_reference,
+            segment_deviations=segments,
+            warnings=tuple(str(item) for item in response.warnings),
+            reports=reports,
+        )
+
     def _analysis_boundary(self) -> tuple[Any, type[Any]]:
         from brain.application.soundbrain_service import AnalysisRequest, SoundBrainService
 
         factory = self._service_factory or SoundBrainService
         return factory(), AnalysisRequest
+
+    @staticmethod
+    def _reference_reports(output_directory: Path | None) -> tuple[ReportDescriptor, ...]:
+        if output_directory is None:
+            return ()
+        descriptors = []
+        for format_name, filename, label in (
+            ("json", "reference_report.json", "Reference report JSON"),
+            ("markdown", "reference_report.md", "Reference report Markdown"),
+        ):
+            path = output_directory / filename
+            if path.exists():
+                descriptors.append(
+                    ReportDescriptor(
+                        kind="reference_comparison",
+                        format=format_name,
+                        path=path,
+                        display_label=label,
+                    )
+                )
+        return tuple(descriptors)
+
+    @staticmethod
+    def _enum_value(value: Any) -> str:
+        return str(getattr(value, "value", value))
 
     @staticmethod
     def _scalar_metrics(value: Any) -> tuple[MetricValue, ...]:

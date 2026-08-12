@@ -10,6 +10,7 @@ from .contracts import (
     OperationEvent,
     OperationHandle,
     OperationState,
+    ReferenceViewResult,
     RuntimeStatus,
     UiError,
 )
@@ -17,6 +18,7 @@ from .presentation_state import (
     NotificationLevel,
     PageId,
     PresentationState,
+    ReferenceResultPresentationState,
     ResultPhase,
     ResultPresentationState,
     RuntimePresentationState,
@@ -63,6 +65,7 @@ class PresentationStore:
         *,
         cancellable: bool = False,
         tracks_result: bool = True,
+        tracks_reference_result: bool = False,
     ) -> None:
         operation = self._state.operation.begin(handle, cancellable=cancellable)
         self._publish(
@@ -73,6 +76,11 @@ class PresentationStore:
                     ResultPresentationState.loading(handle.operation_id)
                     if tracks_result
                     else self._state.result
+                ),
+                reference_result=(
+                    ReferenceResultPresentationState.loading(handle.operation_id)
+                    if tracks_reference_result
+                    else self._state.reference_result
                 ),
                 session=self._state.session.with_operation(handle),
             )
@@ -113,10 +121,14 @@ class PresentationStore:
         )
         notifications = self._state.notifications
         tracks_result = result_state.operation_id == event.operation_id
+        reference_result = self._state.reference_result
+        tracks_reference_result = reference_result.operation_id == event.operation_id
 
         if event.state is OperationState.COMPLETED:
-            if event.result is not None and not isinstance(event.result, AnalysisViewResult):
-                raise TypeError("Completed analysis events must carry AnalysisViewResult DTOs.")
+            if event.result is not None and not isinstance(
+                event.result, (AnalysisViewResult, ReferenceViewResult)
+            ):
+                raise TypeError("Completed UI operations must carry stable result DTOs.")
             if tracks_result and isinstance(event.result, AnalysisViewResult):
                 phase = (
                     ResultPhase.WARNING
@@ -135,6 +147,24 @@ class PresentationStore:
                         message=warning,
                         operation_id=event.operation_id,
                     )
+            elif tracks_reference_result and isinstance(event.result, ReferenceViewResult):
+                phase = (
+                    ResultPhase.WARNING
+                    if event.result.warnings or event.result.status.casefold() == "degraded"
+                    else ResultPhase.SUCCESS
+                )
+                reference_result = ReferenceResultPresentationState(
+                    phase=phase,
+                    operation_id=event.operation_id,
+                    result=event.result,
+                )
+                session = session.record_reference_result(event.result)
+                for warning in event.result.warnings:
+                    notifications = notifications.add(
+                        level=NotificationLevel.WARNING,
+                        message=warning,
+                        operation_id=event.operation_id,
+                    )
         elif event.state is OperationState.FAILED and tracks_result:
             result_state = ResultPresentationState(
                 phase=ResultPhase.FAILURE,
@@ -143,6 +173,18 @@ class PresentationStore:
             )
         elif event.state is OperationState.CANCELLED and tracks_result:
             result_state = ResultPresentationState(
+                phase=ResultPhase.CANCELLED,
+                operation_id=event.operation_id,
+                error=event.error,
+            )
+        elif event.state is OperationState.FAILED and tracks_reference_result:
+            reference_result = ReferenceResultPresentationState(
+                phase=ResultPhase.FAILURE,
+                operation_id=event.operation_id,
+                error=event.error,
+            )
+        elif event.state is OperationState.CANCELLED and tracks_reference_result:
+            reference_result = ReferenceResultPresentationState(
                 phase=ResultPhase.CANCELLED,
                 operation_id=event.operation_id,
                 error=event.error,
@@ -162,6 +204,7 @@ class PresentationStore:
                 self._state,
                 operation=operation,
                 result=result_state,
+                reference_result=reference_result,
                 notifications=notifications,
                 session=session,
             )

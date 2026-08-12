@@ -36,6 +36,19 @@ def analysis_error(exc: BaseException, *, operation_id: str) -> UiError:
     return unexpected_error(exc, operation_id=operation_id)
 
 
+def reference_error(exc: BaseException, *, operation_id: str) -> UiError:
+    """Translate reference input rejection without exposing backend exceptions."""
+    if isinstance(exc, (ValueError, FileNotFoundError, IsADirectoryError)):
+        return UiError(
+            code="reference_input_rejected",
+            category=UiErrorCategory.VALIDATION,
+            user_message="The selected tracks could not be compared. Check the inputs and try again.",
+            technical_detail=type(exc).__name__,
+            operation_id=operation_id,
+        )
+    return unexpected_error(exc, operation_id=operation_id)
+
+
 ExceptionHook = Callable[[type[BaseException], BaseException, TracebackType | None], None]
 
 

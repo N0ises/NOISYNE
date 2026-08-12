@@ -218,6 +218,86 @@ class AnalysisViewResult:
     reports: tuple[ReportDescriptor, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class ReferenceComparisonCommand:
+    current_path: Path
+    reference_paths: tuple[Path, ...]
+    genre: str = ""
+    mood: str = ""
+    target: str = ""
+    focus_areas: tuple[str, ...] = ()
+    output_directory: Path | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceMetric:
+    name: str
+    current: float
+    reference: float
+    difference: float
+    unit: str
+    tolerance: float
+    passed: bool
+    severity: str
+    similarity: float
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceBandDifference:
+    band: str
+    start_hz: float
+    end_hz: float
+    reference_energy: float
+    current_energy: float
+    difference_db: float
+    severity: str
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceFinding:
+    title: str
+    description: str
+    category: str
+    severity: str
+    confidence: float
+    recommendation: str
+    decision_type: str
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceSegmentDeviation:
+    start_time: float
+    end_time: float
+    metric: str
+    reference_value: float
+    current_value: float
+    severity: str
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceSimilarity:
+    reference_path: Path
+    similarity: float
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceViewResult:
+    current_path: Path
+    reference_paths: tuple[Path, ...]
+    status: str
+    similarity: float | None
+    confidence: float | None
+    scores: tuple[MetricValue, ...] = ()
+    metric_variances: tuple[MetricValue, ...] = ()
+    metrics: tuple[ReferenceMetric, ...] = ()
+    band_differences: tuple[ReferenceBandDifference, ...] = ()
+    findings: tuple[ReferenceFinding, ...] = ()
+    reference_similarities: tuple[ReferenceSimilarity, ...] = ()
+    segment_deviations: tuple[ReferenceSegmentDeviation, ...] = ()
+    warnings: tuple[str, ...] = ()
+    reports: tuple[ReportDescriptor, ...] = ()
+
+
 @runtime_checkable
 class DesktopApplicationAdapter(Protocol):
     def product_metadata(self) -> ProductMetadata: ...
@@ -229,3 +309,5 @@ class DesktopApplicationAdapter(Protocol):
     def settings_snapshot(self) -> SettingsSnapshot: ...
 
     def analyze(self, command: AnalysisCommand) -> AnalysisViewResult: ...
+
+    def compare_references(self, command: ReferenceComparisonCommand) -> ReferenceViewResult: ...

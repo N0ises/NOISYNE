@@ -7,6 +7,7 @@ from .contracts import (
     OperationEvent,
     OperationHandle,
     OperationState,
+    ReferenceViewResult,
     UiError,
 )
 from .presentation_store import PresentationStore
@@ -17,13 +18,20 @@ class WorkerStateBinding:
     def __init__(self, store: PresentationStore) -> None:
         self._store = store
 
-    def bind(self, task: WorkerTask, *, capture_analysis_result: bool = False) -> None:
+    def bind(
+        self,
+        task: WorkerTask,
+        *,
+        capture_analysis_result: bool = False,
+        capture_reference_result: bool = False,
+    ) -> None:
         operation_id = task.handle.operation_id
         sequence = 0
         self._store.begin_operation(
             task.handle,
             cancellable=False,
             tracks_result=capture_analysis_result,
+            tracks_reference_result=capture_reference_result,
         )
 
         def next_sequence() -> int:
@@ -50,6 +58,8 @@ class WorkerStateBinding:
                 if capture_analysis_result and isinstance(result, AnalysisViewResult)
                 else None
             )
+            if capture_reference_result and isinstance(result, ReferenceViewResult):
+                captured = result
             self._store.apply_operation_event(
                 OperationEvent(
                     operation_id=operation_id,

@@ -20,6 +20,7 @@ from .pages import PageHost
 from .presentation import ShellViewState
 from .presentation_state import PageId, PresentationState
 from .presentation_store import PresentationStore
+from .reference_controller import ReferenceController
 from .shell_surfaces import (
     NotificationSurface,
     OperationStatusSurface,
@@ -45,6 +46,11 @@ class MainWindow(QMainWindow):
         self._state_store = state_store
         self._presentation_store = presentation_store
         self._analysis_controller = AnalysisController(
+            application_adapter,
+            presentation_store,
+            executor,
+        )
+        self._reference_controller = ReferenceController(
             application_adapter,
             presentation_store,
             executor,
@@ -115,6 +121,7 @@ class MainWindow(QMainWindow):
         self._page_host = PageHost(tokens=tokens)
         self._page_host.navigation_requested.connect(self._presentation_store.navigate)
         self._page_host.analysis_requested.connect(self._analysis_controller.execute)
+        self._page_host.reference_comparison_requested.connect(self._reference_controller.execute)
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation

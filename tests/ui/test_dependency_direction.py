@@ -7,6 +7,7 @@ FORBIDDEN_PREFIXES = (
     "brain.audio",
     "brain.rag",
     "brain.memory",
+    "brain.reference",
     "brain.providers",
     "brain.runtime",
     "numpy",
@@ -28,6 +29,10 @@ def test_qt_and_presentation_modules_do_not_import_deep_backend() -> None:
         ui_root / "presentation_store.py",
         ui_root / "result_presentation.py",
         ui_root / "result_view.py",
+        ui_root / "reference_controller.py",
+        ui_root / "reference_page.py",
+        ui_root / "reference_result_view.py",
+        ui_root / "reference_state.py",
         ui_root / "pages.py",
         ui_root / "shell_surfaces.py",
         ui_root / "session_persistence.py",
@@ -85,6 +90,10 @@ def test_analyze_modules_do_not_import_adapter_or_v1_domain_implementations() ->
         ui_root / "analyze_state.py",
         ui_root / "result_presentation.py",
         ui_root / "result_view.py",
+        ui_root / "reference_controller.py",
+        ui_root / "reference_page.py",
+        ui_root / "reference_result_view.py",
+        ui_root / "reference_state.py",
     )
     forbidden = (*FORBIDDEN_PREFIXES, "brain.application", "brain.ui.adapters")
     violations = []

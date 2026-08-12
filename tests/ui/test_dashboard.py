@@ -37,6 +37,7 @@ from brain.ui.presentation_state import (
     SessionState,
 )
 from brain.ui.presentation_store import PresentationStore
+from brain.ui.reference_page import ReferencePage
 from brain.ui.state import ApplicationStateStore
 
 
@@ -73,16 +74,17 @@ def _dashboard(qtbot, state: PresentationState | None = None) -> DashboardPage:
     return dashboard
 
 
-def test_overview_and_analyze_are_real_pages_while_later_pages_are_placeholders(qtbot) -> None:
+def test_implemented_pages_are_real_while_later_pages_are_placeholders(qtbot) -> None:
     host = PageHost()
     qtbot.addWidget(host)
 
     assert isinstance(host.page(PageId.OVERVIEW), DashboardPage)
     assert isinstance(host.page(PageId.ANALYZE), AnalyzePage)
+    assert isinstance(host.page(PageId.REFERENCES), ReferencePage)
     assert all(
         isinstance(host.page(page_id), PlaceholderPage)
         for page_id in NAVIGATION_ORDER
-        if page_id not in {PageId.OVERVIEW, PageId.ANALYZE}
+        if page_id not in {PageId.OVERVIEW, PageId.ANALYZE, PageId.REFERENCES}
     )
 
 
