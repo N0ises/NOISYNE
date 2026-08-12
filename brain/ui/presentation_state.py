@@ -21,6 +21,7 @@ from .contracts import (
     ReportPreview,
     RuntimeState,
     RuntimeStatus,
+    SettingsSnapshot,
     UiError,
 )
 
@@ -253,6 +254,19 @@ class RuntimePresentationState:
 
     def capability(self, capability_id: str) -> CapabilitySnapshot | None:
         return next((item for item in self.capabilities if item.id == capability_id), None)
+
+
+class SettingsPresentationPhase(str, Enum):
+    LOADING = "loading"
+    READY = "ready"
+    FAILURE = "failure"
+
+
+@dataclass(frozen=True, slots=True)
+class SettingsPresentationState:
+    phase: SettingsPresentationPhase = SettingsPresentationPhase.LOADING
+    snapshot: SettingsSnapshot | None = None
+    error: UiError | None = None
 
 
 class ResultPhase(str, Enum):
@@ -526,6 +540,7 @@ class PresentationState:
     operation: OperationPresentationState = OperationPresentationState()
     notifications: NotificationState = NotificationState()
     runtime: RuntimePresentationState = RuntimePresentationState()
+    settings: SettingsPresentationState = SettingsPresentationState()
     result: ResultPresentationState = ResultPresentationState()
     reference_result: ReferenceResultPresentationState = ReferenceResultPresentationState()
     knowledge_result: KnowledgeResultPresentationState = KnowledgeResultPresentationState()

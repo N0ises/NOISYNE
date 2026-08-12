@@ -16,6 +16,7 @@ from .knowledge_page import KnowledgePage
 from .presentation_state import NAVIGATION_ORDER, PageId, PresentationState
 from .reference_page import ReferencePage
 from .reports_page import ReportsPage
+from .settings_page import SettingsPage
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,6 +104,8 @@ class PageHost(QStackedWidget):
     report_preview_requested = Signal(object)
     report_export_requested = Signal(object)
     report_open_directory_requested = Signal(object)
+    settings_refresh_requested = Signal()
+    runtime_refresh_requested = Signal()
 
     def __init__(
         self,
@@ -134,6 +137,10 @@ class PageHost(QStackedWidget):
                 page.preview_requested.connect(self.report_preview_requested)
                 page.export_requested.connect(self.report_export_requested)
                 page.open_directory_requested.connect(self.report_open_directory_requested)
+            elif page_id is PageId.SETTINGS:
+                page = SettingsPage(tokens=tokens)
+                page.refresh_settings_requested.connect(self.settings_refresh_requested)
+                page.refresh_runtime_requested.connect(self.runtime_refresh_requested)
             else:
                 page = PlaceholderPage(PAGE_DEFINITIONS[page_id], tokens=tokens)
             self._pages[page_id] = page
@@ -172,3 +179,6 @@ class PageHost(QStackedWidget):
         reports = self._pages[PageId.REPORTS]
         if isinstance(reports, ReportsPage):
             reports.render(state)
+        settings = self._pages[PageId.SETTINGS]
+        if isinstance(settings, SettingsPage):
+            settings.render(state)

@@ -15,6 +15,7 @@ from .contracts import (
     ReportExportResult,
     ReportPreview,
     RuntimeStatus,
+    SettingsSnapshot,
     UiError,
 )
 from .presentation_state import (
@@ -29,6 +30,8 @@ from .presentation_state import (
     ResultPresentationState,
     RuntimePresentationState,
     SessionState,
+    SettingsPresentationPhase,
+    SettingsPresentationState,
 )
 
 Subscriber = Callable[[PresentationState], None]
@@ -340,6 +343,41 @@ class PresentationStore:
 
     def set_runtime_status(self, status: RuntimeStatus) -> None:
         self._publish(replace(self._state, runtime=RuntimePresentationState.from_status(status)))
+
+    def set_settings_loading(self) -> None:
+        self._publish(
+            replace(
+                self._state,
+                settings=SettingsPresentationState(
+                    phase=SettingsPresentationPhase.LOADING,
+                    snapshot=self._state.settings.snapshot,
+                ),
+            )
+        )
+
+    def set_settings_snapshot(self, snapshot: SettingsSnapshot) -> None:
+        self._publish(
+            replace(
+                self._state,
+                settings=SettingsPresentationState(
+                    phase=SettingsPresentationPhase.READY,
+                    snapshot=snapshot,
+                ),
+            )
+        )
+
+    def set_settings_error(self, error: UiError) -> None:
+        self._publish(
+            replace(
+                self._state,
+                settings=SettingsPresentationState(
+                    phase=SettingsPresentationPhase.FAILURE,
+                    snapshot=self._state.settings.snapshot,
+                    error=error,
+                ),
+            )
+        )
+        self.add_error(error)
 
     def add_notification(
         self,

@@ -23,6 +23,7 @@ from .presentation_state import PageId, PresentationState
 from .presentation_store import PresentationStore
 from .reference_controller import ReferenceController
 from .report_controller import ReportController
+from .settings_controller import SettingsController
 from .shell_surfaces import (
     NotificationSurface,
     OperationStatusSurface,
@@ -63,6 +64,11 @@ class MainWindow(QMainWindow):
             executor,
         )
         self._report_controller = ReportController(
+            application_adapter,
+            presentation_store,
+            executor,
+        )
+        self._settings_controller = SettingsController(
             application_adapter,
             presentation_store,
             executor,
@@ -140,6 +146,10 @@ class MainWindow(QMainWindow):
         self._page_host.report_open_directory_requested.connect(
             self._report_controller.open_directory
         )
+        self._page_host.settings_refresh_requested.connect(
+            self._settings_controller.refresh_settings
+        )
+        self._page_host.runtime_refresh_requested.connect(self._settings_controller.refresh_runtime)
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation
@@ -166,6 +176,7 @@ class MainWindow(QMainWindow):
         self._navigation.currentItemChanged.connect(self._navigate)
         self._state_store.subscribe(self._render_application_state)
         self._presentation_store.subscribe(self._render_presentation_state)
+        self._settings_controller.refresh_settings()
 
     def show_error(self, error: UiError) -> None:
         self.statusBar().showMessage(error.user_message)

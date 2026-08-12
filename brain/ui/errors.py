@@ -117,6 +117,30 @@ def report_open_error() -> UiError:
     )
 
 
+def settings_error(exc: BaseException, *, operation_id: str | None = None) -> UiError:
+    return UiError(
+        code="settings_snapshot_failed",
+        category=UiErrorCategory.CONFIGURATION,
+        user_message="The effective application settings could not be loaded.",
+        technical_detail=type(exc).__name__,
+        retryable=True,
+        recovery_actions=(RecoveryAction("retry", "Try again"),),
+        operation_id=operation_id,
+    )
+
+
+def runtime_refresh_error(exc: BaseException, *, operation_id: str) -> UiError:
+    return UiError(
+        code="runtime_status_refresh_failed",
+        category=UiErrorCategory.CONFIGURATION,
+        user_message="Runtime status could not be refreshed.",
+        technical_detail=type(exc).__name__,
+        retryable=True,
+        recovery_actions=(RecoveryAction("retry", "Refresh again"),),
+        operation_id=operation_id,
+    )
+
+
 ExceptionHook = Callable[[type[BaseException], BaseException, TracebackType | None], None]
 
 

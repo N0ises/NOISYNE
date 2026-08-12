@@ -141,16 +141,100 @@ class V1ApplicationAdapter:
     def settings_snapshot(self) -> SettingsSnapshot:
         from brain.infrastructure.config import settings
 
+        read_only = "V1 has no validated user-settings persistence contract."
+
+        def value(
+            key: str,
+            raw_value: str | float | bool | Path,
+            category: str,
+            label: str,
+        ) -> SettingValue:
+            return SettingValue(
+                key,
+                str(raw_value) if isinstance(raw_value, Path) else raw_value,
+                category=category,
+                display_name=label,
+                read_only_reason=read_only,
+            )
+
         values = (
-            SettingValue("runtime.device", settings.runtime.device),
-            SettingValue("runtime.dtype", settings.runtime.dtype),
-            SettingValue("runtime.model_root", str(settings.runtime.model_root)),
-            SettingValue("runtime.report_dir", str(settings.runtime.report_dir)),
-            SettingValue("audio.sample_rate", settings.audio.sample_rate),
-            SettingValue("audio.max_duration_seconds", settings.audio.max_duration_seconds),
-            SettingValue("llm.provider", settings.llm.provider),
-            SettingValue("llm.model", settings.llm.model),
-            SettingValue("llm.base_url", settings.llm.base_url),
+            value("llm.provider", settings.llm.provider, "provider", "Provider"),
+            value("llm.model", settings.llm.model, "provider", "Configured model"),
+            value("llm.base_url", settings.llm.base_url, "provider", "Base URL"),
+            value("llm.temperature", settings.llm.temperature, "provider", "Temperature"),
+            value("llm.top_p", settings.llm.top_p, "provider", "Top P"),
+            value("llm.max_tokens", settings.llm.max_tokens, "provider", "Maximum tokens"),
+            value("runtime.device", settings.runtime.device, "runtime", "Requested device"),
+            value("runtime.dtype", settings.runtime.dtype, "runtime", "Requested data type"),
+            value("runtime.lazy_load", settings.runtime.lazy_load, "runtime", "Lazy loading"),
+            value("runtime.model_root", settings.runtime.model_root, "runtime", "Model root"),
+            value("models.clap.name", settings.models.clap.name, "models", "CLAP model"),
+            value("models.qwen.name", settings.models.qwen.name, "models", "Qwen model"),
+            value(
+                "models.bge_reranker.name",
+                settings.models.bge_reranker.name,
+                "models",
+                "Reranker model",
+            ),
+            value(
+                "models.text_embedding.name",
+                settings.models.text_embedding.name,
+                "models",
+                "Text embedding model",
+            ),
+            value("audio.sample_rate", settings.audio.sample_rate, "audio", "Sample rate"),
+            value(
+                "audio.clap_target_sample_rate",
+                settings.audio.clap_target_sample_rate,
+                "audio",
+                "CLAP target sample rate",
+            ),
+            value(
+                "audio.max_duration_seconds",
+                settings.audio.max_duration_seconds,
+                "audio",
+                "Maximum duration (seconds)",
+            ),
+            value("audio.n_fft", settings.audio.n_fft, "audio", "FFT size"),
+            value("audio.hop_length", settings.audio.hop_length, "audio", "Hop length"),
+            value("audio.n_mels", settings.audio.n_mels, "audio", "Mel bands"),
+            value("audio.n_mfcc", settings.audio.n_mfcc, "audio", "MFCC count"),
+            value("audio.n_chroma", settings.audio.n_chroma, "audio", "Chroma bins"),
+            value("chroma.path", settings.chroma.path, "knowledge", "Knowledge index path"),
+            value(
+                "chroma.collection",
+                settings.chroma.collection,
+                "knowledge",
+                "Knowledge collection",
+            ),
+            value(
+                "embedding.model_path",
+                settings.embedding.model_path,
+                "knowledge",
+                "Embedding model",
+            ),
+            value(
+                "embedding.device",
+                settings.embedding.device,
+                "knowledge",
+                "Embedding device",
+            ),
+            value(
+                "runtime.report_dir",
+                settings.runtime.report_dir,
+                "reports",
+                "Report directory",
+            ),
+            value(
+                "runtime.model_cache_dir",
+                settings.runtime.model_cache_dir,
+                "storage",
+                "Model cache directory",
+            ),
+            value("runtime.cache_dir", settings.runtime.cache_dir, "storage", "Cache directory"),
+            value("runtime.log_dir", settings.runtime.log_dir, "logging", "Backend log directory"),
+            value("logging.level", settings.logging.level, "logging", "Backend log level"),
+            value("logging.format", settings.logging.format, "logging", "Backend log format"),
         )
         return SettingsSnapshot(
             revision="packaged-v1",

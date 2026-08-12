@@ -118,6 +118,9 @@ class SettingValue:
     value: str | int | float | bool
     writable: bool = False
     restart_required: bool = False
+    category: str = "application"
+    display_name: str = ""
+    read_only_reason: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

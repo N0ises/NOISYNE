@@ -41,6 +41,7 @@ from brain.ui.presentation_state import (
 from brain.ui.presentation_store import PresentationStore
 from brain.ui.reference_page import ReferencePage
 from brain.ui.reports_page import ReportsPage
+from brain.ui.settings_page import SettingsPage
 from brain.ui.state import ApplicationStateStore
 
 
@@ -87,6 +88,7 @@ def test_implemented_pages_are_real_while_later_pages_are_placeholders(qtbot) ->
     assert isinstance(host.page(PageId.INTELLIGENCE), IntelligencePage)
     assert isinstance(host.page(PageId.KNOWLEDGE), KnowledgePage)
     assert isinstance(host.page(PageId.REPORTS), ReportsPage)
+    assert isinstance(host.page(PageId.SETTINGS), SettingsPage)
     assert all(
         isinstance(host.page(page_id), PlaceholderPage)
         for page_id in NAVIGATION_ORDER
@@ -98,6 +100,7 @@ def test_implemented_pages_are_real_while_later_pages_are_placeholders(qtbot) ->
             PageId.INTELLIGENCE,
             PageId.KNOWLEDGE,
             PageId.REPORTS,
+            PageId.SETTINGS,
         }
     )
 
