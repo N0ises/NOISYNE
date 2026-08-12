@@ -5,6 +5,7 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
+from .brand_resources import DARK_LOCKUP, DARK_SYMBOL, brand_pixmap
 from .contracts import ProductMetadata
 from .design_system.components import (
     ButtonVariant,
@@ -40,10 +41,21 @@ class ProductIdentity(QFrame):
         self.setAccessibleName(f"{metadata.display_name}, version {metadata.version}")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(tokens.spacing.xxs)
+        layout.setSpacing(tokens.spacing.xs)
+        self.brand_mark = QLabel()
+        self.brand_mark.setObjectName("productBrandLockup")
+        self.brand_mark.setAccessibleName(metadata.display_name)
+        lockup = brand_pixmap(DARK_LOCKUP, width=164, height=34)
+        if lockup is None:
+            lockup = brand_pixmap(DARK_SYMBOL, width=34, height=34)
+        if lockup is not None:
+            self.brand_mark.setPixmap(lockup)
+            self.brand_mark.setFixedHeight(34)
+            layout.addWidget(self.brand_mark)
         self.name_label = QLabel(metadata.display_name)
         self.name_label.setObjectName("productDisplayName")
         self.name_label.setProperty("textRole", "title")
+        self.name_label.setVisible(lockup is None)
         version = QLabel(f"Version {metadata.version}")
         version.setProperty("textRole", "caption")
         layout.addWidget(self.name_label)

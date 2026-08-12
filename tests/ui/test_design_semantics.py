@@ -28,6 +28,6 @@ def test_operation_semantic_mapping(state, expected) -> None:
 
 
 def test_runtime_result_and_availability_mappings_remain_explicit() -> None:
-    assert runtime_visual_state(RuntimePresentationPhase.DEGRADED) is VisualState.WARNING
+    assert runtime_visual_state(RuntimePresentationPhase.DEGRADED) is VisualState.DEGRADED
     assert result_visual_state(ResultPhase.UNAVAILABLE) is VisualState.UNAVAILABLE
-    assert availability_visual_state(Availability.UNKNOWN) is VisualState.IDLE
+    assert availability_visual_state(Availability.UNKNOWN) is VisualState.UNKNOWN

@@ -1,4 +1,4 @@
-"""Qt-free design tokens for temporary neutral desktop branding."""
+"""Qt-free NØISYNE design tokens mapped from the approved brand package."""
 
 from __future__ import annotations
 
@@ -7,31 +7,40 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True)
 class ColorTokens:
-    background: str = "#111318"
-    surface: str = "#181b22"
-    surface_raised: str = "#20242d"
-    surface_overlay: str = "#292e39"
-    text_primary: str = "#f2f4f8"
-    text_secondary: str = "#b7bdc9"
-    text_muted: str = "#8991a1"
-    border: str = "#343a47"
-    divider: str = "#2b303b"
-    accent: str = "#8ea8ff"
-    accent_hover: str = "#a6b9ff"
-    accent_pressed: str = "#718ee8"
-    accent_text: str = "#10131a"
-    success: str = "#5fc995"
-    success_surface: str = "#19382b"
-    warning: str = "#e2b866"
-    warning_surface: str = "#3b301b"
-    error: str = "#ef7d86"
-    error_surface: str = "#402127"
-    info: str = "#72b9e8"
-    info_surface: str = "#1c3342"
-    focus: str = "#b5c5ff"
-    disabled_surface: str = "#242832"
-    disabled_text: str = "#666d7a"
-    selection: str = "#34466f"
+    background: str = "#0A0A0A"
+    surface: str = "#141414"
+    surface_raised: str = "#1E1E1E"
+    surface_overlay: str = "#262626"
+    text_primary: str = "#EDEDED"
+    text_secondary: str = "#A3A3A3"
+    text_muted: str = "#737373"
+    border: str = "#2E2E2E"
+    divider: str = "#1F1F1F"
+    border_strong: str = "#404040"
+    accent: str = "#6366F1"
+    accent_hover: str = "#818CF8"
+    accent_pressed: str = "#4F46E5"
+    accent_text: str = "#EDEDED"
+    success: str = "#10B981"
+    success_surface: str = "#062A20"
+    warning: str = "#F59E0B"
+    warning_surface: str = "#352300"
+    error: str = "#EF4444"
+    error_surface: str = "#351111"
+    info: str = "#3B82F6"
+    info_surface: str = "#081A35"
+    unavailable: str = "#525252"
+    unknown: str = "#8B5CF6"
+    unknown_surface: str = "#251449"
+    running: str = "#3B82F6"
+    degraded: str = "#F97316"
+    degraded_surface: str = "#381704"
+    intelligence: str = "#6366F1"
+    intelligence_surface: str = "#1B1C46"
+    focus: str = "#8B5CF6"
+    disabled_surface: str = "#1E1E1E"
+    disabled_text: str = "#525252"
+    selection: str = "#282950"
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,20 +48,21 @@ class SpacingTokens:
     xxs: int = 2
     xs: int = 4
     sm: int = 8
-    md: int = 12
-    lg: int = 16
-    xl: int = 24
-    xxl: int = 32
+    md: int = 16
+    lg: int = 24
+    xl: int = 32
+    xxl: int = 40
     xxxl: int = 48
 
 
 @dataclass(frozen=True, slots=True)
 class TypographyTokens:
-    family: str = "Segoe UI"
-    caption_size: int = 11
-    body_size: int = 13
-    label_size: int = 13
-    title_size: int = 18
+    family: str = '"Geist", "Segoe UI", sans-serif'
+    mono_family: str = '"Geist Mono", "Consolas", monospace'
+    caption_size: int = 12
+    body_size: int = 14
+    label_size: int = 14
+    title_size: int = 20
     page_title_size: int = 24
     metric_size: int = 26
     regular_weight: int = 400
@@ -63,16 +73,16 @@ class TypographyTokens:
 @dataclass(frozen=True, slots=True)
 class RadiusTokens:
     small: int = 4
-    medium: int = 8
-    large: int = 12
+    medium: int = 6
+    large: int = 8
     pill: int = 999
 
 
 @dataclass(frozen=True, slots=True)
 class ControlTokens:
-    compact_height: int = 28
-    standard_height: int = 36
-    large_height: int = 44
+    compact_height: int = 24
+    standard_height: int = 32
+    large_height: int = 40
     minimum_touch_target: int = 32
     sidebar_width: int = 196
     dialog_minimum_width: int = 380

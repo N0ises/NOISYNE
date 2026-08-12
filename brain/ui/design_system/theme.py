@@ -18,7 +18,7 @@ def build_stylesheet(tokens: DesignTokens = DEFAULT_TOKENS) -> str:
 QWidget {{
     background-color: {c.background};
     color: {c.text_primary};
-    font-family: \"{t.family}\";
+    font-family: {t.family};
     font-size: {t.body_size}px;
     selection-background-color: {c.selection};
 }}
@@ -37,13 +37,14 @@ QLabel[textRole="muted"], QLabel[textRole="caption"] {{
 QLabel[textRole="metric"] {{
     color: {c.text_primary}; font-size: {t.metric_size}px; font-weight: {t.strong_weight};
 }}
+QLabel[textRole="technical"] {{ font-family: {t.mono_family}; color: {c.text_secondary}; }}
 QFrame[component="card"], QFrame[component="panel"], QFrame[component="resultSection"] {{
     background-color: {c.surface}; border: {interaction.border_width}px solid {c.border};
     border-radius: {r.large}px;
 }}
 QFrame[component="panel"] {{ background-color: {c.surface_raised}; }}
 QPushButton {{
-    min-height: {control.standard_height}px; padding: 0 {s.lg}px;
+    min-height: {control.standard_height}px; padding: 0 {s.md}px;
     border: {interaction.border_width}px solid {c.border}; border-radius: {r.medium}px;
     background-color: {c.surface_raised}; color: {c.text_primary};
     font-weight: {t.medium_weight};
@@ -107,13 +108,19 @@ QProgressBar::chunk {{ background-color: {c.accent}; border-radius: {r.small}px;
 QLabel[status="idle"], QLabel[status="cancelled"], QLabel[status="unavailable"] {{
     color: {c.text_secondary}; background-color: {c.disabled_surface};
 }}
+QLabel[status="unavailable"] {{ color: {c.text_primary}; background-color: {c.unavailable}; }}
+QLabel[status="unknown"] {{ color: {c.unknown}; background-color: {c.unknown_surface}; }}
 QLabel[status="loading"], QLabel[status="running"], QLabel[status="info"] {{
-    color: {c.info}; background-color: {c.info_surface};
+    color: {c.running}; background-color: {c.info_surface};
 }}
 QLabel[status="ready"], QLabel[status="success"] {{
     color: {c.success}; background-color: {c.success_surface};
 }}
 QLabel[status="warning"] {{ color: {c.warning}; background-color: {c.warning_surface}; }}
+QLabel[status="degraded"] {{ color: {c.degraded}; background-color: {c.degraded_surface}; }}
+QLabel[status="intelligence"] {{
+    color: {c.intelligence}; background-color: {c.intelligence_surface};
+}}
 QLabel[status="error"] {{ color: {c.error}; background-color: {c.error_surface}; }}
 QLabel[status="disabled"] {{ color: {c.disabled_text}; background-color: {c.disabled_surface}; }}
 QLabel[component="statusBadge"] {{
@@ -122,6 +129,9 @@ QLabel[component="statusBadge"] {{
 QFrame[semantic="info"] {{ border-left: {interaction.focus_width}px solid {c.info}; }}
 QFrame[semantic="warning"] {{ border-left: {interaction.focus_width}px solid {c.warning}; }}
 QFrame[semantic="error"] {{ border-left: {interaction.focus_width}px solid {c.error}; }}
+QFrame[semantic="intelligence"] {{
+    border-left: {interaction.focus_width}px solid {c.intelligence};
+}}
 QListWidget {{ background-color: {c.surface}; border: 0; padding: {s.sm}px; outline: 0; }}
 QListWidget::item {{ padding: {s.md}px; border-radius: {r.medium}px; color: {c.text_secondary}; }}
 QListWidget::item:hover {{ background-color: {c.surface_raised}; color: {c.text_primary}; }}

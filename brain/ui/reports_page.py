@@ -51,6 +51,7 @@ class ReportsPage(QScrollArea):
         self.setObjectName("page-reports")
         self.setAccessibleName("Reports workspace")
         self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self._tokens = tokens
         self._reports_signature: tuple = ()

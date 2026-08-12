@@ -30,6 +30,7 @@ class IntelligencePage(QScrollArea):
         self.setObjectName("page-intelligence")
         self.setAccessibleName("Intelligence workspace")
         self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._tokens = tokens
         content = QWidget()
         self._layout = QVBoxLayout(content)
@@ -128,6 +129,7 @@ class IntelligencePage(QScrollArea):
         self._add_capability(layout, capability)
         if reasoning:
             card = Card("AI reasoning / interpretation", tokens=self._tokens)
+            card.setProperty("semantic", "intelligence")
             text = QLabel(reasoning)
             text.setObjectName("reasoningText")
             text.setWordWrap(True)

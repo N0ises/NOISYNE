@@ -156,7 +156,7 @@ def test_capability_lifecycle_and_availability_remain_separate(
     if availability is Availability.UNAVAILABLE:
         assert badge.visual_state is VisualState.UNAVAILABLE
     if availability is Availability.DEGRADED:
-        assert badge.visual_state is VisualState.WARNING
+        assert badge.visual_state is VisualState.DEGRADED
 
 
 def test_unknown_capability_remains_unknown_with_reason(qtbot) -> None:
@@ -172,7 +172,7 @@ def test_unknown_capability_remains_unknown_with_reason(qtbot) -> None:
     badge = dashboard.findChild(CapabilityStatusIndicator).findChild(StatusBadge)
 
     assert badge.text() == "unknown"
-    assert badge.visual_state is VisualState.IDLE
+    assert badge.visual_state is VisualState.UNKNOWN
     assert "Not checked" in _labels(dashboard)
 
 
@@ -180,7 +180,7 @@ def test_unknown_capability_remains_unknown_with_reason(qtbot) -> None:
     ("availability", "visual_state"),
     [
         (Availability.UNAVAILABLE, VisualState.UNAVAILABLE),
-        (Availability.UNKNOWN, VisualState.IDLE),
+        (Availability.UNKNOWN, VisualState.UNKNOWN),
     ],
 )
 def test_provider_name_does_not_imply_availability(qtbot, availability, visual_state) -> None:

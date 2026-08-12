@@ -147,10 +147,10 @@ class Card(QFrame):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.content_layout = QVBoxLayout(self)
         self.content_layout.setContentsMargins(
-            tokens.spacing.lg,
-            tokens.spacing.lg,
-            tokens.spacing.lg,
-            tokens.spacing.lg,
+            tokens.spacing.md,
+            tokens.spacing.md,
+            tokens.spacing.md,
+            tokens.spacing.md,
         )
         self.content_layout.setSpacing(tokens.spacing.md)
         if title:
@@ -570,6 +570,8 @@ class Sidebar(QListWidget):
     ) -> None:
         super().__init__(parent)
         self.setFixedWidth(tokens.controls.sidebar_width)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.setAccessibleName("Primary navigation")
 
 

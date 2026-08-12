@@ -63,6 +63,7 @@ class SettingsPage(QScrollArea):
         self.setObjectName("page-settings")
         self.setAccessibleName("Settings and Runtime page")
         self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self._tokens = tokens
         self._settings_signature: tuple = ()

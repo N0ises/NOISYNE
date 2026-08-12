@@ -12,6 +12,7 @@ from PySide6.QtCore import QCoreApplication, QTimer
 from PySide6.QtWidgets import QApplication
 
 from .adapters import V1ApplicationAdapter
+from .brand_resources import application_icon
 from .contracts import DesktopApplicationAdapter, ProductMetadata, RuntimeStatus, UiError
 from .design_system.theme import apply_theme
 from .errors import ExceptionBoundary, unexpected_error
@@ -53,10 +54,14 @@ def create_application(metadata: ProductMetadata) -> QApplication:
         raise TypeError("A non-GUI QCoreApplication already exists.")
 
     QCoreApplication.setApplicationName(metadata.application_id)
+    application.setApplicationDisplayName(metadata.display_name)
     QCoreApplication.setApplicationVersion(metadata.version)
     QCoreApplication.setOrganizationName(metadata.organization_name)
     if metadata.organization_domain:
         QCoreApplication.setOrganizationDomain(metadata.organization_domain)
+    icon = application_icon()
+    if not icon.isNull():
+        application.setWindowIcon(icon)
     apply_theme(application)
     return application
 
@@ -71,7 +76,11 @@ def build_main_window(
     ui_store = presentation_store or PresentationStore()
     view_state = build_shell_view_state(adapter.product_metadata(), ui_store.state.navigation)
     worker_executor = executor or WorkerExecutor()
-    return MainWindow(view_state, store, ui_store, adapter, worker_executor)
+    window = MainWindow(view_state, store, ui_store, adapter, worker_executor)
+    icon = application_icon()
+    if not icon.isNull():
+        window.setWindowIcon(icon)
+    return window
 
 
 def run(

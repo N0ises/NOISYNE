@@ -41,6 +41,7 @@ class KnowledgePage(QScrollArea):
         self.setObjectName("page-knowledge")
         self.setAccessibleName("Knowledge search page")
         self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self._tokens = tokens
         self._query = KnowledgeQueryState()

@@ -85,6 +85,7 @@ soundbrain-desktop = "brain.ui.app:main"
 
 [tool.setuptools.package-data]
 "brain.infrastructure.config" = ["resources/*.yaml"]
+"brain.ui.resources" = ["brand/noisyne/*.svg", "brand/noisyne/*.png"]
 
 [tool.setuptools.packages.find]
 include = ["brain*"]

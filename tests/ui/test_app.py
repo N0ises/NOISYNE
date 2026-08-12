@@ -13,6 +13,7 @@ def test_create_application_uses_stable_metadata(product_metadata) -> None:
     application = create_application(product_metadata)
 
     assert application.applicationName() == product_metadata.application_id
+    assert application.applicationDisplayName() == product_metadata.display_name
     assert application.applicationVersion() == product_metadata.version
     assert application.organizationName() == product_metadata.organization_name
 

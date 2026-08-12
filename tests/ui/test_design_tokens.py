@@ -13,6 +13,7 @@ def test_tokens_cover_required_design_roles() -> None:
     assert tokens.colors.surface_raised
     assert tokens.colors.text_primary
     assert tokens.colors.border
+    assert tokens.colors.border_strong
     assert tokens.colors.accent_hover
     assert tokens.colors.accent_pressed
     assert tokens.colors.focus
@@ -21,8 +22,16 @@ def test_tokens_cover_required_design_roles() -> None:
     assert tokens.colors.warning
     assert tokens.colors.error
     assert tokens.colors.info
+    assert tokens.colors.unavailable
+    assert tokens.colors.unknown
+    assert tokens.colors.running
+    assert tokens.colors.degraded
+    assert tokens.colors.intelligence
     assert tokens.spacing.xxs < tokens.spacing.sm < tokens.spacing.xl
     assert tokens.typography.caption_size < tokens.typography.page_title_size
+    assert "Geist" in tokens.typography.family
+    assert "Segoe UI" in tokens.typography.family
+    assert "Consolas" in tokens.typography.mono_family
     assert tokens.radius.small < tokens.radius.large
     assert tokens.controls.compact_height < tokens.controls.large_height
     assert tokens.icons.small < tokens.icons.large

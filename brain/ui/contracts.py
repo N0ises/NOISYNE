@@ -68,6 +68,8 @@ class ProductMetadata:
     organization_name: str
     organization_domain: str | None
     application_id: str
+    ascii_name: str = "NOISYNE"
+    technical_identity: str = "SoundBrain"
 
 
 @dataclass(frozen=True, slots=True)

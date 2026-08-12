@@ -50,6 +50,7 @@ class ReferencePage(QScrollArea):
         self.setObjectName("page-references")
         self.setAccessibleName("Reference Intelligence page")
         self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setAcceptDrops(True)
         self._tokens = tokens

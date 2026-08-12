@@ -15,11 +15,14 @@ class VisualState(str, Enum):
     RUNNING = "running"
     SUCCESS = "success"
     WARNING = "warning"
+    DEGRADED = "degraded"
     ERROR = "error"
     CANCELLED = "cancelled"
     UNAVAILABLE = "unavailable"
     DISABLED = "disabled"
     INFO = "info"
+    UNKNOWN = "unknown"
+    INTELLIGENCE = "intelligence"
 
 
 def operation_visual_state(state: OperationState | None) -> VisualState:
@@ -50,9 +53,9 @@ def result_visual_state(phase: ResultPhase) -> VisualState:
 def runtime_visual_state(phase: RuntimePresentationPhase) -> VisualState:
     return {
         RuntimePresentationPhase.LOADING: VisualState.LOADING,
-        RuntimePresentationPhase.UNKNOWN: VisualState.IDLE,
+        RuntimePresentationPhase.UNKNOWN: VisualState.UNKNOWN,
         RuntimePresentationPhase.READY: VisualState.READY,
-        RuntimePresentationPhase.DEGRADED: VisualState.WARNING,
+        RuntimePresentationPhase.DEGRADED: VisualState.DEGRADED,
         RuntimePresentationPhase.UNAVAILABLE: VisualState.UNAVAILABLE,
     }[phase]
 
@@ -60,7 +63,7 @@ def runtime_visual_state(phase: RuntimePresentationPhase) -> VisualState:
 def availability_visual_state(availability: Availability) -> VisualState:
     return {
         Availability.AVAILABLE: VisualState.READY,
-        Availability.DEGRADED: VisualState.WARNING,
+        Availability.DEGRADED: VisualState.DEGRADED,
         Availability.UNAVAILABLE: VisualState.UNAVAILABLE,
-        Availability.UNKNOWN: VisualState.IDLE,
+        Availability.UNKNOWN: VisualState.UNKNOWN,
     }[availability]
