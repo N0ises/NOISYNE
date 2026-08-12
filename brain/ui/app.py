@@ -17,8 +17,13 @@ from .errors import ExceptionBoundary
 from .logging_setup import configure_logging
 from .main_window import MainWindow
 from .packaging_probe import run_packaging_probe
+from .paths import session_state_path
 from .presentation import build_shell_view_state
+from .presentation_state import NotificationLevel, PresentationState
+from .presentation_store import PresentationStore
+from .session_persistence import SessionRepository
 from .state import ApplicationLifecycle, ApplicationStateStore
+from .worker_binding import WorkerStateBinding
 from .workers import WorkerExecutor
 
 logger = logging.getLogger(__name__)
@@ -57,15 +62,19 @@ def create_application(metadata: ProductMetadata) -> QApplication:
 def build_main_window(
     adapter: DesktopApplicationAdapter,
     state_store: ApplicationStateStore | None = None,
+    presentation_store: PresentationStore | None = None,
 ) -> MainWindow:
     store = state_store or ApplicationStateStore()
-    return MainWindow(build_shell_view_state(adapter.product_metadata()), store)
+    ui_store = presentation_store or PresentationStore()
+    view_state = build_shell_view_state(adapter.product_metadata(), ui_store.state.navigation)
+    return MainWindow(view_state, store, ui_store)
 
 
 def run(
     argv: Sequence[str] | None = None,
     *,
     adapter: DesktopApplicationAdapter | None = None,
+    session_repository: SessionRepository | None = None,
 ) -> int:
     options = _parser().parse_args(argv)
     application_adapter = adapter or V1ApplicationAdapter()
@@ -73,8 +82,14 @@ def run(
     application = create_application(metadata)
     configure_logging()
 
+    repository = session_repository or SessionRepository(session_state_path())
+    loaded = repository.load()
+    presentation_store = PresentationStore(PresentationState.from_session(loaded.session))
+    if loaded.warning:
+        presentation_store.add_notification(NotificationLevel.WARNING, loaded.warning)
+
     state_store = ApplicationStateStore()
-    window = build_main_window(application_adapter, state_store)
+    window = build_main_window(application_adapter, state_store, presentation_store)
     boundary = ExceptionBoundary(window.show_error)
     boundary.install()
     state_store.set_lifecycle(ApplicationLifecycle.READY, "Ready")
@@ -91,12 +106,14 @@ def run(
 
     if options.packaging_probe is not None:
         executor = WorkerExecutor()
-        task = executor.submit(
+        task = executor.create(
             "packaging_probe",
             lambda: run_packaging_probe(options.packaging_probe, metadata),
         )
+        WorkerStateBinding(presentation_store).bind(task)
         task.signals.failed.connect(fail_probe)
         task.signals.finished.connect(lambda _operation_id: window.close())
+        executor.start(task)
     elif options.smoke_test:
         QTimer.singleShot(100, window.close)
 
@@ -106,6 +123,10 @@ def run(
         if executor is not None:
             executor.wait_for_done()
         boundary.uninstall()
+        try:
+            repository.save(presentation_store.state.session)
+        except OSError:
+            logger.exception("Desktop session state could not be saved.")
     return exit_code or qt_exit_code
 
 

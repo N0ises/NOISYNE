@@ -13,3 +13,8 @@ def user_data_directory() -> Path:
     if not location:
         raise RuntimeError("Qt could not resolve a writable application data directory.")
     return Path(location)
+
+
+def session_state_path() -> Path:
+    """Return the versioned user-scoped desktop session path."""
+    return user_data_directory() / "state" / "session-v1.json"

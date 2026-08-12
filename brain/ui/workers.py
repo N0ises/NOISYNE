@@ -57,12 +57,20 @@ class WorkerExecutor(QObject):
         self._active: dict[str, WorkerTask] = {}
 
     def submit(self, kind: str, function: Callable[[], Any]) -> WorkerTask:
+        task = self.create(kind, function)
+        self.start(task)
+        return task
+
+    def create(self, kind: str, function: Callable[[], Any]) -> WorkerTask:
+        """Create and retain a task so UI bindings can be attached before it starts."""
         operation_id = uuid4().hex
         task = WorkerTask(operation_id, kind, function)
         self._active[operation_id] = task
         task.signals.finished.connect(self._active.pop)
-        self._pool.start(task)
         return task
+
+    def start(self, task: WorkerTask) -> None:
+        self._pool.start(task)
 
     def wait_for_done(self, timeout_ms: int = -1) -> bool:
         return self._pool.waitForDone(timeout_ms)
