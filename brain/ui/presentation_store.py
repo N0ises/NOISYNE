@@ -167,6 +167,9 @@ class PresentationStore:
     def set_runtime_loading(self) -> None:
         self._publish(replace(self._state, runtime=RuntimePresentationState.loading()))
 
+    def set_runtime_unknown(self) -> None:
+        self._publish(replace(self._state, runtime=RuntimePresentationState()))
+
     def set_runtime_status(self, status: RuntimeStatus) -> None:
         self._publish(replace(self._state, runtime=RuntimePresentationState.from_status(status)))
 

@@ -22,6 +22,8 @@ def test_qt_and_presentation_modules_do_not_import_deep_backend() -> None:
         ui_root / "presentation.py",
         ui_root / "presentation_state.py",
         ui_root / "presentation_store.py",
+        ui_root / "pages.py",
+        ui_root / "shell_surfaces.py",
         ui_root / "session_persistence.py",
         ui_root / "state.py",
         ui_root / "worker_binding.py",

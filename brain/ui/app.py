@@ -12,9 +12,9 @@ from PySide6.QtCore import QCoreApplication, QTimer
 from PySide6.QtWidgets import QApplication
 
 from .adapters import V1ApplicationAdapter
-from .contracts import DesktopApplicationAdapter, ProductMetadata, UiError
+from .contracts import DesktopApplicationAdapter, ProductMetadata, RuntimeStatus, UiError
 from .design_system.theme import apply_theme
-from .errors import ExceptionBoundary
+from .errors import ExceptionBoundary, unexpected_error
 from .logging_setup import configure_logging
 from .main_window import MainWindow
 from .packaging_probe import run_packaging_probe
@@ -97,8 +97,27 @@ def run(
     state_store.set_lifecycle(ApplicationLifecycle.READY, "Ready")
     window.show()
 
-    executor: WorkerExecutor | None = None
+    executor = WorkerExecutor()
     exit_code = 0
+
+    def accept_runtime_status(result: object) -> None:
+        if isinstance(result, RuntimeStatus):
+            presentation_store.set_runtime_status(result)
+            return
+        presentation_store.set_runtime_unknown()
+        presentation_store.add_error(
+            unexpected_error(TypeError("Adapter returned an invalid runtime status DTO."))
+        )
+
+    def fail_runtime_status(error: UiError) -> None:
+        presentation_store.set_runtime_unknown()
+        presentation_store.add_error(error)
+
+    presentation_store.set_runtime_loading()
+    runtime_task = executor.create("runtime_status", application_adapter.runtime_status)
+    runtime_task.signals.succeeded.connect(accept_runtime_status)
+    runtime_task.signals.failed.connect(fail_runtime_status)
+    executor.start(runtime_task)
 
     def fail_probe(error: UiError) -> None:
         nonlocal exit_code
@@ -107,7 +126,6 @@ def run(
         window.show_error(error)
 
     if options.packaging_probe is not None:
-        executor = WorkerExecutor()
         task = executor.create(
             "packaging_probe",
             lambda: run_packaging_probe(options.packaging_probe, metadata),
@@ -122,8 +140,7 @@ def run(
     try:
         qt_exit_code = application.exec()
     finally:
-        if executor is not None:
-            executor.wait_for_done()
+        executor.wait_for_done()
         boundary.uninstall()
         try:
             repository.save(presentation_store.state.session)

@@ -1,10 +1,11 @@
-"""Minimal Qt Widgets shell bound to the Sprint 2 presentation state."""
+"""Persistent Qt application shell bound to presentation-owned state."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSignalBlocker, Qt, Signal
 from PySide6.QtWidgets import (
-    QLabel,
+    QFrame,
+    QHBoxLayout,
     QListWidgetItem,
     QMainWindow,
     QVBoxLayout,
@@ -12,16 +13,24 @@ from PySide6.QtWidgets import (
 )
 
 from .contracts import UiError
-from .design_system.components import AppShell, PageHeader, Sidebar
-from .design_system.gallery import ComponentGallery
+from .design_system.components import AppShell, DesignButton, Sidebar
 from .design_system.tokens import DEFAULT_TOKENS
+from .pages import PageHost
 from .presentation import ShellViewState
 from .presentation_state import PageId, PresentationState
 from .presentation_store import PresentationStore
+from .shell_surfaces import (
+    NotificationSurface,
+    OperationStatusSurface,
+    ProductIdentity,
+    RuntimeStatusSurface,
+)
 from .state import ApplicationLifecycle, ApplicationState, ApplicationStateStore
 
 
 class MainWindow(QMainWindow):
+    recovery_action_requested = Signal(str, str)
+
     def __init__(
         self,
         view_state: ShellViewState,
@@ -31,7 +40,6 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._state_store = state_store
         self._presentation_store = presentation_store
-        self._navigation_items = view_state.navigation_items
         tokens = DEFAULT_TOKENS
         self.setObjectName("desktopMainWindow")
         self.setWindowTitle(view_state.window_title)
@@ -46,35 +54,77 @@ class MainWindow(QMainWindow):
 
         self._navigation = Sidebar(tokens=tokens)
         self._navigation.setObjectName("primaryNavigation")
+        self._navigation.setMinimumWidth(0)
+        self._navigation.setMaximumWidth(16777215)
         for navigation_item in view_state.navigation_items:
             item = QListWidgetItem(navigation_item.label)
             item.setData(Qt.ItemDataRole.UserRole, navigation_item.page_id.value)
+            item.setToolTip(navigation_item.label)
             self._navigation.addItem(item)
-        self._page_header = PageHeader(view_state.heading, view_state.body, tokens=tokens)
-        self._page_header.setObjectName("workspaceHeading")
 
-        self._body = QLabel(view_state.body)
-        self._body.setObjectName("workspaceBody")
-        self._body.setWordWrap(True)
-        self._body.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-
-        workspace_layout = QVBoxLayout()
-        workspace_layout.setContentsMargins(
-            tokens.spacing.xl,
-            tokens.spacing.xl,
-            tokens.spacing.xl,
-            tokens.spacing.xl,
+        self._settings_button = DesignButton("Settings", tokens=tokens)
+        self._settings_button.setObjectName("settingsEntry")
+        self._settings_button.clicked.connect(
+            lambda _checked=False: self._presentation_store.navigate(PageId.SETTINGS)
         )
-        workspace_layout.setSpacing(tokens.spacing.lg)
-        workspace_layout.addWidget(self._page_header)
-        workspace_layout.addWidget(self._body)
-        workspace_layout.addWidget(ComponentGallery(tokens=tokens), 1)
+
+        sidebar_container = QWidget()
+        sidebar_container.setObjectName("shellSidebar")
+        sidebar_layout = QVBoxLayout(sidebar_container)
+        sidebar_layout.setContentsMargins(
+            tokens.spacing.md,
+            tokens.spacing.lg,
+            tokens.spacing.md,
+            tokens.spacing.md,
+        )
+        sidebar_layout.setSpacing(tokens.spacing.md)
+        sidebar_layout.addWidget(ProductIdentity(view_state.metadata, tokens=tokens))
+        sidebar_layout.addWidget(self._navigation, 1)
+        sidebar_layout.addWidget(self._settings_button)
+        sidebar_container.setFixedWidth(tokens.controls.sidebar_width)
+
+        self._runtime_surface = RuntimeStatusSurface(tokens=tokens)
+        self._runtime_surface.activated.connect(
+            lambda: self._presentation_store.navigate(PageId.RUNTIME_STATUS)
+        )
+        top_bar = QFrame()
+        top_bar.setObjectName("globalTopBar")
+        top_bar.setProperty("component", "panel")
+        top_layout = QHBoxLayout(top_bar)
+        top_layout.setContentsMargins(
+            tokens.spacing.lg,
+            tokens.spacing.sm,
+            tokens.spacing.lg,
+            tokens.spacing.sm,
+        )
+        top_layout.addStretch(1)
+        top_layout.addWidget(self._runtime_surface)
+
+        self._notifications = NotificationSurface(tokens=tokens)
+        self._notifications.dismissed.connect(self._presentation_store.dismiss_notification)
+        self._notifications.recovery_requested.connect(self.recovery_action_requested)
+        self._page_host = PageHost(tokens=tokens)
+        self._operation_surface = OperationStatusSurface(tokens=tokens)
+        self._operation_surface.cancel_requested.connect(
+            self._presentation_store.request_cancellation
+        )
+
         workspace = QWidget()
         workspace.setObjectName("centralWorkspace")
-        workspace.setLayout(workspace_layout)
+        workspace_layout = QVBoxLayout(workspace)
+        workspace_layout.setContentsMargins(
+            tokens.spacing.lg,
+            tokens.spacing.lg,
+            tokens.spacing.lg,
+            tokens.spacing.md,
+        )
+        workspace_layout.setSpacing(tokens.spacing.md)
+        workspace_layout.addWidget(top_bar)
+        workspace_layout.addWidget(self._notifications)
+        workspace_layout.addWidget(self._page_host, 1)
+        workspace_layout.addWidget(self._operation_surface)
 
-        self.setCentralWidget(AppShell(self._navigation, workspace, tokens=tokens))
-
+        self.setCentralWidget(AppShell(sidebar_container, workspace, tokens=tokens))
         self.statusBar().setObjectName("applicationStatus")
         self.statusBar().showMessage(view_state.status_message)
         self._navigation.currentItemChanged.connect(self._navigate)
@@ -93,16 +143,16 @@ class MainWindow(QMainWindow):
 
     def _render_presentation_state(self, state: PresentationState) -> None:
         page = state.navigation.current_page
-        label = next(item.label for item in self._navigation_items if item.page_id is page)
-        self._page_header.set_title(label)
-        self._page_header.set_subtitle(f"{label} foundation is ready.")
-        self._body.setText(f"{label} foundation is ready.")
-        for row in range(self._navigation.count()):
-            item = self._navigation.item(row)
-            if item.data(Qt.ItemDataRole.UserRole) == page.value:
-                if self._navigation.currentRow() != row:
+        self._page_host.show_page(page)
+        with QSignalBlocker(self._navigation):
+            for row in range(self._navigation.count()):
+                item = self._navigation.item(row)
+                if item.data(Qt.ItemDataRole.UserRole) == page.value:
                     self._navigation.setCurrentRow(row)
-                break
+                    break
+        self._runtime_surface.render(state.runtime)
+        self._operation_surface.render(state.operation)
+        self._notifications.render(state.notifications)
 
     def closeEvent(self, event) -> None:
         self._state_store.set_lifecycle(ApplicationLifecycle.STOPPED, "Stopped")

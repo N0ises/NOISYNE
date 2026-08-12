@@ -28,6 +28,7 @@ _PAGE_LABELS = {
 
 @dataclass(frozen=True, slots=True)
 class ShellViewState:
+    metadata: ProductMetadata
     window_title: str
     heading: str
     body: str
@@ -40,6 +41,7 @@ def build_shell_view_state(
 ) -> ShellViewState:
     available = navigation.available_pages if navigation is not None else NAVIGATION_ORDER
     return ShellViewState(
+        metadata=metadata,
         window_title=metadata.application_title,
         heading=metadata.display_name,
         body="Desktop foundation is ready.",
