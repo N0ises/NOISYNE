@@ -227,6 +227,8 @@ def test_notification_dismissal_and_structured_recovery_intent(qtbot, fake_adapt
     with qtbot.waitSignal(window.recovery_action_requested, timeout=1000) as recovery:
         next(button for button in buttons if button.text() == "Open settings").click()
     assert recovery.args == [notification_id, "open_settings"]
+    assert store.state.navigation.current_page is PageId.SETTINGS
+    assert store.state.notifications.active == ()
 
     next(button for button in buttons if button.accessibleName() == "Dismiss notification").click()
     assert store.state.notifications.active == ()
@@ -241,6 +243,22 @@ def test_global_surface_renders_info_warning_and_error_notifications(qtbot, fake
 
     assert len(toasts) == 3
     assert [toast.property("semantic") for toast in toasts] == ["info", "warning", "error"]
+
+
+def test_global_exception_error_enters_structured_notification_surface(qtbot, fake_adapter) -> None:
+    window, store = _window(qtbot, fake_adapter)
+    error = UiError(
+        "unexpected_internal_error",
+        UiErrorCategory.INTERNAL,
+        "An unexpected error occurred.",
+        technical_detail="RuntimeError",
+    )
+
+    window.show_error(error)
+
+    assert store.state.notifications.active[-1].error is error
+    assert window.statusBar().currentMessage() == error.user_message
+    assert window.findChild(NotificationToast) is not None
 
 
 def test_product_identity_uses_metadata_and_settings_entry_navigates(qtbot, fake_adapter) -> None:

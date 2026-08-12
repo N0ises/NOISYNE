@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
 
         self._notifications = NotificationSurface(tokens=tokens)
         self._notifications.dismissed.connect(self._presentation_store.dismiss_notification)
-        self._notifications.recovery_requested.connect(self.recovery_action_requested)
+        self._notifications.recovery_requested.connect(self._handle_recovery_action)
         self._page_host = PageHost(tokens=tokens)
         self._page_host.navigation_requested.connect(self._presentation_store.navigate)
         self._page_host.analysis_requested.connect(self._analysis_controller.execute)
@@ -155,6 +155,7 @@ class MainWindow(QMainWindow):
             self._presentation_store.select_references
         )
         self._page_host.session_report_selected.connect(self._presentation_store.select_report)
+        self._page_host.recovery_requested.connect(self._handle_page_recovery_action)
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation
@@ -185,6 +186,41 @@ class MainWindow(QMainWindow):
 
     def show_error(self, error: UiError) -> None:
         self.statusBar().showMessage(error.user_message)
+        self._presentation_store.add_error(error)
+
+    def _handle_recovery_action(self, notification_id: str, action_id: str) -> None:
+        handled = self._route_recovery_action(action_id)
+        if handled:
+            self._presentation_store.dismiss_notification(notification_id)
+        self.recovery_action_requested.emit(notification_id, action_id)
+
+    def _handle_page_recovery_action(self, action_id: str) -> None:
+        self._route_recovery_action(action_id)
+        self.recovery_action_requested.emit("", action_id)
+
+    def _route_recovery_action(self, action_id: str) -> bool:
+        navigation = {
+            "open_settings": PageId.SETTINGS,
+            "select_audio": PageId.ANALYZE,
+            "select_references": PageId.REFERENCES,
+            "open_knowledge": PageId.KNOWLEDGE,
+            "open_reports": PageId.REPORTS,
+            "choose_export_destination": PageId.REPORTS,
+            "open_runtime_status": PageId.RUNTIME_STATUS,
+        }
+        handled = action_id in navigation or action_id in {
+            "retry_settings",
+            "refresh_runtime",
+        }
+        if action_id in navigation:
+            self._presentation_store.navigate(navigation[action_id])
+        elif action_id == "retry_settings":
+            self._presentation_store.navigate(PageId.SETTINGS)
+            self._settings_controller.refresh_settings()
+        elif action_id == "refresh_runtime":
+            self._presentation_store.navigate(PageId.RUNTIME_STATUS)
+            self._settings_controller.refresh_runtime()
+        return handled
 
     def _render_application_state(self, state: ApplicationState) -> None:
         self.statusBar().showMessage(state.status_message)

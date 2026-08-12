@@ -199,6 +199,19 @@ class NotificationState:
         recovery_actions: tuple[RecoveryAction, ...] = (),
         created_at: datetime | None = None,
     ) -> NotificationState:
+        if error is not None:
+            duplicate = next(
+                (
+                    item
+                    for item in self.active
+                    if item.error is not None
+                    and item.error.code == error.code
+                    and item.operation_id == operation_id
+                ),
+                None,
+            )
+            if duplicate is not None:
+                return self
         sequence = self.next_sequence
         notification = Notification(
             notification_id=f"notification-{sequence}",
@@ -222,6 +235,19 @@ class NotificationState:
             self,
             active=tuple(item for item in self.active if item.notification_id != notification_id),
         )
+
+    def active_error_id(self, error: UiError) -> str | None:
+        match = next(
+            (
+                item
+                for item in self.active
+                if item.error is not None
+                and item.error.code == error.code
+                and item.operation_id == error.operation_id
+            ),
+            None,
+        )
+        return match.notification_id if match is not None else None
 
 
 class RuntimePresentationPhase(str, Enum):
@@ -287,8 +313,16 @@ class ResultPresentationState:
     error: UiError | None = None
 
     @classmethod
-    def loading(cls, operation_id: str) -> ResultPresentationState:
-        return cls(phase=ResultPhase.LOADING, operation_id=operation_id)
+    def loading(
+        cls,
+        operation_id: str,
+        retained_result: AnalysisViewResult | None = None,
+    ) -> ResultPresentationState:
+        return cls(
+            phase=ResultPhase.LOADING,
+            operation_id=operation_id,
+            result=retained_result,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -299,8 +333,16 @@ class ReferenceResultPresentationState:
     error: UiError | None = None
 
     @classmethod
-    def loading(cls, operation_id: str) -> ReferenceResultPresentationState:
-        return cls(phase=ResultPhase.LOADING, operation_id=operation_id)
+    def loading(
+        cls,
+        operation_id: str,
+        retained_result: ReferenceViewResult | None = None,
+    ) -> ReferenceResultPresentationState:
+        return cls(
+            phase=ResultPhase.LOADING,
+            operation_id=operation_id,
+            result=retained_result,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -311,8 +353,16 @@ class KnowledgeResultPresentationState:
     error: UiError | None = None
 
     @classmethod
-    def loading(cls, operation_id: str) -> KnowledgeResultPresentationState:
-        return cls(phase=ResultPhase.LOADING, operation_id=operation_id)
+    def loading(
+        cls,
+        operation_id: str,
+        retained_result: KnowledgeSearchResult | None = None,
+    ) -> KnowledgeResultPresentationState:
+        return cls(
+            phase=ResultPhase.LOADING,
+            operation_id=operation_id,
+            result=retained_result,
+        )
 
 
 @dataclass(frozen=True, slots=True)

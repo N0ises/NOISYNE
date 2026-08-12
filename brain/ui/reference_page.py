@@ -37,6 +37,7 @@ class ReferencePage(QScrollArea):
     comparison_requested = Signal(object)
     current_selected = Signal(object)
     references_selected = Signal(object)
+    recovery_requested = Signal(str)
     page_id = PageId.REFERENCES
 
     def __init__(
@@ -184,6 +185,7 @@ class ReferencePage(QScrollArea):
         self.compare_button.clicked.connect(self._confirm)
         self.view_result_button.clicked.connect(self.result_view.show)
         self.result_view.back_requested.connect(self.result_view.hide)
+        self.result_view.recovery_requested.connect(self.recovery_requested)
         self._render_form()
 
     @property
@@ -256,9 +258,12 @@ class ReferencePage(QScrollArea):
         self.status_badge.setText(text)
         self.status_badge.set_state(visual)
         self.status_message.setText(message)
-        available = (
-            result.phase in {ResultPhase.SUCCESS, ResultPhase.WARNING} and result.result is not None
-        )
+        available = result.result is not None and result.phase in {
+            ResultPhase.SUCCESS,
+            ResultPhase.WARNING,
+            ResultPhase.FAILURE,
+            ResultPhase.CANCELLED,
+        }
         self.view_result_button.setVisible(available)
         if not available:
             self.result_view.hide()

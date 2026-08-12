@@ -14,6 +14,7 @@ from brain.ui.contracts import (
     UiError,
     UiErrorCategory,
 )
+from brain.ui.design_system.components import ErrorState
 from brain.ui.presentation_state import ReferenceResultPresentationState, ResultPhase
 from brain.ui.reference_result_view import ReferenceResultView
 
@@ -138,3 +139,25 @@ def test_failure_cancelled_and_unavailable_states_do_not_show_stale_result(qtbot
         view.render(ReferenceResultPresentationState(phase))
         assert phase.value in view.findChild(QLabel, "referenceResultStateMessage").text()
         assert view.findChild(QLabel, "referenceResultSimilarity") is None
+
+
+def test_failed_refresh_keeps_prior_reference_result_visible(qtbot, tmp_path) -> None:
+    prior = _result(tmp_path)
+    error = UiError(
+        "reference_failed",
+        UiErrorCategory.VALIDATION,
+        "The latest comparison failed.",
+    )
+    view = ReferenceResultView()
+    qtbot.addWidget(view)
+
+    view.render(
+        ReferenceResultPresentationState(
+            ResultPhase.FAILURE,
+            result=prior,
+            error=error,
+        )
+    )
+
+    assert view.findChild(ErrorState, "referenceResultError") is not None
+    assert view.findChild(QLabel, "referenceResultSimilarity") is not None

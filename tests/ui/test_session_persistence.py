@@ -39,6 +39,8 @@ def test_session_round_trip_is_allowlisted_and_marks_missing_paths(tmp_path) -> 
     assert "secret free text" not in raw
     assert "private warning" not in raw
     assert "current_operation" not in raw
+    assert "session_persistence_failed" not in raw
+    assert "notifications" not in raw
     assert loaded.navigation.current_page is PageId.REPORTS
     assert loaded.selected_audio == audio
     assert loaded.last_analysis_result is not None

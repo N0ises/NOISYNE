@@ -10,6 +10,7 @@ from brain.ui.contracts import (
     CapabilityLifecycle,
     CapabilitySnapshot,
     RecoveryAction,
+    ResultUsability,
     UiError,
     UiErrorCategory,
 )
@@ -111,6 +112,7 @@ def test_empty_and_error_states_emit_intent(qtbot) -> None:
             category=UiErrorCategory.VALIDATION,
             user_message="The selected file is missing.",
             recovery_actions=(RecoveryAction("choose_file", "Choose another"),),
+            result_usability=ResultUsability.NOT_USABLE,
         )
     )
     qtbot.addWidget(empty)
@@ -122,6 +124,9 @@ def test_empty_and_error_states_emit_intent(qtbot) -> None:
         error.findChild(QPushButton).click()
 
     assert signal.args == ["choose_file"]
+    assert error.findChild(QLabel, "errorUsability").text() == (
+        "No result is available from this operation."
+    )
 
 
 def test_confirmation_dialog_accepts_and_rejects(qtbot) -> None:
@@ -138,12 +143,20 @@ def test_confirmation_dialog_accepts_and_rejects(qtbot) -> None:
 
 
 def test_notification_toast_emits_dismiss_and_recovery(qtbot) -> None:
+    error = UiError(
+        code="report_failed",
+        category=UiErrorCategory.REPORT_EXPORT,
+        user_message="Could not open file.",
+        recovery_actions=(RecoveryAction("retry", "Retry"),),
+        result_usability=ResultUsability.USABLE,
+    )
     notification = Notification(
         notification_id="notification-1",
         sequence=1,
         level=NotificationLevel.ERROR,
         message="Could not open file.",
         created_at=datetime.now(UTC),
+        error=error,
         recovery_actions=(RecoveryAction("retry", "Retry"),),
     )
     toast = NotificationToast(notification)
@@ -159,6 +172,9 @@ def test_notification_toast_emits_dismiss_and_recovery(qtbot) -> None:
 
     assert recovery.args == ["notification-1", "retry"]
     assert dismissed.args == ["notification-1"]
+    assert toast.findChild(QLabel, "notificationUsability").text() == (
+        "Existing results and session data remain usable."
+    )
 
 
 def test_progress_is_indeterminate_without_backend_progress(qtbot) -> None:

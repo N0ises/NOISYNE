@@ -109,6 +109,7 @@ class PageHost(QStackedWidget):
     session_audio_selected = Signal(object)
     session_references_selected = Signal(object)
     session_report_selected = Signal(object)
+    recovery_requested = Signal(str)
 
     def __init__(
         self,
@@ -129,11 +130,13 @@ class PageHost(QStackedWidget):
                 page.analysis_requested.connect(self.analysis_requested)
                 page.source_selected.connect(self.session_audio_selected)
                 page.references_selected.connect(self.session_references_selected)
+                page.recovery_requested.connect(self.recovery_requested)
             elif page_id is PageId.REFERENCES:
                 page = ReferencePage(tokens=tokens)
                 page.comparison_requested.connect(self.reference_comparison_requested)
                 page.current_selected.connect(self.session_audio_selected)
                 page.references_selected.connect(self.session_references_selected)
+                page.recovery_requested.connect(self.recovery_requested)
             elif page_id is PageId.INTELLIGENCE:
                 page = IntelligencePage(tokens=tokens)
             elif page_id is PageId.KNOWLEDGE:

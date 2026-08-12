@@ -38,6 +38,7 @@ class AnalyzePage(QScrollArea):
     analysis_requested = Signal(object)
     source_selected = Signal(object)
     references_selected = Signal(object)
+    recovery_requested = Signal(str)
     page_id = PageId.ANALYZE
 
     def __init__(
@@ -194,6 +195,7 @@ class AnalyzePage(QScrollArea):
         self.confirm_button.clicked.connect(self._confirm)
         self.view_result_button.clicked.connect(self.result_view.show)
         self.result_view.back_requested.connect(self.result_view.hide)
+        self.result_view.recovery_requested.connect(self.recovery_requested)
         self._render_form()
 
     @property
@@ -270,9 +272,12 @@ class AnalyzePage(QScrollArea):
         self.completion_badge.setText(text)
         self.completion_badge.set_state(visual)
         self.completion_message.setText(message)
-        result_available = (
-            result.phase in {ResultPhase.SUCCESS, ResultPhase.WARNING} and result.result is not None
-        )
+        result_available = result.result is not None and result.phase in {
+            ResultPhase.SUCCESS,
+            ResultPhase.WARNING,
+            ResultPhase.FAILURE,
+            ResultPhase.CANCELLED,
+        }
         self.view_result_button.setVisible(result_available)
         if not result_available:
             self.result_view.setVisible(False)

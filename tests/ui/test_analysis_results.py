@@ -4,13 +4,14 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from PySide6.QtWidgets import QLabel, QTableWidget, QToolBox, QWidget
+from PySide6.QtWidgets import QLabel, QPushButton, QTableWidget, QToolBox, QWidget
 
 from brain.ui.analyze_page import AnalyzePage
 from brain.ui.contracts import (
     AnalysisIssue,
     AnalysisViewResult,
     MetricValue,
+    RecoveryAction,
     ReportDescriptor,
     UiError,
     UiErrorCategory,
@@ -179,6 +180,39 @@ def test_failure_renders_structured_ui_error(qtbot) -> None:
     assert error_state is not None
     assert any(label.text() == error.user_message for label in view.findChildren(QLabel))
     assert view.findChild(QLabel, "resultSource") is None
+
+
+def test_result_error_recovery_action_emits_stable_intent(qtbot) -> None:
+    error = UiError(
+        "analysis_failed",
+        UiErrorCategory.VALIDATION,
+        "Choose a readable audio file.",
+        recovery_actions=(RecoveryAction("select_audio", "Select another file"),),
+    )
+    view = AnalysisResultView()
+    qtbot.addWidget(view)
+    view.render(ResultPresentationState(ResultPhase.FAILURE, error=error))
+
+    with qtbot.waitSignal(view.recovery_requested, timeout=1000) as recovery:
+        view.findChild(ErrorState, "resultErrorState").findChild(QPushButton).click()
+
+    assert recovery.args == ["select_audio"]
+
+
+def test_failed_refresh_keeps_prior_result_visible_with_error_context(qtbot, tmp_path) -> None:
+    prior = _result(tmp_path / "prior.wav")
+    error = UiError(
+        "analysis_failed",
+        UiErrorCategory.VALIDATION,
+        "The latest analysis failed.",
+    )
+    view = AnalysisResultView()
+    qtbot.addWidget(view)
+
+    view.render(ResultPresentationState(ResultPhase.FAILURE, result=prior, error=error))
+
+    assert view.findChild(ErrorState, "resultErrorState") is not None
+    assert _label(view, "resultSource").text() == prior.source_path.name
 
 
 def test_result_presentation_preserves_values_without_unit_inference(tmp_path) -> None:

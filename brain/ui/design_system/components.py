@@ -373,8 +373,13 @@ class ErrorState(Card):
         title.setProperty("textRole", "title")
         message = QLabel(error.user_message)
         message.setWordWrap(True)
+        usability = QLabel(error.usability_message)
+        usability.setObjectName("errorUsability")
+        usability.setProperty("textRole", "secondary")
+        usability.setWordWrap(True)
         self.content_layout.addWidget(title)
         self.content_layout.addWidget(message)
+        self.content_layout.addWidget(usability)
         self._add_recovery_actions(error.recovery_actions, tokens)
         self.setAccessibleName(f"Error: {error.user_message}")
 
@@ -470,9 +475,17 @@ class NotificationToast(QFrame):
             tokens.spacing.md,
         )
         layout.setSpacing(tokens.spacing.sm)
+        text = QVBoxLayout()
         message = QLabel(notification.message)
         message.setWordWrap(True)
-        layout.addWidget(message, 1)
+        text.addWidget(message)
+        if notification.error is not None:
+            usability = QLabel(notification.error.usability_message)
+            usability.setObjectName("notificationUsability")
+            usability.setProperty("textRole", "secondary")
+            usability.setWordWrap(True)
+            text.addWidget(usability)
+        layout.addLayout(text, 1)
         for action in notification.recovery_actions:
             button = DesignButton(action.label, tokens=tokens)
             button.clicked.connect(

@@ -26,6 +26,7 @@ class AnalysisResultView(QWidget):
     """Render stable result contracts without backend calls or domain interpretation."""
 
     back_requested = Signal()
+    recovery_requested = Signal(str)
 
     def __init__(
         self,
@@ -70,6 +71,7 @@ class AnalysisResultView(QWidget):
         if state.phase is ResultPhase.FAILURE and state.error is not None:
             error = ErrorState(state.error, tokens=self._tokens)
             error.setObjectName("resultErrorState")
+            error.recovery_requested.connect(self.recovery_requested)
             return error
         card = Card("Result status", tokens=self._tokens)
         card.setObjectName("resultStateCard")
@@ -87,6 +89,16 @@ class AnalysisResultView(QWidget):
         layout = QVBoxLayout(root)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(self._tokens.spacing.lg)
+
+        if state.error is not None:
+            error = ErrorState(state.error, tokens=self._tokens)
+            error.setObjectName("resultErrorState")
+            error.recovery_requested.connect(self.recovery_requested)
+            layout.addWidget(error)
+        elif state.phase is ResultPhase.CANCELLED:
+            retained = Card("Previous result retained", tokens=self._tokens)
+            retained.content_layout.addWidget(QLabel(state.message))
+            layout.addWidget(retained)
 
         header_card = Card("Result overview", tokens=self._tokens)
         header_card.setObjectName("resultOverview")

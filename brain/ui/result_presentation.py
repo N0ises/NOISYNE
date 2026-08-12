@@ -34,13 +34,30 @@ class AnalysisResultViewState:
 def build_result_view_state(state: ResultPresentationState) -> AnalysisResultViewState:
     """Map result state one-to-one without inferring values, units, or sections."""
     result = state.result
-    if state.phase in {ResultPhase.SUCCESS, ResultPhase.WARNING} and result is not None:
+    if (
+        state.phase
+        in {
+            ResultPhase.SUCCESS,
+            ResultPhase.WARNING,
+            ResultPhase.FAILURE,
+            ResultPhase.CANCELLED,
+        }
+        and result is not None
+    ):
         return AnalysisResultViewState(
             phase=state.phase,
             message=(
                 "Analysis completed with warnings. Available result data remains usable."
                 if state.phase is ResultPhase.WARNING
-                else "Analysis completed."
+                else (
+                    "The latest analysis failed. The previous result remains available."
+                    if state.phase is ResultPhase.FAILURE
+                    else (
+                        "The latest analysis was cancelled. The previous result remains available."
+                        if state.phase is ResultPhase.CANCELLED
+                        else "Analysis completed."
+                    )
+                )
             ),
             header=ResultHeaderView(
                 source_path=result.source_path,
@@ -54,6 +71,7 @@ def build_result_view_state(state: ResultPresentationState) -> AnalysisResultVie
             summary=result.summary,
             reference_similarity=result.reference_similarity,
             reports=result.reports,
+            error=state.error,
         )
 
     messages = {

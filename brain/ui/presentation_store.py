@@ -95,17 +95,26 @@ class PresentationStore:
                 self._state,
                 operation=operation,
                 result=(
-                    ResultPresentationState.loading(handle.operation_id)
+                    ResultPresentationState.loading(
+                        handle.operation_id,
+                        self._state.result.result,
+                    )
                     if tracks_result
                     else self._state.result
                 ),
                 reference_result=(
-                    ReferenceResultPresentationState.loading(handle.operation_id)
+                    ReferenceResultPresentationState.loading(
+                        handle.operation_id,
+                        self._state.reference_result.result,
+                    )
                     if tracks_reference_result
                     else self._state.reference_result
                 ),
                 knowledge_result=(
-                    KnowledgeResultPresentationState.loading(handle.operation_id)
+                    KnowledgeResultPresentationState.loading(
+                        handle.operation_id,
+                        self._state.knowledge_result.result,
+                    )
                     if tracks_knowledge_result
                     else self._state.knowledge_result
                 ),
@@ -264,36 +273,42 @@ class PresentationStore:
             result_state = ResultPresentationState(
                 phase=ResultPhase.FAILURE,
                 operation_id=event.operation_id,
+                result=result_state.result,
                 error=event.error,
             )
         elif event.state is OperationState.CANCELLED and tracks_result:
             result_state = ResultPresentationState(
                 phase=ResultPhase.CANCELLED,
                 operation_id=event.operation_id,
+                result=result_state.result,
                 error=event.error,
             )
         elif event.state is OperationState.FAILED and tracks_reference_result:
             reference_result = ReferenceResultPresentationState(
                 phase=ResultPhase.FAILURE,
                 operation_id=event.operation_id,
+                result=reference_result.result,
                 error=event.error,
             )
         elif event.state is OperationState.CANCELLED and tracks_reference_result:
             reference_result = ReferenceResultPresentationState(
                 phase=ResultPhase.CANCELLED,
                 operation_id=event.operation_id,
+                result=reference_result.result,
                 error=event.error,
             )
         elif event.state is OperationState.FAILED and tracks_knowledge_result:
             knowledge_result = KnowledgeResultPresentationState(
                 phase=ResultPhase.FAILURE,
                 operation_id=event.operation_id,
+                result=knowledge_result.result,
                 error=event.error,
             )
         elif event.state is OperationState.CANCELLED and tracks_knowledge_result:
             knowledge_result = KnowledgeResultPresentationState(
                 phase=ResultPhase.CANCELLED,
                 operation_id=event.operation_id,
+                result=knowledge_result.result,
                 error=event.error,
             )
         elif event.state is OperationState.FAILED and tracks_report_preview:
@@ -407,6 +422,9 @@ class PresentationStore:
 
     def add_error(self, error: UiError) -> str:
         """Add a structured global or operation-linked error without parsing exceptions."""
+        existing_id = self._state.notifications.active_error_id(error)
+        if existing_id is not None:
+            return existing_id
         notifications = self._state.notifications.add(
             level=NotificationLevel.ERROR,
             message=error.user_message,

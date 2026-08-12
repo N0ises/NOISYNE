@@ -49,7 +49,15 @@ class UiErrorCategory(str, Enum):
     CANCELLED = "cancelled"
     TIMEOUT = "timeout"
     REPORT_EXPORT = "report_export"
+    PERSISTENCE = "persistence"
     INTERNAL = "internal"
+
+
+class ResultUsability(str, Enum):
+    USABLE = "usable"
+    PARTIALLY_USABLE = "partially_usable"
+    NOT_USABLE = "not_usable"
+    NOT_APPLICABLE = "not_applicable"
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,9 +153,18 @@ class UiError:
     technical_detail: str | None = None
     retryable: bool = False
     recovery_actions: tuple[RecoveryAction, ...] = ()
-    partial_result_usable: bool = False
+    result_usability: ResultUsability = ResultUsability.NOT_APPLICABLE
     capability_id: str | None = None
     operation_id: str | None = None
+
+    @property
+    def usability_message(self) -> str:
+        return {
+            ResultUsability.USABLE: "Existing results and session data remain usable.",
+            ResultUsability.PARTIALLY_USABLE: "Available result data remains usable.",
+            ResultUsability.NOT_USABLE: "No result is available from this operation.",
+            ResultUsability.NOT_APPLICABLE: "Result usability is not applicable to this failure.",
+        }[self.result_usability]
 
 
 @dataclass(frozen=True, slots=True)

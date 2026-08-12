@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .contracts import ReferenceViewResult
+from .contracts import ReferenceViewResult, UiError
 from .design_system.components import Card, DesignButton, ErrorState, PageHeader, StatusBadge
 from .design_system.semantics import result_visual_state
 from .design_system.tokens import DEFAULT_TOKENS, DesignTokens
@@ -23,6 +23,7 @@ from .result_presentation import raw_value_text
 
 class ReferenceResultView(QWidget):
     back_requested = Signal()
+    recovery_requested = Signal(str)
 
     def __init__(
         self,
@@ -49,11 +50,17 @@ class ReferenceResultView(QWidget):
         self.render(ReferenceResultPresentationState())
 
     def render(self, state: ReferenceResultPresentationState) -> None:
-        if state.phase in {ResultPhase.SUCCESS, ResultPhase.WARNING} and state.result is not None:
-            body = self._result_widget(state.result, state.phase)
+        if state.result is not None and state.phase in {
+            ResultPhase.SUCCESS,
+            ResultPhase.WARNING,
+            ResultPhase.FAILURE,
+            ResultPhase.CANCELLED,
+        }:
+            body = self._result_widget(state.result, state.phase, state.error)
         elif state.phase is ResultPhase.FAILURE and state.error is not None:
             body = ErrorState(state.error, tokens=self._tokens)
             body.setObjectName("referenceResultError")
+            body.recovery_requested.connect(self.recovery_requested)
         else:
             body = Card("Comparison status", tokens=self._tokens)
             message = QLabel(_state_message(state.phase))
@@ -72,11 +79,27 @@ class ReferenceResultView(QWidget):
         self._body = body
         self._layout.addWidget(body)
 
-    def _result_widget(self, result: ReferenceViewResult, phase: ResultPhase) -> QWidget:
+    def _result_widget(
+        self,
+        result: ReferenceViewResult,
+        phase: ResultPhase,
+        error: UiError | None = None,
+    ) -> QWidget:
         root = QWidget()
         layout = QVBoxLayout(root)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(self._tokens.spacing.lg)
+        if error is not None:
+            failure = ErrorState(error, tokens=self._tokens)
+            failure.setObjectName("referenceResultError")
+            failure.recovery_requested.connect(self.recovery_requested)
+            layout.addWidget(failure)
+        elif phase is ResultPhase.CANCELLED:
+            retained = Card("Previous result retained", tokens=self._tokens)
+            retained.content_layout.addWidget(
+                QLabel("The latest comparison was cancelled; the previous result remains usable.")
+            )
+            layout.addWidget(retained)
         overview = Card("Comparison overview", tokens=self._tokens)
         overview.content_layout.addWidget(
             StatusBadge(phase.value.title(), result_visual_state(phase)),

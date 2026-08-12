@@ -46,12 +46,14 @@ class SessionRepository:
                 return SessionLoadResult(SessionState())
             payload = json.loads(self.path.read_text(encoding="utf-8"))
             return SessionLoadResult(_decode_session(payload))
-        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
             backup_path = self._quarantine_corrupt_file()
             return SessionLoadResult(
                 SessionState(),
                 recovered_from_corruption=True,
-                warning=f"Saved desktop session could not be restored: {exc}",
+                warning=(
+                    "Saved desktop session data was invalid and was replaced with safe defaults."
+                ),
                 backup_path=backup_path,
             )
 
