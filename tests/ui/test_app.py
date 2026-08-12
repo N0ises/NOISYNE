@@ -3,7 +3,7 @@ from __future__ import annotations
 from PySide6.QtWidgets import QApplication, QListWidget
 
 from brain.ui.app import build_main_window, create_application, run
-from brain.ui.presentation_state import PageId, SessionState
+from brain.ui.presentation_state import NAVIGATION_ORDER, PageId, SessionState
 from brain.ui.presentation_store import PresentationStore
 from brain.ui.session_persistence import SessionRepository
 from brain.ui.state import ApplicationStateStore
@@ -28,7 +28,7 @@ def test_main_window_construction_uses_central_title(qtbot, fake_adapter) -> Non
     assert window.findChild(object, "applicationStatus") is not None
     navigation = window.findChild(QListWidget, "primaryNavigation")
     assert navigation is not None
-    assert navigation.count() == 8
+    assert navigation.count() == len(NAVIGATION_ORDER)
 
 
 def test_navigation_selection_updates_presentation_and_session(qtbot, fake_adapter) -> None:
@@ -41,7 +41,7 @@ def test_navigation_selection_updates_presentation_and_session(qtbot, fake_adapt
     qtbot.addWidget(window)
     navigation = window.findChild(QListWidget, "primaryNavigation")
 
-    navigation.setCurrentRow(5)
+    navigation.setCurrentRow(NAVIGATION_ORDER.index(PageId.REPORTS))
 
     assert presentation_store.state.navigation.current_page is PageId.REPORTS
     assert presentation_store.state.session.navigation.current_page is PageId.REPORTS

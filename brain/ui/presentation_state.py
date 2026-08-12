@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
@@ -24,6 +24,7 @@ from .contracts import (
     SettingsSnapshot,
     UiError,
 )
+from .voice_contracts import VoicePresentationState
 
 
 class PageId(str, Enum):
@@ -31,6 +32,7 @@ class PageId(str, Enum):
     ANALYZE = "analyze"
     REFERENCES = "references"
     INTELLIGENCE = "intelligence"
+    VOICE = "voice"
     KNOWLEDGE = "knowledge"
     REPORTS = "reports"
     SETTINGS = "settings"
@@ -600,6 +602,7 @@ class PresentationState:
     knowledge_result: KnowledgeResultPresentationState = KnowledgeResultPresentationState()
     report_preview: ReportPreviewPresentationState = ReportPreviewPresentationState()
     report_export: ReportExportPresentationState = ReportExportPresentationState()
+    voice: VoicePresentationState = field(default_factory=VoicePresentationState)
     session: SessionState = SessionState()
 
     @classmethod

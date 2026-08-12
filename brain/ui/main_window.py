@@ -156,6 +156,9 @@ class MainWindow(QMainWindow):
         )
         self._page_host.session_report_selected.connect(self._presentation_store.select_report)
         self._page_host.recovery_requested.connect(self._handle_page_recovery_action)
+        self._page_host.voice_interruption_requested.connect(
+            self._presentation_store.request_voice_interruption
+        )
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation

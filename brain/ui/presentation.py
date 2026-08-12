@@ -19,6 +19,7 @@ _PAGE_LABELS = {
     PageId.ANALYZE: "Analyze",
     PageId.REFERENCES: "References",
     PageId.INTELLIGENCE: "Intelligence",
+    PageId.VOICE: "Voice / Agent",
     PageId.KNOWLEDGE: "Knowledge",
     PageId.REPORTS: "Reports",
     PageId.SETTINGS: "Settings",

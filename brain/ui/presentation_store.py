@@ -34,6 +34,14 @@ from .presentation_state import (
     SettingsPresentationPhase,
     SettingsPresentationState,
 )
+from .voice_contracts import (
+    ActionProposal,
+    ActionResultSummary,
+    TranscriptItem,
+    VoiceAvailability,
+    VoiceLifecycle,
+    VoicePresentationState,
+)
 
 Subscriber = Callable[[PresentationState], None]
 
@@ -77,6 +85,57 @@ class PresentationStore:
 
     def select_report(self, path: Path | None) -> None:
         self.set_session(self._state.session.select_report(path))
+
+    def set_voice_state(self, voice: VoicePresentationState) -> None:
+        """Accept state from a future voice adapter without coupling Qt to it."""
+        self._publish(replace(self._state, voice=voice))
+
+    def set_voice_availability(self, availability: VoiceAvailability) -> None:
+        self._publish(
+            replace(
+                self._state,
+                voice=replace(self._state.voice, availability=availability),
+            )
+        )
+
+    def transition_voice(self, lifecycle: VoiceLifecycle) -> None:
+        self._publish(
+            replace(
+                self._state,
+                voice=self._state.voice.transition(lifecycle),
+            )
+        )
+
+    def request_voice_interruption(self) -> bool:
+        voice = self._state.voice.request_interruption()
+        if voice is self._state.voice:
+            return False
+        self._publish(replace(self._state, voice=voice))
+        return True
+
+    def append_voice_transcript(self, item: TranscriptItem) -> None:
+        self._publish(
+            replace(
+                self._state,
+                voice=self._state.voice.append_transcript(item),
+            )
+        )
+
+    def set_voice_proposal(self, proposal: ActionProposal | None) -> None:
+        self._publish(
+            replace(
+                self._state,
+                voice=replace(self._state.voice, proposal=proposal),
+            )
+        )
+
+    def set_voice_result(self, result: ActionResultSummary | None) -> None:
+        self._publish(
+            replace(
+                self._state,
+                voice=replace(self._state.voice, result=result),
+            )
+        )
 
     def begin_operation(
         self,

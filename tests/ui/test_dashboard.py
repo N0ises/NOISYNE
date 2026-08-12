@@ -43,6 +43,7 @@ from brain.ui.reference_page import ReferencePage
 from brain.ui.reports_page import ReportsPage
 from brain.ui.settings_page import SettingsPage
 from brain.ui.state import ApplicationStateStore
+from brain.ui.voice_page import VoicePage
 
 
 def _runtime(
@@ -86,6 +87,7 @@ def test_implemented_pages_are_real_while_later_pages_are_placeholders(qtbot) ->
     assert isinstance(host.page(PageId.ANALYZE), AnalyzePage)
     assert isinstance(host.page(PageId.REFERENCES), ReferencePage)
     assert isinstance(host.page(PageId.INTELLIGENCE), IntelligencePage)
+    assert isinstance(host.page(PageId.VOICE), VoicePage)
     assert isinstance(host.page(PageId.KNOWLEDGE), KnowledgePage)
     assert isinstance(host.page(PageId.REPORTS), ReportsPage)
     assert isinstance(host.page(PageId.SETTINGS), SettingsPage)
@@ -98,6 +100,7 @@ def test_implemented_pages_are_real_while_later_pages_are_placeholders(qtbot) ->
             PageId.ANALYZE,
             PageId.REFERENCES,
             PageId.INTELLIGENCE,
+            PageId.VOICE,
             PageId.KNOWLEDGE,
             PageId.REPORTS,
             PageId.SETTINGS,

@@ -17,6 +17,7 @@ from .presentation_state import NAVIGATION_ORDER, PageId, PresentationState
 from .reference_page import ReferencePage
 from .reports_page import ReportsPage
 from .settings_page import SettingsPage
+from .voice_page import VoicePage
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +111,11 @@ class PageHost(QStackedWidget):
     session_references_selected = Signal(object)
     session_report_selected = Signal(object)
     recovery_requested = Signal(str)
+    voice_start_listening_requested = Signal()
+    voice_stop_listening_requested = Signal()
+    voice_interruption_requested = Signal()
+    voice_proposal_confirmed = Signal(str)
+    voice_proposal_cancelled = Signal(str)
 
     def __init__(
         self,
@@ -139,6 +145,13 @@ class PageHost(QStackedWidget):
                 page.recovery_requested.connect(self.recovery_requested)
             elif page_id is PageId.INTELLIGENCE:
                 page = IntelligencePage(tokens=tokens)
+            elif page_id is PageId.VOICE:
+                page = VoicePage(tokens=tokens)
+                page.start_listening_requested.connect(self.voice_start_listening_requested)
+                page.stop_listening_requested.connect(self.voice_stop_listening_requested)
+                page.interruption_requested.connect(self.voice_interruption_requested)
+                page.proposal_confirmed.connect(self.voice_proposal_confirmed)
+                page.proposal_cancelled.connect(self.voice_proposal_cancelled)
             elif page_id is PageId.KNOWLEDGE:
                 page = KnowledgePage(tokens=tokens)
                 page.search_requested.connect(self.knowledge_search_requested)
@@ -184,6 +197,9 @@ class PageHost(QStackedWidget):
         intelligence = self._pages[PageId.INTELLIGENCE]
         if isinstance(intelligence, IntelligencePage):
             intelligence.render(state)
+        voice = self._pages[PageId.VOICE]
+        if isinstance(voice, VoicePage):
+            voice.render(state)
         knowledge = self._pages[PageId.KNOWLEDGE]
         if isinstance(knowledge, KnowledgePage):
             knowledge.render(state)
