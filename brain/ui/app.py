@@ -1,0 +1,117 @@
+"""Desktop application bootstrap and QApplication lifecycle."""
+
+from __future__ import annotations
+
+import argparse
+import logging
+import sys
+from collections.abc import Sequence
+from pathlib import Path
+
+from PySide6.QtCore import QCoreApplication, QTimer
+from PySide6.QtWidgets import QApplication
+
+from .adapters import V1ApplicationAdapter
+from .contracts import DesktopApplicationAdapter, ProductMetadata, UiError
+from .errors import ExceptionBoundary
+from .logging_setup import configure_logging
+from .main_window import MainWindow
+from .packaging_probe import run_packaging_probe
+from .presentation import build_shell_view_state
+from .state import ApplicationLifecycle, ApplicationStateStore
+from .workers import WorkerExecutor
+
+logger = logging.getLogger(__name__)
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Launch the desktop application.")
+    parser.add_argument(
+        "--smoke-test",
+        action="store_true",
+        help="Show the shell, process events, and close cleanly.",
+    )
+    parser.add_argument(
+        "--packaging-probe",
+        type=Path,
+        help="Run representative packaged-runtime checks and write JSON results.",
+    )
+    return parser
+
+
+def create_application(metadata: ProductMetadata) -> QApplication:
+    application = QApplication.instance()
+    if application is None:
+        application = QApplication([sys.argv[0]])
+    if not isinstance(application, QApplication):
+        raise TypeError("A non-GUI QCoreApplication already exists.")
+
+    QCoreApplication.setApplicationName(metadata.application_id)
+    QCoreApplication.setApplicationVersion(metadata.version)
+    QCoreApplication.setOrganizationName(metadata.organization_name)
+    if metadata.organization_domain:
+        QCoreApplication.setOrganizationDomain(metadata.organization_domain)
+    return application
+
+
+def build_main_window(
+    adapter: DesktopApplicationAdapter,
+    state_store: ApplicationStateStore | None = None,
+) -> MainWindow:
+    store = state_store or ApplicationStateStore()
+    return MainWindow(build_shell_view_state(adapter.product_metadata()), store)
+
+
+def run(
+    argv: Sequence[str] | None = None,
+    *,
+    adapter: DesktopApplicationAdapter | None = None,
+) -> int:
+    options = _parser().parse_args(argv)
+    application_adapter = adapter or V1ApplicationAdapter()
+    metadata = application_adapter.product_metadata()
+    application = create_application(metadata)
+    configure_logging()
+
+    state_store = ApplicationStateStore()
+    window = build_main_window(application_adapter, state_store)
+    boundary = ExceptionBoundary(window.show_error)
+    boundary.install()
+    state_store.set_lifecycle(ApplicationLifecycle.READY, "Ready")
+    window.show()
+
+    executor: WorkerExecutor | None = None
+    exit_code = 0
+
+    def fail_probe(error: UiError) -> None:
+        nonlocal exit_code
+        exit_code = 1
+        logger.error("Packaging probe failed: %s", error.technical_detail)
+        window.show_error(error)
+
+    if options.packaging_probe is not None:
+        executor = WorkerExecutor()
+        task = executor.submit(
+            "packaging_probe",
+            lambda: run_packaging_probe(options.packaging_probe, metadata),
+        )
+        task.signals.failed.connect(fail_probe)
+        task.signals.finished.connect(lambda _operation_id: window.close())
+    elif options.smoke_test:
+        QTimer.singleShot(100, window.close)
+
+    try:
+        qt_exit_code = application.exec()
+    finally:
+        if executor is not None:
+            executor.wait_for_done()
+        boundary.uninstall()
+    return exit_code or qt_exit_code
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    return run(argv)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
