@@ -9,6 +9,8 @@ from .contracts import (
     OperationHandle,
     OperationState,
     ReferenceViewResult,
+    ReportExportResult,
+    ReportPreview,
     UiError,
 )
 from .presentation_store import PresentationStore
@@ -26,6 +28,8 @@ class WorkerStateBinding:
         capture_analysis_result: bool = False,
         capture_reference_result: bool = False,
         capture_knowledge_result: bool = False,
+        capture_report_preview: bool = False,
+        capture_report_export: bool = False,
     ) -> None:
         operation_id = task.handle.operation_id
         sequence = 0
@@ -35,6 +39,8 @@ class WorkerStateBinding:
             tracks_result=capture_analysis_result,
             tracks_reference_result=capture_reference_result,
             tracks_knowledge_result=capture_knowledge_result,
+            tracks_report_preview=capture_report_preview,
+            tracks_report_export=capture_report_export,
         )
 
         def next_sequence() -> int:
@@ -64,6 +70,10 @@ class WorkerStateBinding:
             if capture_reference_result and isinstance(result, ReferenceViewResult):
                 captured = result
             if capture_knowledge_result and isinstance(result, KnowledgeSearchResult):
+                captured = result
+            if capture_report_preview and isinstance(result, ReportPreview):
+                captured = result
+            if capture_report_export and isinstance(result, ReportExportResult):
                 captured = result
             self._store.apply_operation_event(
                 OperationEvent(

@@ -19,7 +19,7 @@ def test_session_round_trip_is_allowlisted_and_marks_missing_paths(tmp_path) -> 
         score=91.0,
         summary="secret free text must not persist",
         warnings=("private warning",),
-        reports=(ReportDescriptor("analysis", "json", report, "JSON"),),
+        reports=(ReportDescriptor("analysis", "json", report, "JSON", audio),),
     )
     session = (
         SessionState(recent_limit=2)
@@ -40,6 +40,7 @@ def test_session_round_trip_is_allowlisted_and_marks_missing_paths(tmp_path) -> 
     assert loaded.last_analysis_result is not None
     assert loaded.last_analysis_result.summary == ""
     assert not loaded.recent_reports[0].exists
+    assert loaded.recent_reports[0].descriptor.source_path == audio
 
 
 def test_missing_selected_files_are_safe_on_restore(tmp_path) -> None:

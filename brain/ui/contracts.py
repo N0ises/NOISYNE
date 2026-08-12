@@ -202,6 +202,31 @@ class ReportDescriptor:
     format: str
     path: Path
     display_label: str
+    source_path: Path | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReportPreview:
+    descriptor: ReportDescriptor
+    content: str | None
+    size_bytes: int
+    filesystem_modified_at: datetime
+    warnings: tuple[str, ...] = ()
+    unavailable_reason: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ReportExportCommand:
+    source: ReportDescriptor
+    destination_path: Path
+    overwrite: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class ReportExportResult:
+    source: ReportDescriptor
+    exported: ReportDescriptor
+    warnings: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -373,3 +398,7 @@ class DesktopApplicationAdapter(Protocol):
     def compare_references(self, command: ReferenceComparisonCommand) -> ReferenceViewResult: ...
 
     def search_knowledge(self, query: KnowledgeQuery) -> KnowledgeSearchResult: ...
+
+    def load_report(self, descriptor: ReportDescriptor) -> ReportPreview: ...
+
+    def export_report(self, command: ReportExportCommand) -> ReportExportResult: ...

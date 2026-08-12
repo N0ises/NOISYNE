@@ -15,6 +15,7 @@ from .intelligence_page import IntelligencePage
 from .knowledge_page import KnowledgePage
 from .presentation_state import NAVIGATION_ORDER, PageId, PresentationState
 from .reference_page import ReferencePage
+from .reports_page import ReportsPage
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,6 +100,9 @@ class PageHost(QStackedWidget):
     analysis_requested = Signal(object)
     reference_comparison_requested = Signal(object)
     knowledge_search_requested = Signal(object)
+    report_preview_requested = Signal(object)
+    report_export_requested = Signal(object)
+    report_open_directory_requested = Signal(object)
 
     def __init__(
         self,
@@ -125,6 +129,11 @@ class PageHost(QStackedWidget):
             elif page_id is PageId.KNOWLEDGE:
                 page = KnowledgePage(tokens=tokens)
                 page.search_requested.connect(self.knowledge_search_requested)
+            elif page_id is PageId.REPORTS:
+                page = ReportsPage(tokens=tokens)
+                page.preview_requested.connect(self.report_preview_requested)
+                page.export_requested.connect(self.report_export_requested)
+                page.open_directory_requested.connect(self.report_open_directory_requested)
             else:
                 page = PlaceholderPage(PAGE_DEFINITIONS[page_id], tokens=tokens)
             self._pages[page_id] = page
@@ -160,3 +169,6 @@ class PageHost(QStackedWidget):
         knowledge = self._pages[PageId.KNOWLEDGE]
         if isinstance(knowledge, KnowledgePage):
             knowledge.render(state)
+        reports = self._pages[PageId.REPORTS]
+        if isinstance(reports, ReportsPage):
+            reports.render(state)

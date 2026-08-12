@@ -12,6 +12,8 @@ from .contracts import (
     OperationHandle,
     OperationState,
     ReferenceViewResult,
+    ReportExportResult,
+    ReportPreview,
     RuntimeStatus,
     UiError,
 )
@@ -21,6 +23,8 @@ from .presentation_state import (
     PageId,
     PresentationState,
     ReferenceResultPresentationState,
+    ReportExportPresentationState,
+    ReportPreviewPresentationState,
     ResultPhase,
     ResultPresentationState,
     RuntimePresentationState,
@@ -69,6 +73,8 @@ class PresentationStore:
         tracks_result: bool = True,
         tracks_reference_result: bool = False,
         tracks_knowledge_result: bool = False,
+        tracks_report_preview: bool = False,
+        tracks_report_export: bool = False,
     ) -> None:
         operation = self._state.operation.begin(handle, cancellable=cancellable)
         self._publish(
@@ -89,6 +95,16 @@ class PresentationStore:
                     KnowledgeResultPresentationState.loading(handle.operation_id)
                     if tracks_knowledge_result
                     else self._state.knowledge_result
+                ),
+                report_preview=(
+                    ReportPreviewPresentationState.loading(handle.operation_id)
+                    if tracks_report_preview
+                    else self._state.report_preview
+                ),
+                report_export=(
+                    ReportExportPresentationState.loading(handle.operation_id)
+                    if tracks_report_export
+                    else self._state.report_export
                 ),
                 session=self._state.session.with_operation(handle),
             )
@@ -133,10 +149,21 @@ class PresentationStore:
         tracks_reference_result = reference_result.operation_id == event.operation_id
         knowledge_result = self._state.knowledge_result
         tracks_knowledge_result = knowledge_result.operation_id == event.operation_id
+        report_preview = self._state.report_preview
+        tracks_report_preview = report_preview.operation_id == event.operation_id
+        report_export = self._state.report_export
+        tracks_report_export = report_export.operation_id == event.operation_id
 
         if event.state is OperationState.COMPLETED:
             if event.result is not None and not isinstance(
-                event.result, (AnalysisViewResult, ReferenceViewResult, KnowledgeSearchResult)
+                event.result,
+                (
+                    AnalysisViewResult,
+                    ReferenceViewResult,
+                    KnowledgeSearchResult,
+                    ReportPreview,
+                    ReportExportResult,
+                ),
             ):
                 raise TypeError("Completed UI operations must carry stable result DTOs.")
             if tracks_result and isinstance(event.result, AnalysisViewResult):
@@ -189,6 +216,37 @@ class PresentationStore:
                         message=warning,
                         operation_id=event.operation_id,
                     )
+            elif tracks_report_preview and isinstance(event.result, ReportPreview):
+                phase = (
+                    ResultPhase.WARNING
+                    if event.result.warnings or event.result.unavailable_reason
+                    else ResultPhase.SUCCESS
+                )
+                report_preview = ReportPreviewPresentationState(
+                    phase=phase,
+                    operation_id=event.operation_id,
+                    preview=event.result,
+                )
+                for warning in event.result.warnings:
+                    notifications = notifications.add(
+                        level=NotificationLevel.WARNING,
+                        message=warning,
+                        operation_id=event.operation_id,
+                    )
+            elif tracks_report_export and isinstance(event.result, ReportExportResult):
+                phase = ResultPhase.WARNING if event.result.warnings else ResultPhase.SUCCESS
+                report_export = ReportExportPresentationState(
+                    phase=phase,
+                    operation_id=event.operation_id,
+                    result=event.result,
+                )
+                session = session.record_report(event.result.exported)
+                for warning in event.result.warnings:
+                    notifications = notifications.add(
+                        level=NotificationLevel.WARNING,
+                        message=warning,
+                        operation_id=event.operation_id,
+                    )
         elif event.state is OperationState.FAILED and tracks_result:
             result_state = ResultPresentationState(
                 phase=ResultPhase.FAILURE,
@@ -225,6 +283,30 @@ class PresentationStore:
                 operation_id=event.operation_id,
                 error=event.error,
             )
+        elif event.state is OperationState.FAILED and tracks_report_preview:
+            report_preview = ReportPreviewPresentationState(
+                phase=ResultPhase.FAILURE,
+                operation_id=event.operation_id,
+                error=event.error,
+            )
+        elif event.state is OperationState.CANCELLED and tracks_report_preview:
+            report_preview = ReportPreviewPresentationState(
+                phase=ResultPhase.CANCELLED,
+                operation_id=event.operation_id,
+                error=event.error,
+            )
+        elif event.state is OperationState.FAILED and tracks_report_export:
+            report_export = ReportExportPresentationState(
+                phase=ResultPhase.FAILURE,
+                operation_id=event.operation_id,
+                error=event.error,
+            )
+        elif event.state is OperationState.CANCELLED and tracks_report_export:
+            report_export = ReportExportPresentationState(
+                phase=ResultPhase.CANCELLED,
+                operation_id=event.operation_id,
+                error=event.error,
+            )
 
         if event.state is OperationState.FAILED and event.error is not None:
             notifications = notifications.add(
@@ -242,6 +324,8 @@ class PresentationStore:
                 result=result_state,
                 reference_result=reference_result,
                 knowledge_result=knowledge_result,
+                report_preview=report_preview,
+                report_export=report_export,
                 notifications=notifications,
                 session=session,
             )

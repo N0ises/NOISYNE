@@ -38,6 +38,8 @@ def test_qt_and_presentation_modules_do_not_import_deep_backend() -> None:
         ui_root / "knowledge_controller.py",
         ui_root / "knowledge_page.py",
         ui_root / "knowledge_state.py",
+        ui_root / "report_controller.py",
+        ui_root / "reports_page.py",
         ui_root / "pages.py",
         ui_root / "shell_surfaces.py",
         ui_root / "session_persistence.py",
@@ -104,6 +106,8 @@ def test_analyze_modules_do_not_import_adapter_or_v1_domain_implementations() ->
         ui_root / "knowledge_controller.py",
         ui_root / "knowledge_page.py",
         ui_root / "knowledge_state.py",
+        ui_root / "report_controller.py",
+        ui_root / "reports_page.py",
     )
     forbidden = (*FORBIDDEN_PREFIXES, "brain.application", "brain.ui.adapters")
     violations = []

@@ -202,12 +202,15 @@ def _decode_report(value: object) -> RecentReport:
 
 
 def _encode_descriptor(item: ReportDescriptor) -> dict[str, str]:
-    return {
+    encoded = {
         "kind": item.kind,
         "format": item.format,
         "path": str(item.path),
         "display_label": item.display_label,
     }
+    if item.source_path is not None:
+        encoded["source_path"] = str(item.source_path)
+    return encoded
 
 
 def _decode_descriptor(value: object) -> ReportDescriptor:
@@ -217,6 +220,9 @@ def _decode_descriptor(value: object) -> ReportDescriptor:
         format=str(item["format"]),
         path=Path(str(item["path"])),
         display_label=str(item["display_label"]),
+        source_path=(
+            Path(str(item["source_path"])) if item.get("source_path") is not None else None
+        ),
     )
 
 

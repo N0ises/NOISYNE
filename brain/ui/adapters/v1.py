@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import os
+import shutil
 from collections.abc import Callable
 from dataclasses import fields, is_dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from tempfile import NamedTemporaryFile
+from typing import Any, ClassVar
 
 from ..branding import default_product_metadata
 from ..contracts import (
@@ -36,6 +39,9 @@ from ..contracts import (
     ReferenceSimilarity,
     ReferenceViewResult,
     ReportDescriptor,
+    ReportExportCommand,
+    ReportExportResult,
+    ReportPreview,
     RuntimeState,
     RuntimeStatus,
     SettingsSnapshot,
@@ -45,6 +51,16 @@ from ..contracts import (
 
 class V1ApplicationAdapter:
     """Translate frozen V1 facades and domain results into desktop contracts."""
+
+    _MAX_REPORT_PREVIEW_BYTES = 2 * 1024 * 1024
+    _REPORT_FORMATS: ClassVar[dict[str, frozenset[str]]] = {
+        "analysis": frozenset({"json"}),
+        "reference_comparison": frozenset({"json", "markdown"}),
+    }
+    _REPORT_EXTENSIONS: ClassVar[dict[str, str]] = {
+        "json": ".json",
+        "markdown": ".md",
+    }
 
     def __init__(
         self,
@@ -178,6 +194,7 @@ class V1ApplicationAdapter:
                     format="json",
                     path=command.output_path,
                     display_label=command.output_path.name,
+                    source_path=command.source_path,
                 ),
             )
         comparison = getattr(response, "comparison", None)
@@ -219,7 +236,7 @@ class V1ApplicationAdapter:
             )
         )
         comparison = getattr(response, "comparison", None)
-        reports = self._reference_reports(command.output_directory)
+        reports = self._reference_reports(command.output_directory, command.current_path)
         if comparison is None:
             return ReferenceViewResult(
                 current_path=command.current_path,
@@ -337,6 +354,79 @@ class V1ApplicationAdapter:
                 for item in results
             ),
         )
+
+    def load_report(self, descriptor: ReportDescriptor) -> ReportPreview:
+        self._validate_report_descriptor(descriptor)
+        path = descriptor.path
+        if not path.exists() or not path.is_file():
+            raise FileNotFoundError(path)
+        stat = path.stat()
+        modified_at = datetime.fromtimestamp(stat.st_mtime, tz=UTC)
+        if stat.st_size > self._MAX_REPORT_PREVIEW_BYTES:
+            return ReportPreview(
+                descriptor=descriptor,
+                content=None,
+                size_bytes=stat.st_size,
+                filesystem_modified_at=modified_at,
+                unavailable_reason="Preview is unavailable because this report exceeds 2 MiB.",
+            )
+
+        content = path.read_text(encoding="utf-8")
+        warnings: tuple[str, ...] = ()
+        if descriptor.format == "json":
+            try:
+                content = json.dumps(
+                    json.loads(content), indent=2, ensure_ascii=False, allow_nan=False
+                )
+            except (json.JSONDecodeError, ValueError):
+                warnings = ("JSON formatting failed; showing the original UTF-8 text.",)
+        return ReportPreview(
+            descriptor=descriptor,
+            content=content,
+            size_bytes=stat.st_size,
+            filesystem_modified_at=modified_at,
+            warnings=warnings,
+        )
+
+    def export_report(self, command: ReportExportCommand) -> ReportExportResult:
+        source = command.source
+        self._validate_report_descriptor(source)
+        if not source.path.exists() or not source.path.is_file():
+            raise FileNotFoundError(source.path)
+        destination = command.destination_path
+        expected_extension = self._REPORT_EXTENSIONS[source.format]
+        if destination.suffix.casefold() != expected_extension:
+            raise ValueError(f"Destination must use {expected_extension}.")
+        if not destination.parent.exists() or not destination.parent.is_dir():
+            raise FileNotFoundError(destination.parent)
+        if destination.exists() and not command.overwrite:
+            raise FileExistsError(destination)
+
+        temporary_path: Path | None = None
+        try:
+            with NamedTemporaryFile(
+                dir=destination.parent,
+                prefix=f".{destination.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as temporary:
+                temporary_path = Path(temporary.name)
+            shutil.copyfile(source.path, temporary_path)
+            if destination.exists() and not command.overwrite:
+                raise FileExistsError(destination)
+            temporary_path.replace(destination)
+        finally:
+            if temporary_path is not None and temporary_path.exists():
+                temporary_path.unlink()
+
+        exported = ReportDescriptor(
+            kind=source.kind,
+            format=source.format,
+            path=destination,
+            display_label=destination.name,
+            source_path=source.source_path,
+        )
+        return ReportExportResult(source=source, exported=exported)
 
     def _analysis_boundary(self) -> tuple[Any, type[Any]]:
         from brain.application.soundbrain_service import AnalysisRequest, SoundBrainService
@@ -500,7 +590,10 @@ class V1ApplicationAdapter:
         return value if isinstance(value, (str, int, float, bool, type(None))) else str(value)
 
     @staticmethod
-    def _reference_reports(output_directory: Path | None) -> tuple[ReportDescriptor, ...]:
+    def _reference_reports(
+        output_directory: Path | None,
+        source_path: Path | None = None,
+    ) -> tuple[ReportDescriptor, ...]:
         if output_directory is None:
             return ()
         descriptors = []
@@ -516,9 +609,16 @@ class V1ApplicationAdapter:
                         format=format_name,
                         path=path,
                         display_label=label,
+                        source_path=source_path,
                     )
                 )
         return tuple(descriptors)
+
+    @classmethod
+    def _validate_report_descriptor(cls, descriptor: ReportDescriptor) -> None:
+        formats = cls._REPORT_FORMATS.get(descriptor.kind, frozenset())
+        if descriptor.format not in formats:
+            raise ValueError("This report type or format is not supported by V1 Desktop.")
 
     @staticmethod
     def _enum_value(value: Any) -> str:

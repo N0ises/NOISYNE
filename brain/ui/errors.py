@@ -7,7 +7,7 @@ import sys
 from collections.abc import Callable
 from types import TracebackType
 
-from .contracts import UiError, UiErrorCategory
+from .contracts import RecoveryAction, UiError, UiErrorCategory
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +77,43 @@ def knowledge_error(exc: BaseException, *, operation_id: str) -> UiError:
         retryable=True,
         operation_id=operation_id,
         capability_id="rag_retrieval",
+    )
+
+
+def report_error(exc: BaseException, *, operation_id: str, action: str) -> UiError:
+    if isinstance(exc, FileNotFoundError):
+        message = "The report file or destination folder is missing."
+        code = "report_path_missing"
+    elif isinstance(exc, FileExistsError):
+        message = "The destination already exists and overwrite was not confirmed."
+        code = "report_destination_exists"
+    elif isinstance(exc, UnicodeDecodeError):
+        message = "The report preview is not valid UTF-8 text."
+        code = "report_encoding_unsupported"
+    elif isinstance(exc, ValueError):
+        message = "This report type, format, or destination is not supported."
+        code = "report_format_unsupported"
+    else:
+        message = f"The report {action} could not be completed."
+        code = f"report_{action}_failed"
+    return UiError(
+        code=code,
+        category=UiErrorCategory.REPORT_EXPORT,
+        user_message=message,
+        technical_detail=type(exc).__name__,
+        retryable=not isinstance(exc, (UnicodeDecodeError, ValueError)),
+        recovery_actions=(RecoveryAction("retry", "Try again"),),
+        operation_id=operation_id,
+    )
+
+
+def report_open_error() -> UiError:
+    return UiError(
+        code="report_folder_open_failed",
+        category=UiErrorCategory.REPORT_EXPORT,
+        user_message="The report folder could not be opened.",
+        retryable=True,
+        recovery_actions=(RecoveryAction("retry", "Try again"),),
     )
 
 

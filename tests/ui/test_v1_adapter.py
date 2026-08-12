@@ -42,13 +42,15 @@ class FakeSoundBrainService:
         )
 
 
-def test_v1_adapter_flattens_domain_response(product_metadata) -> None:
+def test_v1_adapter_flattens_domain_response(product_metadata, tmp_path) -> None:
     adapter = V1ApplicationAdapter(
         metadata=product_metadata,
         service_factory=FakeSoundBrainService,
     )
 
-    result = adapter.analyze(AnalysisCommand(source_path=Path("mix.wav")))
+    output = tmp_path / "analysis.json"
+    output.write_text("{}", encoding="utf-8")
+    result = adapter.analyze(AnalysisCommand(source_path=Path("mix.wav"), output_path=output))
 
     assert result.audio_type == "full_mix"
     assert result.score == 87.5
@@ -57,6 +59,7 @@ def test_v1_adapter_flattens_domain_response(product_metadata) -> None:
     assert result.metrics[0].name == "loudness"
     assert result.metrics[0].value == -14.0
     assert result.issues[0].title == "Issue"
+    assert result.reports[0].source_path == Path("mix.wav")
 
 
 def test_capability_snapshot_does_not_infer_machine_readiness(product_metadata) -> None:

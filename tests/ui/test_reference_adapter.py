@@ -108,6 +108,7 @@ def test_v1_reference_adapter_maps_real_multi_reference_contract(
     assert result.segment_deviations[0].start_time == 1.0
     assert result.metric_variances[0].value == 0.125
     assert [item.format for item in result.reports] == ["json", "markdown"]
+    assert all(item.source_path == Path("current.wav") for item in result.reports)
 
 
 def test_v1_reference_adapter_preserves_graceful_warning(product_metadata) -> None:

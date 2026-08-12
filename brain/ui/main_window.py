@@ -22,6 +22,7 @@ from .presentation import ShellViewState
 from .presentation_state import PageId, PresentationState
 from .presentation_store import PresentationStore
 from .reference_controller import ReferenceController
+from .report_controller import ReportController
 from .shell_surfaces import (
     NotificationSurface,
     OperationStatusSurface,
@@ -57,6 +58,11 @@ class MainWindow(QMainWindow):
             executor,
         )
         self._knowledge_controller = KnowledgeController(
+            application_adapter,
+            presentation_store,
+            executor,
+        )
+        self._report_controller = ReportController(
             application_adapter,
             presentation_store,
             executor,
@@ -129,6 +135,11 @@ class MainWindow(QMainWindow):
         self._page_host.analysis_requested.connect(self._analysis_controller.execute)
         self._page_host.reference_comparison_requested.connect(self._reference_controller.execute)
         self._page_host.knowledge_search_requested.connect(self._knowledge_controller.execute)
+        self._page_host.report_preview_requested.connect(self._report_controller.preview)
+        self._page_host.report_export_requested.connect(self._report_controller.export)
+        self._page_host.report_open_directory_requested.connect(
+            self._report_controller.open_directory
+        )
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation

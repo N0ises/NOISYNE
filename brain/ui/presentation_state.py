@@ -17,6 +17,8 @@ from .contracts import (
     RecoveryAction,
     ReferenceViewResult,
     ReportDescriptor,
+    ReportExportResult,
+    ReportPreview,
     RuntimeState,
     RuntimeStatus,
     UiError,
@@ -300,6 +302,30 @@ class KnowledgeResultPresentationState:
 
 
 @dataclass(frozen=True, slots=True)
+class ReportPreviewPresentationState:
+    phase: ResultPhase = ResultPhase.EMPTY
+    operation_id: str | None = None
+    preview: ReportPreview | None = None
+    error: UiError | None = None
+
+    @classmethod
+    def loading(cls, operation_id: str) -> ReportPreviewPresentationState:
+        return cls(phase=ResultPhase.LOADING, operation_id=operation_id)
+
+
+@dataclass(frozen=True, slots=True)
+class ReportExportPresentationState:
+    phase: ResultPhase = ResultPhase.EMPTY
+    operation_id: str | None = None
+    result: ReportExportResult | None = None
+    error: UiError | None = None
+
+    @classmethod
+    def loading(cls, operation_id: str) -> ReportExportPresentationState:
+        return cls(phase=ResultPhase.LOADING, operation_id=operation_id)
+
+
+@dataclass(frozen=True, slots=True)
 class RecentPath:
     path: Path
     last_used_at: datetime
@@ -472,6 +498,27 @@ class SessionState:
             recent_knowledge_queries=recent[: self.recent_limit],
         )
 
+    def record_report(
+        self,
+        descriptor: ReportDescriptor,
+        *,
+        created_at: datetime | None = None,
+    ) -> SessionState:
+        report = RecentReport(
+            descriptor=descriptor,
+            created_at=created_at or datetime.now(UTC),
+            exists=descriptor.path.exists(),
+        )
+        return replace(
+            self,
+            recent_reports=_prepend_unique(
+                self.recent_reports,
+                report,
+                lambda item: _path_key(item.descriptor.path),
+                self.recent_limit,
+            ),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class PresentationState:
@@ -482,6 +529,8 @@ class PresentationState:
     result: ResultPresentationState = ResultPresentationState()
     reference_result: ReferenceResultPresentationState = ReferenceResultPresentationState()
     knowledge_result: KnowledgeResultPresentationState = KnowledgeResultPresentationState()
+    report_preview: ReportPreviewPresentationState = ReportPreviewPresentationState()
+    report_export: ReportExportPresentationState = ReportExportPresentationState()
     session: SessionState = SessionState()
 
     @classmethod
