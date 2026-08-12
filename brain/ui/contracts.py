@@ -205,6 +205,43 @@ class ReportDescriptor:
 
 
 @dataclass(frozen=True, slots=True)
+class IntelligenceEvidence:
+    label: str
+    value: str | int | float | bool | None
+
+
+@dataclass(frozen=True, slots=True)
+class IntelligenceParameter:
+    name: str
+    value: str | int | float | bool | None
+    unit: str | None = None
+    confidence: float | None = None
+    reason: str = ""
+    range_min: float | None = None
+    range_max: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class IntelligenceItem:
+    observation: str = ""
+    finding: str = ""
+    explanations: tuple[str, ...] = ()
+    recommendation: str = ""
+    proposed_action: str = ""
+    confidence: float | None = None
+    evidence: tuple[IntelligenceEvidence, ...] = ()
+    parameters: tuple[IntelligenceParameter, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class IntelligenceSnapshot:
+    engineering: tuple[IntelligenceItem, ...] = ()
+    mix: tuple[IntelligenceItem, ...] = ()
+    plugin: tuple[IntelligenceItem, ...] = ()
+    reasoning: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class AnalysisViewResult:
     source_path: Path
     status: str
@@ -216,6 +253,7 @@ class AnalysisViewResult:
     warnings: tuple[str, ...] = ()
     reference_similarity: float | None = None
     reports: tuple[ReportDescriptor, ...] = ()
+    intelligence: IntelligenceSnapshot = IntelligenceSnapshot()
 
 
 @dataclass(frozen=True, slots=True)

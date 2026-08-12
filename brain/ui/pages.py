@@ -11,6 +11,7 @@ from .analyze_page import AnalyzePage
 from .dashboard import DashboardPage
 from .design_system.components import EmptyState, PageHeader
 from .design_system.tokens import DEFAULT_TOKENS, DesignTokens
+from .intelligence_page import IntelligencePage
 from .presentation_state import NAVIGATION_ORDER, PageId, PresentationState
 from .reference_page import ReferencePage
 
@@ -117,6 +118,8 @@ class PageHost(QStackedWidget):
             elif page_id is PageId.REFERENCES:
                 page = ReferencePage(tokens=tokens)
                 page.comparison_requested.connect(self.reference_comparison_requested)
+            elif page_id is PageId.INTELLIGENCE:
+                page = IntelligencePage(tokens=tokens)
             else:
                 page = PlaceholderPage(PAGE_DEFINITIONS[page_id], tokens=tokens)
             self._pages[page_id] = page
@@ -146,3 +149,6 @@ class PageHost(QStackedWidget):
         references = self._pages[PageId.REFERENCES]
         if isinstance(references, ReferencePage):
             references.render(state)
+        intelligence = self._pages[PageId.INTELLIGENCE]
+        if isinstance(intelligence, IntelligencePage):
+            intelligence.render(state)

@@ -17,6 +17,10 @@ from ..contracts import (
     Availability,
     CapabilityLifecycle,
     CapabilitySnapshot,
+    IntelligenceEvidence,
+    IntelligenceItem,
+    IntelligenceParameter,
+    IntelligenceSnapshot,
     MetricValue,
     PathStatus,
     ProductMetadata,
@@ -183,6 +187,12 @@ class V1ApplicationAdapter:
             warnings=tuple(str(item) for item in response.warnings),
             reference_similarity=(float(comparison.similarity) if comparison is not None else None),
             reports=reports,
+            intelligence=IntelligenceSnapshot(
+                engineering=self._engineering_intelligence(getattr(response, "engineering", None)),
+                mix=self._mix_intelligence(getattr(response, "mix_intelligence", None)),
+                plugin=self._plugin_intelligence(getattr(response, "plugin_intelligence", None)),
+                reasoning=self._reasoning_text(command, report),
+            ),
         )
 
     def compare_references(self, command: ReferenceComparisonCommand) -> ReferenceViewResult:
@@ -308,6 +318,152 @@ class V1ApplicationAdapter:
 
         factory = self._service_factory or SoundBrainService
         return factory(), AnalysisRequest
+
+    @classmethod
+    def _engineering_intelligence(cls, engineering: Any) -> tuple[IntelligenceItem, ...]:
+        items = [
+            IntelligenceItem(observation=str(value))
+            for value in getattr(engineering, "strengths", ())
+        ]
+        items.extend(
+            IntelligenceItem(
+                finding=str(issue.title),
+                explanations=(str(issue.description),) if issue.description else (),
+                recommendation=str(issue.recommendation),
+                confidence=float(issue.confidence),
+                evidence=(IntelligenceEvidence("severity", str(issue.severity)),),
+            )
+            for issue in getattr(engineering, "issues", ())
+        )
+        items.extend(
+            IntelligenceItem(
+                finding=str(recommendation.title),
+                explanations=(str(recommendation.reason),) if recommendation.reason else (),
+                proposed_action=str(recommendation.action),
+                confidence=float(recommendation.confidence),
+            )
+            for recommendation in getattr(engineering, "recommendations", ())
+        )
+        return tuple(items)
+
+    @staticmethod
+    def _reasoning_text(command: AnalysisCommand, report: Any) -> str:
+        if not command.include_reasoning:
+            return ""
+        summary = str(getattr(report, "ai_summary", ""))
+        deterministic_baseline = command.intent or command.delivery_target
+        return summary if summary and summary != deterministic_baseline else ""
+
+    @classmethod
+    def _mix_intelligence(cls, mix: Any) -> tuple[IntelligenceItem, ...]:
+        if mix is None:
+            return ()
+        items = []
+        items.extend(
+            IntelligenceItem(
+                observation=str(cause.symptom),
+                explanations=tuple(str(value) for value in cause.likely_causes),
+                confidence=float(cause.confidence),
+                evidence=(IntelligenceEvidence("priority", str(cause.priority)),),
+            )
+            for cause in mix.root_causes
+        )
+        items.extend(
+            IntelligenceItem(
+                observation=str(issue.description),
+                finding=str(issue.title),
+                recommendation=str(issue.recommendation),
+                confidence=float(issue.confidence),
+                evidence=(
+                    IntelligenceEvidence("severity", str(issue.severity)),
+                    IntelligenceEvidence("category", str(issue.category)),
+                    IntelligenceEvidence("priority_score", float(issue.priority_score)),
+                    IntelligenceEvidence("user_action_order", int(issue.user_action_order)),
+                ),
+            )
+            for issue in mix.prioritized_issues
+        )
+        items.extend(
+            IntelligenceItem(
+                finding=str(step.target),
+                recommendation=str(step.suggestion),
+                confidence=float(step.confidence),
+                evidence=(
+                    IntelligenceEvidence("order", int(step.order)),
+                    IntelligenceEvidence("plugin_type", str(step.plugin_type)),
+                    IntelligenceEvidence("estimated_impact", str(step.estimated_impact)),
+                ),
+            )
+            for step in mix.processing_chain
+        )
+        items.extend(
+            IntelligenceItem(explanations=(str(explanation),)) for explanation in mix.explanations
+        )
+        return tuple(items)
+
+    @classmethod
+    def _plugin_intelligence(cls, plugin: Any) -> tuple[IntelligenceItem, ...]:
+        if plugin is None:
+            return ()
+        items = []
+        for step in plugin.steps:
+            evidence = [
+                IntelligenceEvidence("order", int(step.order)),
+                IntelligenceEvidence("target", str(step.goal.target)),
+                IntelligenceEvidence("plugin_category", str(step.plugin_category)),
+                IntelligenceEvidence("plugin_type", str(step.plugin_type)),
+                IntelligenceEvidence("estimated_impact", str(step.estimated_impact)),
+            ]
+            if step.goal.root_cause:
+                evidence.append(IntelligenceEvidence("root_cause", str(step.goal.root_cause)))
+            evidence.extend(
+                IntelligenceEvidence(
+                    "plugin_option",
+                    f"{option.brand} {option.name}".strip(),
+                )
+                for option in step.plugin_options
+            )
+            parameters = tuple(
+                IntelligenceParameter(
+                    name=str(parameter.name),
+                    value=cls._ui_scalar(parameter.value),
+                    unit=(str(parameter.unit) if parameter.unit is not None else None),
+                    confidence=float(parameter.confidence),
+                    reason=str(parameter.reason),
+                    range_min=(
+                        float(parameter.range_min)
+                        if getattr(parameter, "range_min", None) is not None
+                        else None
+                    ),
+                    range_max=(
+                        float(parameter.range_max)
+                        if getattr(parameter, "range_max", None) is not None
+                        else None
+                    ),
+                )
+                for parameter in step.parameter_recommendations
+            )
+            items.append(
+                IntelligenceItem(
+                    observation=str(step.goal.description),
+                    finding=str(step.plugin_category),
+                    explanations=(str(step.goal.root_cause),) if step.goal.root_cause else (),
+                    recommendation=str(step.suggestion),
+                    proposed_action=str(step.goal.action),
+                    confidence=float(step.confidence),
+                    evidence=tuple(evidence),
+                    parameters=parameters,
+                )
+            )
+        items.extend(
+            IntelligenceItem(explanations=(str(explanation),))
+            for explanation in plugin.explanations
+        )
+        return tuple(items)
+
+    @staticmethod
+    def _ui_scalar(value: Any) -> str | int | float | bool | None:
+        return value if isinstance(value, (str, int, float, bool, type(None))) else str(value)
 
     @staticmethod
     def _reference_reports(output_directory: Path | None) -> tuple[ReportDescriptor, ...]:

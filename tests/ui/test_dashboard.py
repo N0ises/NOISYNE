@@ -25,6 +25,7 @@ from brain.ui.design_system.components import (
     StatusBadge,
 )
 from brain.ui.design_system.semantics import VisualState
+from brain.ui.intelligence_page import IntelligencePage
 from brain.ui.pages import PageHost, PlaceholderPage
 from brain.ui.presentation_state import (
     NAVIGATION_ORDER,
@@ -81,10 +82,17 @@ def test_implemented_pages_are_real_while_later_pages_are_placeholders(qtbot) ->
     assert isinstance(host.page(PageId.OVERVIEW), DashboardPage)
     assert isinstance(host.page(PageId.ANALYZE), AnalyzePage)
     assert isinstance(host.page(PageId.REFERENCES), ReferencePage)
+    assert isinstance(host.page(PageId.INTELLIGENCE), IntelligencePage)
     assert all(
         isinstance(host.page(page_id), PlaceholderPage)
         for page_id in NAVIGATION_ORDER
-        if page_id not in {PageId.OVERVIEW, PageId.ANALYZE, PageId.REFERENCES}
+        if page_id
+        not in {
+            PageId.OVERVIEW,
+            PageId.ANALYZE,
+            PageId.REFERENCES,
+            PageId.INTELLIGENCE,
+        }
     )
 
 
