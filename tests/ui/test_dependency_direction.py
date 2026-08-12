@@ -151,3 +151,33 @@ def test_dashboard_does_not_import_adapter_or_backend_implementations() -> None:
         violations.extend(name for name in names if name.startswith(forbidden))
 
     assert violations == []
+
+
+def test_every_non_adapter_ui_module_respects_desktop_application_boundary() -> None:
+    """Keep this broad so newly added pages cannot silently bypass the adapter seam."""
+    ui_root = Path(__file__).parents[2] / "brain" / "ui"
+    forbidden = (
+        *FORBIDDEN_PREFIXES,
+        "brain.application",
+        "brain.domain",
+        "brain.processing",
+    )
+    violations = []
+    for path in sorted(ui_root.rglob("*.py")):
+        if "adapters" in path.parts:
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+            else:
+                continue
+            violations.extend(
+                f"{path.relative_to(ui_root)}: {name}"
+                for name in names
+                if name.startswith(forbidden)
+            )
+
+    assert violations == []

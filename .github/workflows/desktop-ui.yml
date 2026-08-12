@@ -23,4 +23,10 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[desktop-test]"
+      - run: python -m black --check brain/ui tests/ui
+      - run: python -m ruff check brain/ui tests/ui
+      - run: python -m compileall -q brain/ui
       - run: python -m pytest tests/ui
+      - run: python -m pytest tests/ui/test_v1_adapter.py tests/ui/test_intelligence_adapter.py tests/ui/test_knowledge_adapter.py tests/ui/test_reference_adapter.py tests/ui/test_report_adapter.py tests/ui/test_settings_adapter.py
+      - run: python -m pytest tests/ui/e2e
+      - run: python -m brain.ui --smoke-test
