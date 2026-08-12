@@ -12,6 +12,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .agent_contracts import (
+    ActionClass,
+    ActionExecution,
+    ActionExecutionState,
+    AgentPlan,
+    ConfirmationDecision,
+    ConfirmationOutcome,
+    VerificationResult,
+    VerificationState,
+)
 from .contracts import Availability, ResultUsability
 from .design_system.components import (
     ButtonVariant,
@@ -281,6 +291,7 @@ class TranscriptSurface(Card):
 
 class ActionProposalCard(Card):
     confirmation_requested = Signal(str)
+    plan_confirmation_requested = Signal(object)
 
     def __init__(
         self,
@@ -291,7 +302,10 @@ class ActionProposalCard(Card):
         super().__init__("Proposed action", component="panel", tokens=tokens, parent=parent)
         self.setProperty("semantic", "intelligence")
         self.setObjectName("voiceActionProposal")
+        self._tokens = tokens
         self._proposal: ActionProposal | None = None
+        self._plan: AgentPlan | None = None
+        self._action_widgets: list[QWidget] = []
         self.title_label = QLabel()
         self.title_label.setProperty("textRole", "title")
         self.summary_label = QLabel()
@@ -321,9 +335,22 @@ class ActionProposalCard(Card):
             self.content_layout.addWidget(widget)
         self.setVisible(False)
 
-    def render(self, proposal: ActionProposal | None) -> None:
+    def render(
+        self,
+        proposal: ActionProposal | None,
+        plan: AgentPlan | None = None,
+    ) -> None:
+        for widget in self._action_widgets:
+            self.content_layout.removeWidget(widget)
+            widget.setParent(None)
+            widget.deleteLater()
+        self._action_widgets.clear()
         self._proposal = proposal
-        self.setVisible(proposal is not None)
+        self._plan = plan
+        self.setVisible(proposal is not None or plan is not None)
+        if plan is not None:
+            self._render_plan(plan)
+            return
         if proposal is None:
             return
         self.title_label.setText(proposal.title)
@@ -340,8 +367,76 @@ class ActionProposalCard(Card):
         self.review_button.setVisible(proposal.confirmation_required)
 
     def _request_confirmation(self) -> None:
+        if self._plan is not None:
+            self.plan_confirmation_requested.emit(self._plan)
+            return
         if self._proposal is not None:
             self.confirmation_requested.emit(self._proposal.proposal_id)
+
+    def _render_plan(self, plan: AgentPlan) -> None:
+        self.title_label.setText(f"Plan: {plan.intent_summary}")
+        self.summary_label.setText(
+            f"Status: {plan.status.value.replace('_', ' ').title()}\n"
+            f"Plan ID: {plan.plan_id} · Revision: {plan.revision}"
+        )
+        self.actions_label.setText(plan.rationale or "Ordered proposed tool calls")
+        self.impact_label.clear()
+        self.target_label.clear()
+        for index, action in enumerate(plan.actions, start=1):
+            frame = QFrame()
+            frame.setObjectName(f"plannedAction-{action.action_id}")
+            frame.setProperty("component", "panel")
+            semantic = {
+                ActionClass.READ_ONLY: "info",
+                ActionClass.TRANSFORMATIVE: "warning",
+                ActionClass.DESTRUCTIVE: "error",
+            }[action.action_class]
+            frame.setProperty("semantic", semantic)
+            frame.setAccessibleName(
+                f"Planned action {index}: {action.title}; {action.action_class.value}"
+            )
+            layout = QVBoxLayout(frame)
+            layout.setContentsMargins(
+                self._tokens.spacing.md,
+                self._tokens.spacing.md,
+                self._tokens.spacing.md,
+                self._tokens.spacing.md,
+            )
+            heading = QLabel(f"{index}. {action.title}")
+            heading.setProperty("textRole", "title")
+            action_class = QLabel(
+                f"Action class: {action.action_class.value.replace('_', ' ').title()}"
+            )
+            policy = QLabel(
+                f"Policy: {action.permission.disposition.value.replace('_', ' ').title()}\n"
+                f"Reason: {action.permission.reason}"
+            )
+            target = QLabel(
+                f"Affected target: {action.affected_target or 'Not specified'}\n"
+                f"Tool: {action.tool_label}\nRisk / impact: {action.risk_summary}"
+            )
+            for label in (action_class, policy, target):
+                label.setWordWrap(True)
+            layout.addWidget(heading)
+            layout.addWidget(action_class)
+            layout.addWidget(QLabel(action.summary))
+            layout.addWidget(policy)
+            layout.addWidget(target)
+            self.content_layout.insertWidget(
+                self.content_layout.count() - 1,
+                frame,
+            )
+            self._action_widgets.append(frame)
+        self.review_button.setText(
+            "Review destructive plan"
+            if any(action.action_class is ActionClass.DESTRUCTIVE for action in plan.actions)
+            else "Review and confirm plan"
+        )
+        self.review_button.setAccessibleName("Review exact agent plan for confirmation")
+        self.review_button.setVisible(plan.confirmation_pending or plan.blocked)
+        self.review_button.setEnabled(not plan.blocked and bool(plan.confirmable_action_ids))
+        if plan.blocked:
+            self.review_button.setText("Plan blocked")
 
 
 class ActionConfirmationDialog(ConfirmationDialog):
@@ -369,7 +464,54 @@ class ActionConfirmationDialog(ConfirmationDialog):
         self.setAccessibleName("Confirm proposed voice agent action")
 
 
+class AgentPlanConfirmationDialog(ConfirmationDialog):
+    def __init__(
+        self,
+        plan: AgentPlan,
+        *,
+        tokens: DesignTokens = DEFAULT_TOKENS,
+        parent: QWidget | None = None,
+    ) -> None:
+        lines = []
+        destructive = False
+        for index, action in enumerate(plan.actions, start=1):
+            destructive = destructive or action.action_class is ActionClass.DESTRUCTIVE
+            lines.append(
+                f"{index}. {action.title}\n"
+                f"Action class: {action.action_class.value.replace('_', ' ').title()}\n"
+                f"Affected target: {action.affected_target or 'Not specified'}\n"
+                f"Risk / impact: {action.risk_summary}\n"
+                f"Policy reason: {action.permission.reason}"
+            )
+        warning = (
+            "This plan contains a destructive action. Confirm only if you intend to approve "
+            "the exact targets shown.\n\n"
+            if destructive
+            else ""
+        )
+        super().__init__(
+            "Confirm exact agent plan",
+            (
+                f"Intent: {plan.intent_summary}\n"
+                f"Plan ID: {plan.plan_id}\nRevision: {plan.revision}\n\n"
+                f"{warning}" + "\n\n".join(lines)
+            ),
+            confirm_label="Confirm destructive plan" if destructive else "Confirm plan",
+            destructive=destructive,
+            tokens=tokens,
+            parent=parent,
+        )
+        self.setObjectName("agentPlanConfirmation")
+        self.setAccessibleName("Confirm exact proposed agent plan")
+        self.confirm_button.setAccessibleName(
+            "Confirm exact destructive plan" if destructive else "Confirm exact agent plan"
+        )
+        self.cancel_button.setAccessibleName("Decline proposed agent plan")
+
+
 class VoiceExecutionProgress(Card):
+    cancellation_requested = Signal(str)
+
     def __init__(
         self,
         *,
@@ -382,12 +524,26 @@ class VoiceExecutionProgress(Card):
         self.message = QLabel("No proposed action is executing.")
         self.message.setWordWrap(True)
         self.progress = ProgressIndicator(None, accessible_name="Agent action progress")
+        self.cancel_button = DesignButton(
+            "Cancel action",
+            variant=ButtonVariant.SECONDARY,
+            tokens=tokens,
+        )
+        self.cancel_button.setAccessibleName("Cancel technically cancellable agent action")
+        self.cancel_button.clicked.connect(self._request_cancellation)
+        self._execution: ActionExecution | None = None
         self.content_layout.addWidget(self.badge, 0, Qt.AlignmentFlag.AlignLeft)
         self.content_layout.addWidget(self.message)
         self.content_layout.addWidget(self.progress)
+        self.content_layout.addWidget(
+            self.cancel_button,
+            0,
+            Qt.AlignmentFlag.AlignLeft,
+        )
         self.render(OperationPresentationState())
 
     def render(self, operation: OperationPresentationState) -> None:
+        self._execution = None
         state_text = operation.state.value if operation.state else "idle"
         self.badge.setText(state_text.replace("_", " ").title())
         self.badge.set_state(operation_visual_state(operation.state))
@@ -398,6 +554,71 @@ class VoiceExecutionProgress(Card):
         self.message.setText(
             operation.message or operation.kind or "No proposed action is executing."
         )
+        self.cancel_button.setVisible(active and operation.cancellable)
+        self.cancel_button.setEnabled(active and operation.cancellable)
+
+    def render_agent_execution(self, execution: ActionExecution | None) -> None:
+        self._execution = execution
+        if execution is None:
+            self.render(OperationPresentationState())
+            return
+        self.badge.setText(execution.state.value.replace("_", " ").title())
+        self.badge.set_state(_execution_visual(execution.state))
+        active = execution.state in {
+            ActionExecutionState.QUEUED,
+            ActionExecutionState.EXECUTING,
+            ActionExecutionState.CANCELLING,
+            ActionExecutionState.VERIFYING,
+        }
+        self.progress.setVisible(active)
+        if active:
+            self.progress.set_progress(None)
+        self.message.setText(execution.message)
+        self.cancel_button.setVisible(execution.can_cancel)
+        self.cancel_button.setEnabled(execution.can_cancel)
+
+    def _request_cancellation(self) -> None:
+        if self._execution is not None and self._execution.can_cancel:
+            self.cancellation_requested.emit(self._execution.action_id)
+
+
+class VerificationSurface(Card):
+    def __init__(
+        self,
+        *,
+        tokens: DesignTokens = DEFAULT_TOKENS,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__("Verification", tokens=tokens, parent=parent)
+        self.setObjectName("agentVerification")
+        self.badge = StatusBadge("Not started", VisualState.IDLE)
+        self.summary = QLabel("Verification has not started.")
+        self.summary.setWordWrap(True)
+        self.evidence = QLabel()
+        self.evidence.setProperty("textRole", "secondary")
+        self.evidence.setWordWrap(True)
+        self.content_layout.addWidget(self.badge, 0, Qt.AlignmentFlag.AlignLeft)
+        self.content_layout.addWidget(self.summary)
+        self.content_layout.addWidget(self.evidence)
+
+    def render(self, verification: VerificationResult) -> None:
+        self.badge.setText(verification.state.value.replace("_", " ").title())
+        self.badge.set_state(
+            {
+                VerificationState.NOT_STARTED: VisualState.IDLE,
+                VerificationState.VERIFYING: VisualState.RUNNING,
+                VerificationState.VERIFIED: VisualState.SUCCESS,
+                VerificationState.FAILED: VisualState.ERROR,
+                VerificationState.NOT_APPLICABLE: VisualState.DISABLED,
+            }[verification.state]
+        )
+        self.summary.setText(
+            verification.error.user_message
+            if verification.error is not None
+            else verification.summary
+        )
+        self.evidence.setText("\n".join(verification.evidence))
+        self.evidence.setVisible(bool(verification.evidence))
 
 
 class ResultSummarySurface(Card):
@@ -430,6 +651,8 @@ class ResultSummarySurface(Card):
             ActionResultStatus.AVAILABLE: VisualState.READY,
             ActionResultStatus.PARTIALLY_AVAILABLE: VisualState.WARNING,
             ActionResultStatus.FAILED: VisualState.ERROR,
+            ActionResultStatus.BLOCKED: VisualState.UNAVAILABLE,
+            ActionResultStatus.CANCELLED: VisualState.CANCELLED,
         }[result.status]
         self.badge.setText(result.status.value.replace("_", " ").title())
         self.badge.set_state(visual)
@@ -447,6 +670,8 @@ class VoicePage(QScrollArea):
     interruption_requested = Signal()
     proposal_confirmed = Signal(str)
     proposal_cancelled = Signal(str)
+    plan_confirmation_recorded = Signal(object)
+    action_cancellation_requested = Signal(str)
 
     def __init__(
         self,
@@ -482,6 +707,7 @@ class VoicePage(QScrollArea):
         self.transcript = TranscriptSurface(tokens=tokens)
         self.proposal = ActionProposalCard(tokens=tokens)
         self.execution = VoiceExecutionProgress(tokens=tokens)
+        self.verification = VerificationSurface(tokens=tokens)
         self.result = ResultSummarySurface(tokens=tokens)
         for widget in (
             self.availability,
@@ -490,6 +716,7 @@ class VoicePage(QScrollArea):
             self.transcript,
             self.proposal,
             self.execution,
+            self.verification,
             self.result,
         ):
             layout.addWidget(widget)
@@ -499,6 +726,8 @@ class VoicePage(QScrollArea):
         self.input_control.stop_listening_requested.connect(self.stop_listening_requested)
         self.input_control.interruption_requested.connect(self.interruption_requested)
         self.proposal.confirmation_requested.connect(self._confirm_proposal)
+        self.proposal.plan_confirmation_requested.connect(self._confirm_plan)
+        self.execution.cancellation_requested.connect(self.action_cancellation_requested)
         self._current_state = VoicePresentationState()
         self.render(PresentationState())
 
@@ -508,8 +737,12 @@ class VoicePage(QScrollArea):
         self.agent_status.render(state.voice)
         self.input_control.render(state.voice)
         self.transcript.render(state.voice.conversation.items)
-        self.proposal.render(state.voice.proposal)
-        self.execution.render(state.operation)
+        self.proposal.render(state.voice.proposal, state.voice.agent_plan)
+        if state.voice.executions:
+            self.execution.render_agent_execution(state.voice.executions[-1])
+        else:
+            self.execution.render(state.operation)
+        self.verification.render(state.voice.verification)
         self.result.render(state.voice.result)
 
     def _confirm_proposal(self, proposal_id: str) -> None:
@@ -521,6 +754,18 @@ class VoicePage(QScrollArea):
             self.proposal_confirmed.emit(proposal_id)
         else:
             self.proposal_cancelled.emit(proposal_id)
+
+    def _confirm_plan(self, plan: AgentPlan) -> None:
+        if plan.blocked:
+            return
+        dialog = AgentPlanConfirmationDialog(plan, tokens=self._tokens, parent=self)
+        outcome = (
+            ConfirmationOutcome.APPROVED
+            if dialog.exec() == ConfirmationDialog.DialogCode.Accepted
+            else ConfirmationOutcome.DECLINED
+        )
+        decision = ConfirmationDecision.for_plan(plan, outcome)
+        self.plan_confirmation_recorded.emit(decision)
 
 
 def _set_availability_badge(
@@ -556,3 +801,19 @@ def _state_description(lifecycle: VoiceLifecycle) -> str:
             "A response is ready. Speech output is unavailable until a voice engine reports it."
         ),
     }[lifecycle]
+
+
+def _execution_visual(state: ActionExecutionState) -> VisualState:
+    return {
+        ActionExecutionState.PROPOSED: VisualState.INTELLIGENCE,
+        ActionExecutionState.WAITING_FOR_CONFIRMATION: VisualState.WARNING,
+        ActionExecutionState.APPROVED: VisualState.READY,
+        ActionExecutionState.QUEUED: VisualState.LOADING,
+        ActionExecutionState.EXECUTING: VisualState.RUNNING,
+        ActionExecutionState.CANCELLING: VisualState.WARNING,
+        ActionExecutionState.CANCELLED: VisualState.CANCELLED,
+        ActionExecutionState.VERIFYING: VisualState.INFO,
+        ActionExecutionState.COMPLETED: VisualState.SUCCESS,
+        ActionExecutionState.FAILED: VisualState.ERROR,
+        ActionExecutionState.BLOCKED: VisualState.UNAVAILABLE,
+    }[state]

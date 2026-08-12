@@ -159,6 +159,9 @@ class MainWindow(QMainWindow):
         self._page_host.voice_interruption_requested.connect(
             self._presentation_store.request_voice_interruption
         )
+        self._page_host.voice_plan_confirmation_recorded.connect(
+            self._presentation_store.record_agent_confirmation
+        )
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation

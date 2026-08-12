@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from enum import Enum
 
+from .agent_contracts import (
+    ActionExecution,
+    AgentPlan,
+    ConfirmationDecision,
+    VerificationResult,
+)
 from .contracts import Availability, ResultUsability, UiError
 
 
@@ -124,6 +130,8 @@ class ActionResultStatus(str, Enum):
     AVAILABLE = "available"
     PARTIALLY_AVAILABLE = "partially_available"
     FAILED = "failed"
+    BLOCKED = "blocked"
+    CANCELLED = "cancelled"
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,6 +150,10 @@ class VoicePresentationState:
     conversation: ConversationHistory = ConversationHistory()
     proposal: ActionProposal | None = None
     result: ActionResultSummary | None = None
+    agent_plan: AgentPlan | None = None
+    confirmation: ConfirmationDecision | None = None
+    executions: tuple[ActionExecution, ...] = ()
+    verification: VerificationResult = field(default_factory=VerificationResult)
     interruption_requested: bool = False
 
     def transition(self, next_state: VoiceLifecycle) -> VoicePresentationState:

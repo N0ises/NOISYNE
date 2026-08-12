@@ -116,6 +116,8 @@ class PageHost(QStackedWidget):
     voice_interruption_requested = Signal()
     voice_proposal_confirmed = Signal(str)
     voice_proposal_cancelled = Signal(str)
+    voice_plan_confirmation_recorded = Signal(object)
+    voice_action_cancellation_requested = Signal(str)
 
     def __init__(
         self,
@@ -152,6 +154,8 @@ class PageHost(QStackedWidget):
                 page.interruption_requested.connect(self.voice_interruption_requested)
                 page.proposal_confirmed.connect(self.voice_proposal_confirmed)
                 page.proposal_cancelled.connect(self.voice_proposal_cancelled)
+                page.plan_confirmation_recorded.connect(self.voice_plan_confirmation_recorded)
+                page.action_cancellation_requested.connect(self.voice_action_cancellation_requested)
             elif page_id is PageId.KNOWLEDGE:
                 page = KnowledgePage(tokens=tokens)
                 page.search_requested.connect(self.knowledge_search_requested)

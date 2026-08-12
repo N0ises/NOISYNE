@@ -6,6 +6,15 @@ from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 
+from .agent_contracts import (
+    ActionExecution,
+    AgentPlan,
+    ConfirmationDecision,
+    ConfirmationOutcome,
+    ConfirmationScope,
+    PermissionDisposition,
+    VerificationResult,
+)
 from .contracts import (
     AnalysisViewResult,
     KnowledgeSearchResult,
@@ -134,6 +143,71 @@ class PresentationStore:
             replace(
                 self._state,
                 voice=replace(self._state.voice, result=result),
+            )
+        )
+
+    def set_agent_plan(self, plan: AgentPlan | None) -> None:
+        """Publish an immutable proposal snapshot; this does not execute any action."""
+        self._publish(
+            replace(
+                self._state,
+                voice=replace(
+                    self._state.voice,
+                    agent_plan=plan,
+                    confirmation=None,
+                    executions=(),
+                    verification=VerificationResult(),
+                ),
+            )
+        )
+
+    def record_agent_confirmation(self, decision: ConfirmationDecision) -> bool:
+        plan = self._state.voice.agent_plan
+        if plan is None:
+            return False
+        if decision.plan_id != plan.plan_id or decision.plan_revision != plan.revision:
+            return False
+        plan_action_ids = tuple(item.action_id for item in plan.actions)
+        if any(action_id not in plan_action_ids for action_id in decision.action_ids):
+            return False
+        if decision.scope is ConfirmationScope.PLAN and decision.action_ids != plan_action_ids:
+            return False
+        if decision.outcome is ConfirmationOutcome.APPROVED and plan.blocked:
+            return False
+        selected = tuple(
+            action for action in plan.actions if action.action_id in decision.action_ids
+        )
+        if decision.outcome is ConfirmationOutcome.APPROVED and any(
+            action.permission.disposition is PermissionDisposition.BLOCKED for action in selected
+        ):
+            return False
+        self._publish(
+            replace(
+                self._state,
+                voice=replace(self._state.voice, confirmation=decision),
+            )
+        )
+        return True
+
+    def set_agent_execution(self, execution: ActionExecution) -> None:
+        executions = tuple(
+            item for item in self._state.voice.executions if item.action_id != execution.action_id
+        )
+        self._publish(
+            replace(
+                self._state,
+                voice=replace(
+                    self._state.voice,
+                    executions=(*executions, execution),
+                ),
+            )
+        )
+
+    def set_agent_verification(self, verification: VerificationResult) -> None:
+        self._publish(
+            replace(
+                self._state,
+                voice=replace(self._state.voice, verification=verification),
             )
         )
 
