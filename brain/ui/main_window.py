@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
         self._notifications.dismissed.connect(self._presentation_store.dismiss_notification)
         self._notifications.recovery_requested.connect(self.recovery_action_requested)
         self._page_host = PageHost(tokens=tokens)
+        self._page_host.navigation_requested.connect(self._presentation_store.navigate)
         self._operation_surface = OperationStatusSurface(tokens=tokens)
         self._operation_surface.cancel_requested.connect(
             self._presentation_store.request_cancellation
@@ -143,6 +144,7 @@ class MainWindow(QMainWindow):
 
     def _render_presentation_state(self, state: PresentationState) -> None:
         page = state.navigation.current_page
+        self._page_host.render(state)
         self._page_host.show_page(page)
         with QSignalBlocker(self._navigation):
             for row in range(self._navigation.count()):

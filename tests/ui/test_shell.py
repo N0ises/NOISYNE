@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QListWidget, QPushButton
+from PySide6.QtWidgets import QListWidget, QPushButton
 
 from brain.ui.app import build_main_window
 from brain.ui.contracts import (
@@ -255,15 +255,13 @@ def test_product_identity_uses_metadata_and_settings_entry_navigates(qtbot, fake
     assert store.state.navigation.current_page is PageId.SETTINGS
 
 
-def test_overview_is_placeholder_not_component_gallery(qtbot, fake_adapter) -> None:
+def test_overview_is_dashboard_not_component_gallery(qtbot, fake_adapter) -> None:
     window, _store = _window(qtbot, fake_adapter)
     host = window.findChild(PageHost, "pageHost")
 
     assert host.current_page_id is PageId.OVERVIEW
     assert host.findChild(ComponentGallery) is None
-    assert any(
-        "future content" in label.text() for label in host.currentWidget().findChildren(QLabel)
-    )
+    assert host.currentWidget().accessibleName() == "Overview Dashboard"
 
 
 def test_keyboard_navigation_and_shell_resize(qtbot, fake_adapter) -> None:

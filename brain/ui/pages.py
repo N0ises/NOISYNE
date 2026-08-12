@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QStackedWidget, QVBoxLayout, QWidget
 
+from .dashboard import DashboardPage
 from .design_system.components import EmptyState, PageHeader
 from .design_system.tokens import DEFAULT_TOKENS, DesignTokens
-from .presentation_state import NAVIGATION_ORDER, PageId
+from .presentation_state import NAVIGATION_ORDER, PageId, PresentationState
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,11 +21,6 @@ class PageDefinition:
 
 
 PAGE_DEFINITIONS = {
-    PageId.OVERVIEW: PageDefinition(
-        PageId.OVERVIEW,
-        "Overview",
-        "A workspace summary will be added in a later sprint.",
-    ),
     PageId.ANALYZE: PageDefinition(
         PageId.ANALYZE,
         "Analyze",
@@ -94,6 +91,8 @@ class PlaceholderPage(QWidget):
 
 
 class PageHost(QStackedWidget):
+    navigation_requested = Signal(object)
+
     def __init__(
         self,
         *,
@@ -103,21 +102,31 @@ class PageHost(QStackedWidget):
         super().__init__(parent)
         self.setObjectName("pageHost")
         self.setAccessibleName("Page workspace")
-        self._pages: dict[PageId, PlaceholderPage] = {}
+        self._pages: dict[PageId, QWidget] = {}
         for page_id in NAVIGATION_ORDER:
-            page = PlaceholderPage(PAGE_DEFINITIONS[page_id], tokens=tokens)
+            if page_id is PageId.OVERVIEW:
+                page = DashboardPage(tokens=tokens)
+                page.navigation_requested.connect(self.navigation_requested)
+            else:
+                page = PlaceholderPage(PAGE_DEFINITIONS[page_id], tokens=tokens)
             self._pages[page_id] = page
             self.addWidget(page)
 
     @property
     def current_page_id(self) -> PageId:
         page = self.currentWidget()
-        if not isinstance(page, PlaceholderPage):
+        page_id = getattr(page, "page_id", None)
+        if not isinstance(page_id, PageId):
             raise TypeError("Page host contains an unexpected widget.")
-        return page.page_id
+        return page_id
 
-    def page(self, page_id: PageId) -> PlaceholderPage:
+    def page(self, page_id: PageId) -> QWidget:
         return self._pages[page_id]
 
     def show_page(self, page_id: PageId) -> None:
         self.setCurrentWidget(self._pages[page_id])
+
+    def render(self, state: PresentationState) -> None:
+        dashboard = self._pages[PageId.OVERVIEW]
+        if isinstance(dashboard, DashboardPage):
+            dashboard.render(state)
