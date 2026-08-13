@@ -10,11 +10,12 @@ import sys
 from importlib import resources
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from time import perf_counter
 
 from PySide6.QtCore import QLibraryInfo
 
 from .brand_resources import APPROVED_BRAND_ASSETS, brand_asset_bytes
-from .contracts import ProductMetadata
+from .contracts import AnalysisCommand, DesktopApplicationAdapter, ProductMetadata
 from .paths import desktop_path_layout, user_data_directory
 
 REPRESENTATIVE_IMPORTS = (
@@ -26,8 +27,17 @@ REPRESENTATIVE_IMPORTS = (
 OPTIONAL_RUNTIME_IMPORTS = ("torch", "torchaudio", "transformers")
 
 
-def run_packaging_probe(output_path: Path, metadata: ProductMetadata) -> Path:
+def run_packaging_probe(
+    output_path: Path,
+    metadata: ProductMetadata,
+    *,
+    adapter: DesktopApplicationAdapter | None = None,
+    audio_path: Path | None = None,
+    report_path: Path | None = None,
+) -> Path:
     """Validate packaged imports/resources/paths without loading a model."""
+    if (audio_path is None) is not (report_path is None):
+        raise ValueError("Packaged analysis requires both audio and report paths.")
     imported: dict[str, str] = {}
     for module_name in REPRESENTATIVE_IMPORTS:
         module = importlib.import_module(module_name)
@@ -101,6 +111,27 @@ def run_packaging_probe(output_path: Path, metadata: ProductMetadata) -> Path:
         "writable_directories": [str(path.resolve()) for path in layout.writable_directories],
         "version": metadata.version,
     }
+    if audio_path is not None and report_path is not None:
+        if adapter is None:
+            raise ValueError("Packaged analysis requires the application adapter.")
+        started = perf_counter()
+        analysis = adapter.analyze(
+            AnalysisCommand(
+                source_path=audio_path.resolve(),
+                output_path=report_path.resolve(),
+            )
+        )
+        elapsed = perf_counter() - started
+        if not report_path.is_file():
+            raise RuntimeError("Packaged analysis did not produce its requested report.")
+        result["analysis"] = {
+            "audio_path": str(audio_path.resolve()),
+            "elapsed_seconds": round(elapsed, 3),
+            "report_path": str(report_path.resolve()),
+            "report_size_bytes": report_path.stat().st_size,
+            "score": analysis.score,
+            "status": analysis.status,
+        }
 
     output_path = output_path.resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)

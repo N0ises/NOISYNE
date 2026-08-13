@@ -34,14 +34,14 @@ models, `.env`, credentials, and unrelated workspace `assets/` are not shipped.
 
 ## Runtime locations and first run
 
-Read-only resources use `importlib.resources`. Existing V1 writable identity is preserved at
-`%LOCALAPPDATA%/SoundBrain/soundbrain.desktop`; Sprint 20 does not migrate it to a NOISYNE
-technical path. Frozen startup sets `SOUNDBRAIN_ROOT` to that user root before V1 settings
-load, then idempotently creates state, logs, cache, reports, and the compatible sibling
-Models directory. Session data is `state/session-v1.json`; desktop diagnostics are
-`logs/desktop.log`. Reports remain user-selected; optional models belong in the documented
-user Models directory. Initialization failures fall back to safe stderr diagnostics and the
-existing UI resilience paths.
+Read-only resources use `importlib.resources`. The stable application ID remains
+`soundbrain.desktop`; desktop user data resolves under
+`%LOCALAPPDATA%/NOISYNE/soundbrain.desktop`. Frozen startup sets `SOUNDBRAIN_ROOT` to that
+user root before V1 settings load, then idempotently creates state, logs, cache, reports, and
+the compatible sibling Models directory. Session data is `state/session-v1.json`; desktop
+diagnostics are `logs/desktop.log`. Reports remain user-selected; optional models belong in
+the documented user Models directory. Initialization failures fall back to safe stderr
+diagnostics and the existing UI resilience paths.
 
 ## Local candidate validation
 
@@ -50,24 +50,45 @@ existing UI resilience paths.
 - Native packaged `--smoke-test` from an unrelated path containing spaces: exit 0 in 2.26 s.
 - Static artifact verification: Qt `qwindows.dll`, SVG plugin, five brand assets, YAML,
   NØISYNE 1.0.0 metadata, icon, and unwanted-file scan passed.
-- Distribution size: 891,549,317 bytes across 5,591 files. PowerShell and tar ZIP creation
+- Distribution size: 891,550,244 bytes across 5,591 files. PowerShell and tar ZIP creation
   were stopped after exceeding practical local build time; no completed archive size exists.
-- The comprehensive import probe exceeded 120 seconds while importing bundled librosa/Numba;
-  it is a known diagnostic limitation, not a shell-startup failure. No model was initialized
-  or downloaded.
-- PyInstaller reported the known optional Numba TBB pool missing `tbb12.dll`; accepted
-  librosa/source regressions do not require that pool.
+- A real packaged V1 analysis of the 8,629,040-byte `tests/assets/test.wav` fixture completed
+  from a relocated bundle in 29.053 s, returned `ok` with score 95.0, and exported a
+  2,830-byte JSON report. The command used the bundled runtime only:
 
-No Windows Sandbox/VM or installer compiler (Inno Setup, WiX, NSIS) was available. Therefore
-the one-folder candidate is the Sprint 20 local package: copy it into any user-writable
-directory, launch, replace files to reinstall, and delete that directory to uninstall. This
-launch was validated without source/venv dependency by the packaged executable. A separate
-copy/reinstall/removal cycle was not completed locally. User data is
-outside the bundle and survives replacement/removal. A real Start Menu/uninstall-entry
-installer and true clean-machine audio workflow remain Sprint 21 release-candidate risks;
-no release, tag, signing, or publishing occurs in Sprint 20.
+  ```powershell
+  & 'E:\Build\NOISYNE Sprint20 Validation\Bundle A\NOISYNE.exe' `
+    --packaging-probe 'E:\Build\NOISYNE Sprint20 Validation\Results\probe.json' `
+    --packaged-analysis 'E:\Build\NOISYNE Sprint20 Validation\Inputs\supported-test.wav' `
+    --packaged-analysis-report 'E:\Build\NOISYNE Sprint20 Validation\Results\analysis-report.json'
+  ```
 
-Final source validation: packaging/adjacent tests 28 passed; full UI 367 passed; E2E 16
-passed; stable V1 adapter regressions 18 passed; relevant frozen V1 analyze/reference subset
-10 passed; native and offscreen source smoke exited 0; Ruff, Black, compileall, and Git
-whitespace checks passed. No backend or V2 file was modified.
+  No model was initialized or downloaded.
+- PyInstaller's missing `tbb12.dll` message is non-blocking for the supported deterministic
+  V1 analysis path. The warning originates from Numba's optional TBB threading pool; the
+  packaged librosa import and real analysis/report workflow above completed without it.
+
+No Windows Sandbox, disposable VM, usable clean local account, or installer compiler (Inno
+Setup, WiX, NSIS) was available. The strongest available isolation was a fresh temporary
+workspace outside the repository, with a relocated bundle and audio input, an unrelated
+working directory containing spaces, and no development `PYTHONPATH` or active virtual
+environment. This is not a true clean-machine test. Windows resolved the external user-data
+location to `%LOCALAPPDATA%/NOISYNE/soundbrain.desktop`; that path was outside the bundle.
+
+The relocated bundle launched successfully and the probe found all five brand assets,
+`runtime.yaml`, and Qt's native `qwindows.dll`. Two close/reopen smoke runs exited 0 in
+9.149 s and 3.035 s. For the reinstall-equivalent, the original bundle was moved aside and
+replaced with the same 5,591-file, 891,550,244-byte build; relaunch exited 0 in 15.467 s and
+the session SHA-256 remained
+`1670CA79D7E9F8D82F55A4381211AACC0C303FB3EDC65481BACA7BC0885B5EB0`. For the
+uninstall-equivalent, both validation bundle copies were sent to the Recycle Bin. The copied
+install path was absent afterward while the external session, reports, and model directories
+remained. These are bundle replacement/removal tests, not installer tests.
+
+A real Start Menu/uninstall-entry installer build/test and true clean-machine audio workflow
+remain environment-blocked release-candidate risks. No release, tag, signing, or publishing
+occurs in Sprint 20.
+
+Completion-pass source validation: packaging tests 6 passed; full UI 368 passed; E2E 16
+passed; stable V1 adapter regressions 18 passed; Ruff, Black, compileall, and Git whitespace
+checks passed. No backend or V2 file was modified.

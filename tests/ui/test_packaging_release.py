@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tomllib
@@ -10,6 +11,8 @@ from PIL import Image
 
 from brain.ui.brand_resources import APPROVED_BRAND_ASSETS, brand_asset_bytes
 from brain.ui.branding import default_product_metadata
+from brain.ui.contracts import AnalysisViewResult
+from brain.ui.packaging_probe import run_packaging_probe
 from brain.ui.paths import (
     desktop_path_layout,
     initialize_user_directories,
@@ -86,3 +89,30 @@ def test_spec_is_auditable_onedir_windowed_configuration() -> None:
     assert "Refusing to package a CUDA Torch environment" in spec
     for development_only in ('"pytest"', '"pytestqt"', '"black"', '"ruff"'):
         assert development_only in spec
+
+
+def test_packaging_probe_runs_real_adapter_analysis_and_export(product_metadata, tmp_path) -> None:
+    audio = tmp_path / "fixture.wav"
+    audio.write_bytes(b"audio fixture")
+    report = tmp_path / "analysis.json"
+    output = tmp_path / "probe.json"
+
+    class Adapter:
+        def analyze(self, command):
+            assert command.source_path == audio.resolve()
+            assert command.output_path == report.resolve()
+            report.write_text('{"status":"ok"}', encoding="utf-8")
+            return AnalysisViewResult(command.source_path, "ok", "mix", 91.0, "packaged analysis")
+
+    run_packaging_probe(
+        output,
+        product_metadata,
+        adapter=Adapter(),
+        audio_path=audio,
+        report_path=report,
+    )
+    payload = json.loads(output.read_text(encoding="utf-8"))
+
+    assert payload["analysis"]["status"] == "ok"
+    assert payload["analysis"]["score"] == 91.0
+    assert payload["analysis"]["report_size_bytes"] > 0

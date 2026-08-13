@@ -43,6 +43,16 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="Run representative packaged-runtime checks and write JSON results.",
     )
+    parser.add_argument(
+        "--packaged-analysis",
+        type=Path,
+        help="Analyze a supplied audio fixture during the packaging probe.",
+    )
+    parser.add_argument(
+        "--packaged-analysis-report",
+        type=Path,
+        help="Write the packaging probe analysis report to this path.",
+    )
     return parser
 
 
@@ -151,7 +161,13 @@ def run(
     if options.packaging_probe is not None:
         task = executor.create(
             "packaging_probe",
-            lambda: run_packaging_probe(options.packaging_probe, metadata),
+            lambda: run_packaging_probe(
+                options.packaging_probe,
+                metadata,
+                adapter=application_adapter,
+                audio_path=options.packaged_analysis,
+                report_path=options.packaged_analysis_report,
+            ),
         )
         WorkerStateBinding(presentation_store).bind(task)
         task.signals.failed.connect(fail_probe)
