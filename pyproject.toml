@@ -69,6 +69,7 @@ include-package-data = true
 py-modules = ["main"]
 
 [project.scripts]
+noisyne = "brain.cli:main"
 soundbrain = "brain.cli:main"
 
 [tool.setuptools.package-data]

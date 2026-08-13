@@ -1,10 +1,10 @@
-# SoundBrain
+# NØISYNE
 
 > **Audio Intelligence System**
 
-SoundBrain is an AI platform for professional audio engineering.
+NØISYNE is an AI platform for professional audio engineering.
 
-Unlike traditional analyzers that only report measurements, SoundBrain
+Unlike traditional analyzers that only report measurements, NØISYNE
 is designed to perceive, understand, reason, explain, automate, and
 eventually create audio using modern AI, DSP, psychoacoustics, and
 engineering knowledge.
@@ -17,7 +17,7 @@ Build the world's most capable Audio Intelligence System.
 
 ------------------------------------------------------------------------
 
-# What Makes SoundBrain Different
+# What Makes NØISYNE Different
 
 Traditional software answers:
 
@@ -25,7 +25,7 @@ Traditional software answers:
 -   Is there clipping?
 -   What is the peak?
 
-SoundBrain answers:
+NØISYNE answers:
 
 -   Why does the mix sound this way?
 -   Should anything actually be changed?

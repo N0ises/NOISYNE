@@ -1,4 +1,4 @@
-# SoundBrain Runtime Configuration
+# NØISYNE Runtime Configuration
 # Centralizes execution environment, device selection, and filesystem paths.
 # All paths are relative to the project root and support ~ expansion.
 

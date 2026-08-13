@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class EngineRegistry:
@@ -54,12 +55,13 @@ def _register_default_engines() -> None:
     Imports are deferred to keep this module lightweight at import time.
     """
     from brain.application.audio_review_service import AudioReviewService
-    from brain.application.soundbrain_service import SoundBrainService
+    from brain.application.noisyne_service import NoisyneService
     from brain.reference.pipeline import ReferencePipeline
 
     registry.register("audio_review", AudioReviewService)
     registry.register("reference_comparison", ReferencePipeline)
-    registry.register("soundbrain", SoundBrainService)
+    registry.register("noisyne", NoisyneService)
+    registry.register("soundbrain", NoisyneService)
 
 
 _register_default_engines()

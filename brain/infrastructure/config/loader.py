@@ -29,7 +29,8 @@ except (
     yaml = None
 
 
-_ENV_ROOT = "SOUNDBRAIN_ROOT"
+_ENV_ROOT = "NOISYNE_ROOT"
+_LEGACY_ENV_ROOT = "SOUNDBRAIN_ROOT"
 
 
 def get_application_root() -> Path:
@@ -37,28 +38,29 @@ def get_application_root() -> Path:
 
     Resolution order:
 
-    1. The ``SOUNDBRAIN_ROOT`` environment variable, if set.
-    2. The directory containing ``pyproject.toml`` or ``configs/`` when running
+    1. The ``NOISYNE_ROOT`` environment variable, if set.
+    2. The ``SOUNDBRAIN_ROOT`` environment variable, if set (legacy fallback).
+    3. The directory containing ``pyproject.toml`` or ``configs/`` when running
        from a source checkout.
-    3. The parent directory of the installed ``brain`` package (e.g.
+    4. The parent directory of the installed ``brain`` package (e.g.
        ``site-packages`` for a wheel install).
 
     This keeps runtime paths stable regardless of the current working directory.
     """
-    env_root = os.environ.get(_ENV_ROOT)
+    env_root = os.environ.get(_ENV_ROOT) or os.environ.get(_LEGACY_ENV_ROOT)
     if env_root:
         return Path(env_root).expanduser().resolve()
 
     config_module = sys.modules.get("brain.infrastructure.config")
     if config_module is None:
         raise RuntimeError(
-            "Cannot determine SoundBrain application root: "
+            "Cannot determine NOISYNE application root: "
             "brain.infrastructure.config has not been imported."
         )
     config_file = getattr(config_module, "__file__", None)
     if config_file is None:
         raise RuntimeError(
-            "Cannot determine SoundBrain application root from the packaged "
+            "Cannot determine NOISYNE application root from the packaged "
             f"configuration location. Set the {_ENV_ROOT} environment variable."
         )
     config_dir = Path(config_file).resolve().parent
@@ -80,14 +82,10 @@ def _load_yaml(name: str) -> dict[str, Any]:
     configuration problems fail fast instead of silently falling back to defaults.
     """
     if yaml is None:
-        raise RuntimeError("PyYAML is required to load SoundBrain configuration.")
-    resource = resources.files("brain.infrastructure.config").joinpath(
-        "resources", f"{name}.yaml"
-    )
+        raise RuntimeError("PyYAML is required to load NOISYNE configuration.")
+    resource = resources.files("brain.infrastructure.config").joinpath("resources", f"{name}.yaml")
     if not resource.is_file():
-        raise FileNotFoundError(
-            f"Required SoundBrain configuration resource is missing: {name}.yaml"
-        )
+        raise FileNotFoundError(f"Required NOISYNE configuration resource is missing: {name}.yaml")
     text = resource.read_text(encoding="utf-8")
     if not text.strip():
         return {}
@@ -130,9 +128,7 @@ def _model_entry(data: dict[str, Any] | None, default: ModelEntry) -> ModelEntry
             default.trust_remote_code,
         ),
     )
-    if entry.trust_remote_code and not re.fullmatch(
-        r"[0-9a-fA-F]{40}", entry.revision or ""
-    ):
+    if entry.trust_remote_code and not re.fullmatch(r"[0-9a-fA-F]{40}", entry.revision or ""):
         raise ValueError(
             f"Model '{entry.name}' enables trust_remote_code but does not specify "
             "a 40-character immutable commit revision."

@@ -17,7 +17,39 @@ def _patch_config_file(monkeypatch, config_file: Path):
 
 @pytest.fixture
 def no_env_root(monkeypatch):
+    monkeypatch.delenv("NOISYNE_ROOT", raising=False)
     monkeypatch.delenv("SOUNDBRAIN_ROOT", raising=False)
+
+
+def test_noisyne_root_env_overrides(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        env_root = Path(raw) / "custom_root"
+        env_root.mkdir()
+        monkeypatch.setenv("NOISYNE_ROOT", str(env_root))
+        # Even if the module file points elsewhere, the env variable wins.
+        _patch_config_file(monkeypatch, Path(raw) / "irrelevant" / "__init__.py")
+        assert get_application_root() == env_root
+
+
+def test_soundbrain_root_env_legacy_fallback(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        env_root = Path(raw) / "legacy_root"
+        env_root.mkdir()
+        monkeypatch.setenv("SOUNDBRAIN_ROOT", str(env_root))
+        _patch_config_file(monkeypatch, Path(raw) / "irrelevant" / "__init__.py")
+        assert get_application_root() == env_root
+
+
+def test_noisyne_root_wins_over_soundbrain_root(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        new_root = Path(raw) / "new_root"
+        legacy_root = Path(raw) / "legacy_root"
+        new_root.mkdir()
+        legacy_root.mkdir()
+        monkeypatch.setenv("NOISYNE_ROOT", str(new_root))
+        monkeypatch.setenv("SOUNDBRAIN_ROOT", str(legacy_root))
+        _patch_config_file(monkeypatch, Path(raw) / "irrelevant" / "__init__.py")
+        assert get_application_root() == new_root
 
 
 def test_source_checkout_root_resolution(no_env_root, monkeypatch):
@@ -53,22 +85,10 @@ def test_installed_wheel_root_resolution(no_env_root, monkeypatch):
     with tempfile.TemporaryDirectory() as raw:
         site_packages = Path(raw) / "venv" / "Lib" / "site-packages"
         site_packages.mkdir(parents=True)
-        config_file = (
-            site_packages / "brain" / "infrastructure" / "config" / "__init__.py"
-        )
+        config_file = site_packages / "brain" / "infrastructure" / "config" / "__init__.py"
         config_file.parent.mkdir(parents=True)
         config_file.write_text("", encoding="utf-8")
 
         # No pyproject.toml or configs dir anywhere in the parents.
         _patch_config_file(monkeypatch, config_file)
         assert get_application_root() == site_packages
-
-
-def test_sounbrain_root_env_overrides(no_env_root, monkeypatch):
-    with tempfile.TemporaryDirectory() as raw:
-        env_root = Path(raw) / "custom_root"
-        env_root.mkdir()
-        monkeypatch.setenv("SOUNDBRAIN_ROOT", str(env_root))
-        # Even if the module file points elsewhere, the env variable wins.
-        _patch_config_file(monkeypatch, Path(raw) / "irrelevant" / "__init__.py")
-        assert get_application_root() == env_root

@@ -1,4 +1,4 @@
-# SoundBrain
+# NØISYNE
 
 > A modular AI-powered Audio Intelligence Platform.
 
@@ -11,9 +11,9 @@
 
 # Overview
 
-SoundBrain is a modular artificial intelligence platform for professional audio analysis, understanding, reasoning, and recommendation.
+NØISYNE is a modular artificial intelligence platform for professional audio analysis, understanding, reasoning, and recommendation.
 
-Unlike traditional audio analyzers that only measure technical metrics, SoundBrain combines deterministic signal processing, machine learning, semantic embeddings, retrieval systems, and large language models into a unified architecture capable of understanding audio from both engineering and musical perspectives.
+Unlike traditional audio analyzers that only measure technical metrics, NØISYNE combines deterministic signal processing, machine learning, semantic embeddings, retrieval systems, and large language models into a unified architecture capable of understanding audio from both engineering and musical perspectives.
 
 The project is designed around clean architecture principles where every subsystem has a single responsibility and can evolve independently.
 
@@ -23,7 +23,7 @@ The project is designed around clean architecture principles where every subsyst
 
 Create one of the most complete open modular platforms for Audio Intelligence.
 
-SoundBrain aims to become an engineering platform capable of:
+NØISYNE aims to become an engineering platform capable of:
 
 - Audio Analysis
 - Audio Understanding
@@ -251,7 +251,7 @@ Main documents include:
 
 # Development Philosophy
 
-SoundBrain follows an Architecture First development model.
+NØISYNE follows an Architecture First development model.
 
 Every new feature must satisfy the following principles:
 
@@ -295,4 +295,4 @@ Hamid Haddadi
 
 ---
 
-SoundBrain is an ongoing long-term engineering project focused on building a scalable, modular, and production-ready Audio Intelligence platform.
+NØISYNE is an ongoing long-term engineering project focused on building a scalable, modular, and production-ready Audio Intelligence platform.

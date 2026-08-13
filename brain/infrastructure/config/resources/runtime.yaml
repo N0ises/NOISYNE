@@ -1,4 +1,4 @@
-# SoundBrain Runtime Configuration
+# NØISYNE Runtime Configuration
 runtime:
   device: auto
   dtype: auto

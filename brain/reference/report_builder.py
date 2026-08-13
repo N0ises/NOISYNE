@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 import json
 import logging
 import math
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +11,6 @@ from .models import (
     EngineerDecision,
     ReferenceReport,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -83,58 +82,34 @@ class ReferenceReportBuilder:
 
         lines: list[str] = []
 
-        lines.append("# SoundBrain Reference Report")
+        lines.append("# NØISYNE Reference Report")
         lines.append("")
 
         lines.append("## Overall")
         lines.append("")
-        lines.append(
-            f"- Similarity: **{c.similarity:.2f}%**"
-        )
-        lines.append(
-            f"- Confidence: **{c.confidence:.2f}**"
-        )
+        lines.append(f"- Similarity: **{c.similarity:.2f}%**")
+        lines.append(f"- Confidence: **{c.confidence:.2f}**")
         lines.append("")
         lines.append(report.summary)
         lines.append("")
 
         lines.append("## Scores")
         lines.append("")
-        lines.append(
-            f"| Category | Score |"
-        )
+        lines.append("| Category | Score |")
         lines.append("|---|---:|")
-        lines.append(
-            f"| Frequency | {c.frequency_score:.2f} |"
-        )
-        lines.append(
-            f"| Dynamics | {c.dynamic_score:.2f} |"
-        )
-        lines.append(
-            f"| Stereo | {c.stereo_score:.2f} |"
-        )
-        lines.append(
-            f"| Loudness | {c.loudness_score:.2f} |"
-        )
-        lines.append(
-            f"| Transient | {c.transient_score:.2f} |"
-        )
-        lines.append(
-            f"| Phase | {c.phase_score:.2f} |"
-        )
-        lines.append(
-            f"| Tonal | {c.tonal_score:.2f} |"
-        )
-        lines.append(
-            f"| Semantic | {c.semantic_score:.2f} |"
-        )
+        lines.append(f"| Frequency | {c.frequency_score:.2f} |")
+        lines.append(f"| Dynamics | {c.dynamic_score:.2f} |")
+        lines.append(f"| Stereo | {c.stereo_score:.2f} |")
+        lines.append(f"| Loudness | {c.loudness_score:.2f} |")
+        lines.append(f"| Transient | {c.transient_score:.2f} |")
+        lines.append(f"| Phase | {c.phase_score:.2f} |")
+        lines.append(f"| Tonal | {c.tonal_score:.2f} |")
+        lines.append(f"| Semantic | {c.semantic_score:.2f} |")
         lines.append("")
 
         lines.append("## Frequency Bands")
         lines.append("")
-        lines.append(
-            "| Band | Ref | Current | Δ dB | Severity |"
-        )
+        lines.append("| Band | Ref | Current | Δ dB | Severity |")
         lines.append("|---|---:|---:|---:|---|")
 
         for band in c.band_differences:
@@ -153,9 +128,7 @@ class ReferenceReportBuilder:
 
         for decision in c.engineer_decisions:
 
-            lines.extend(
-                self._decision_block(decision)
-            )
+            lines.extend(self._decision_block(decision))
 
         lines.append("")
         lines.append("## Strengths")
@@ -214,35 +187,21 @@ class ReferenceReportBuilder:
 
         lines = []
 
-        lines.append(
-            f"### {decision.title}"
-        )
+        lines.append(f"### {decision.title}")
 
-        lines.append(
-            f"- Category: {decision.category.value}"
-        )
+        lines.append(f"- Category: {decision.category.value}")
 
-        lines.append(
-            f"- Severity: {decision.severity.value}"
-        )
+        lines.append(f"- Severity: {decision.severity.value}")
 
-        lines.append(
-            f"- Confidence: {decision.confidence:.2f}"
-        )
+        lines.append(f"- Confidence: {decision.confidence:.2f}")
 
-        lines.append(
-            f"- Description: {decision.description}"
-        )
+        lines.append(f"- Description: {decision.description}")
 
-        lines.append(
-            f"- Recommendation: {decision.recommendation}"
-        )
+        lines.append(f"- Recommendation: {decision.recommendation}")
 
         if decision.plugin:
 
-            lines.append(
-                f"- Plugin: {decision.plugin}"
-            )
+            lines.append(f"- Plugin: {decision.plugin}")
 
         if decision.parameters:
 
@@ -251,9 +210,7 @@ class ReferenceReportBuilder:
 
             for key, value in decision.parameters.items():
 
-                lines.append(
-                    f"- {key}: {value}"
-                )
+                lines.append(f"- {key}: {value}")
 
         lines.append("")
 

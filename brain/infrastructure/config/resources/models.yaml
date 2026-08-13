@@ -1,4 +1,4 @@
-# SoundBrain Model Registry
+# NØISYNE Model Registry
 models:
   clap:
     name: clap-htsat-unfused

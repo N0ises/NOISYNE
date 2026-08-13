@@ -1,4 +1,4 @@
-# SoundBrain Audio Processing Defaults
+# NØISYNE Audio Processing Defaults
 audio:
   sample_rate: 48000
   clap_target_sample_rate: 48000

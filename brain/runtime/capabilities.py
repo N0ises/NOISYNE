@@ -59,10 +59,7 @@ class CapabilityRegistry:
         )
 
     def names(self) -> tuple[str, ...]:
-        return tuple(
-            capability.name
-            for capability in self.all()
-        )
+        return tuple(capability.name for capability in self.all())
 
     def clear(self) -> None:
         self._capabilities.clear()
@@ -128,7 +125,7 @@ registry.register(
 )
 
 # ---------------------------------------------------------------------------
-# V1 SoundBrain capabilities
+# V1 NØISYNE capabilities
 # ---------------------------------------------------------------------------
 
 registry.register(
@@ -232,9 +229,9 @@ registry.register(
 registry.register(
     Capability(
         name="service_facade",
-        description="V1 SoundBrainService unified entry point",
+        description="V1 NoisyneService unified entry point",
         status=CapabilityStatus.PRODUCTION,
-        requirements="All deterministic subsystems wired through SoundBrainService",
+        requirements="All deterministic subsystems wired through NoisyneService",
         tested_in_freeze=True,
     )
 )

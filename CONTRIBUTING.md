@@ -1,6 +1,6 @@
-# Contributing to SoundBrain
+# Contributing to NØISYNE
 
-Thank you for your interest in contributing to SoundBrain.
+Thank you for your interest in contributing to NØISYNE.
 
 ## Development Workflow
 
@@ -68,4 +68,4 @@ test: add runtime validation tests
 
 ---
 
-Thank you for helping improve SoundBrain.
+Thank you for helping improve NØISYNE.

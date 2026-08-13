@@ -1,4 +1,4 @@
-# SoundBrain Model Registry
+# NØISYNE Model Registry
 # Every AI model used by SoundBrain is configured here.
 # Model names are resolved by ModelRepository: first as a local folder under
 # models/, then as a Hugging Face model ID or remote source.
