@@ -118,7 +118,7 @@ class MainWindow(QMainWindow):
 
         self._runtime_surface = RuntimeStatusSurface(tokens=tokens)
         self._runtime_surface.activated.connect(
-            lambda: self._presentation_store.navigate(PageId.RUNTIME_STATUS)
+            lambda: self._presentation_store.navigate(PageId.SETTINGS)
         )
         top_bar = QFrame()
         top_bar.setObjectName("globalTopBar")
@@ -212,7 +212,7 @@ class MainWindow(QMainWindow):
             "open_knowledge": PageId.KNOWLEDGE,
             "open_reports": PageId.REPORTS,
             "choose_export_destination": PageId.REPORTS,
-            "open_runtime_status": PageId.RUNTIME_STATUS,
+            "open_runtime_status": PageId.SETTINGS,
         }
         handled = action_id in navigation or action_id in {
             "retry_settings",
@@ -224,7 +224,7 @@ class MainWindow(QMainWindow):
             self._presentation_store.navigate(PageId.SETTINGS)
             self._settings_controller.refresh_settings()
         elif action_id == "refresh_runtime":
-            self._presentation_store.navigate(PageId.RUNTIME_STATUS)
+            self._presentation_store.navigate(PageId.SETTINGS)
             self._settings_controller.refresh_runtime()
         return handled
 

@@ -150,6 +150,17 @@ def test_runtime_loading_is_checking_not_ready(qtbot, fake_adapter) -> None:
     assert surface.badge.text() == "Checking"
 
 
+def test_runtime_details_open_completed_settings_runtime_workspace(qtbot, fake_adapter) -> None:
+    window, store = _window(qtbot, fake_adapter)
+    surface = window.findChild(RuntimeStatusSurface, "runtimeStatusSurface")
+
+    surface.details_button.click()
+
+    assert store.state.navigation.current_page is PageId.SETTINGS
+    assert window._page_host.current_page_id is PageId.SETTINGS
+    assert PageId.RUNTIME_STATUS not in NAVIGATION_ORDER
+
+
 def test_operation_surface_is_truthful_about_progress_and_cancellation(qtbot, fake_adapter) -> None:
     window, store = _window(qtbot, fake_adapter)
     surface = window.findChild(OperationStatusSurface, "operationStatusSurface")

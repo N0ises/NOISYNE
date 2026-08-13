@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -63,6 +63,13 @@ class DashboardSection(Card):
         self._items = list(items)
         for widget in self._items:
             self.content_layout.addWidget(widget)
+        QTimer.singleShot(0, self, self._sync_minimum_height)
+
+    def _sync_minimum_height(self) -> None:
+        self.setMinimumHeight(0)
+        self.content_layout.invalidate()
+        self.content_layout.activate()
+        self.setMinimumHeight(self.sizeHint().height())
 
 
 class DashboardPage(QScrollArea):
@@ -106,7 +113,7 @@ class DashboardPage(QScrollArea):
         self.quick_actions = DashboardSection(
             "Quick actions", object_name="dashboardQuickActions", tokens=tokens
         )
-        self.quick_actions.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        self.quick_actions.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Minimum)
         actions = QVBoxLayout()
         actions.setSpacing(tokens.spacing.sm)
         for label, page_id in (
@@ -154,7 +161,7 @@ class DashboardPage(QScrollArea):
             self.reports_section,
             self.references_section,
         ):
-            section.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+            section.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Minimum)
             layout.addWidget(section)
         layout.addStretch(1)
         self.setWidget(content)

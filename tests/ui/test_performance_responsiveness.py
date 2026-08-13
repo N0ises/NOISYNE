@@ -406,4 +406,4 @@ def test_unavailable_accelerator_status_does_not_probe_or_block_other_pages(
     assert time.perf_counter() - started < 2.0
     assert calls == 0
     assert store.state.runtime.phase.value == "degraded"
-    assert window._page_host.current_page_id is PageId.RUNTIME_STATUS
+    assert window._page_host.current_page_id is PageId.SETTINGS

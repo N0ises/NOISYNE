@@ -108,6 +108,25 @@ def test_implemented_pages_are_real_while_later_pages_are_placeholders(qtbot) ->
     )
 
 
+def test_dashboard_sections_do_not_collapse_below_content_at_rc_window_size(qtbot) -> None:
+    dashboard = _dashboard(qtbot)
+    dashboard.resize(1160, 760)
+    dashboard.show()
+    qtbot.wait(10)
+
+    sections = (
+        dashboard.quick_actions,
+        dashboard.session_section,
+        dashboard.runtime_section,
+        dashboard.provider_section,
+        dashboard.capabilities_section,
+        dashboard.analyses_section,
+        dashboard.reports_section,
+        dashboard.references_section,
+    )
+    assert all(section.height() >= section.sizeHint().height() for section in sections)
+
+
 @pytest.mark.parametrize(
     ("lifecycle", "availability", "lifecycle_text", "availability_text"),
     [

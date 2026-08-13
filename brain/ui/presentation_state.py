@@ -39,7 +39,16 @@ class PageId(str, Enum):
     RUNTIME_STATUS = "runtime_status"
 
 
-NAVIGATION_ORDER = tuple(PageId)
+NAVIGATION_ORDER = (
+    PageId.OVERVIEW,
+    PageId.ANALYZE,
+    PageId.REFERENCES,
+    PageId.INTELLIGENCE,
+    PageId.VOICE,
+    PageId.KNOWLEDGE,
+    PageId.REPORTS,
+    PageId.SETTINGS,
+)
 
 
 @dataclass(frozen=True, slots=True)
