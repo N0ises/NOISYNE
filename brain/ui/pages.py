@@ -188,7 +188,22 @@ class PageHost(QStackedWidget):
     def show_page(self, page_id: PageId) -> None:
         self.setCurrentWidget(self._pages[page_id])
 
+    def render_current(self, state: PresentationState) -> None:
+        """Render only the page selected by presentation state.
+
+        Inactive pages are persistent and receive the latest state when they are
+        selected.  Avoiding eight unnecessary page renders on every publication
+        keeps navigation and operation updates lightweight.
+        """
+        page_id = state.navigation.current_page
+        self.show_page(page_id)
+        page = self._pages[page_id]
+        render = getattr(page, "render", None)
+        if callable(render) and type(page).render is not QWidget.render:
+            render(state)
+
     def render(self, state: PresentationState) -> None:
+        """Synchronize every state-aware page, primarily for explicit test use."""
         dashboard = self._pages[PageId.OVERVIEW]
         if isinstance(dashboard, DashboardPage):
             dashboard.render(state)

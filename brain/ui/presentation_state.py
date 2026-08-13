@@ -189,6 +189,7 @@ class NotificationState:
     active: tuple[Notification, ...] = ()
     history: tuple[Notification, ...] = ()
     next_sequence: int = 1
+    active_limit: int = 10
     history_limit: int = 50
 
     def add(
@@ -227,7 +228,7 @@ class NotificationState:
         )
         return replace(
             self,
-            active=(*self.active, notification),
+            active=(*self.active, notification)[-self.active_limit :],
             history=(*self.history, notification)[-self.history_limit :],
             next_sequence=sequence + 1,
         )

@@ -237,8 +237,7 @@ class MainWindow(QMainWindow):
 
     def _render_presentation_state(self, state: PresentationState) -> None:
         page = state.navigation.current_page
-        self._page_host.render(state)
-        self._page_host.show_page(page)
+        self._page_host.render_current(state)
         with QSignalBlocker(self._navigation):
             for row in range(self._navigation.count()):
                 item = self._navigation.item(row)
