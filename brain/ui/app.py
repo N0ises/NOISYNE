@@ -19,7 +19,7 @@ from .errors import ExceptionBoundary, unexpected_error
 from .logging_setup import configure_logging
 from .main_window import MainWindow
 from .packaging_probe import run_packaging_probe
-from .paths import session_state_path
+from .paths import prepare_packaged_runtime, session_state_path
 from .presentation import build_shell_view_state
 from .presentation_state import NotificationLevel, PresentationState
 from .presentation_store import PresentationStore
@@ -93,6 +93,12 @@ def run(
     application_adapter = adapter or V1ApplicationAdapter()
     metadata = application_adapter.product_metadata()
     application = create_application(metadata)
+    try:
+        prepare_packaged_runtime()
+    except OSError as exc:
+        # The shell can still surface session/path errors through its resilience
+        # layer; retain a safe stderr diagnostic for pre-window failures.
+        print(f"NØISYNE could not initialize its user-data directories: {exc}", file=sys.stderr)
     configure_logging()
 
     repository = session_repository or SessionRepository(session_state_path())

@@ -17,6 +17,13 @@ DARK_LOCKUP = "noisyne-master.svg"
 LIGHT_LOCKUP = "noisyne-master-light.svg"
 DARK_SYMBOL = "noisyne-symbol-dark.svg"
 LIGHT_SYMBOL = "noisyne-symbol.svg"
+APPROVED_BRAND_ASSETS = (
+    APP_ICON,
+    DARK_LOCKUP,
+    LIGHT_LOCKUP,
+    DARK_SYMBOL,
+    LIGHT_SYMBOL,
+)
 
 
 def brand_asset_bytes(filename: str) -> bytes | None:

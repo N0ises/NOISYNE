@@ -75,6 +75,7 @@ desktop-test = [
 desktop-package = [
     "PySide6>=6.8,<7",
     "PyInstaller>=6.11,<7",
+    "Pillow>=10,<13",
 ]
 
 [tool.setuptools]
