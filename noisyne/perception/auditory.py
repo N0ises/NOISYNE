@@ -19,6 +19,11 @@ from .common import AuditoryBand, FrequencyRange, MethodMetadata, TimeRange
 FloatArray = NDArray[np.float64]
 
 
+def _require_finite_array(values: np.ndarray, name: str) -> None:
+    if not np.all(np.isfinite(values)):
+        raise ValueError(f"{name} must contain only finite values")
+
+
 def hz_to_erb_rate(frequency_hz: float | FloatArray) -> float | FloatArray:
     """Glasberg-Moore (1990) ERB-rate mapping for non-negative hertz."""
     values = np.asarray(frequency_hz, dtype=np.float64)
@@ -60,6 +65,10 @@ class AuditoryFrontendResult:
             raise ValueError("channel_power_spectra shape does not match summary")
         if self.auditory_band_power.shape != (channels, frames, bands):
             raise ValueError("auditory_band_power shape does not match summary")
+        _require_finite_array(self.linear_frequencies_hz, "linear_frequencies_hz")
+        _require_finite_array(self.frame_times_seconds, "frame_times_seconds")
+        _require_finite_array(self.channel_power_spectra, "channel_power_spectra")
+        _require_finite_array(self.auditory_band_power, "auditory_band_power")
 
 
 class AuditoryFrontend:
@@ -85,24 +94,42 @@ class AuditoryFrontend:
         )[:: config.hop_size_samples]
         framed = np.transpose(framed, (1, 0, 2))
         window = _periodic_hann(config.frame_size_samples)
-        transformed = np.fft.rfft(framed * window, n=config.fft_size, axis=-1)
-        power = np.square(np.abs(transformed)) / (config.fft_size * np.sum(np.square(window)))
-        if config.fft_size % 2 == 0:
-            power[..., 1:-1] *= 2.0
-        else:
-            power[..., 1:] *= 2.0
+        try:
+            with np.errstate(over="raise", invalid="raise", divide="raise"):
+                transformed = np.fft.rfft(framed * window, n=config.fft_size, axis=-1)
+                _require_finite_array(transformed, "auditory FFT output")
+                power = np.square(np.abs(transformed)) / (
+                    config.fft_size * np.sum(np.square(window))
+                )
+                if config.fft_size % 2 == 0:
+                    power[..., 1:-1] *= 2.0
+                else:
+                    power[..., 1:] *= 2.0
+                _require_finite_array(power, "channel_power_spectra")
+        except FloatingPointError as exc:
+            raise ValueError("auditory frontend numerical transform overflowed") from exc
 
         frequencies = np.fft.rfftfreq(config.fft_size, d=1.0 / sample_rate)
         edges_hz, bands = _erb_bands(sample_rate, config.erb_step)
         band_indexes = np.searchsorted(edges_hz, frequencies, side="right") - 1
         band_indexes = np.clip(band_indexes, 0, len(bands) - 1)
-        band_power = np.stack(
-            [np.sum(power[..., band_indexes == index], axis=-1) for index in range(len(bands))],
-            axis=-1,
-        )
+        try:
+            with np.errstate(over="raise", invalid="raise"):
+                band_power = np.stack(
+                    [
+                        np.sum(power[..., band_indexes == index], axis=-1)
+                        for index in range(len(bands))
+                    ],
+                    axis=-1,
+                )
+                _require_finite_array(band_power, "auditory_band_power")
+        except FloatingPointError as exc:
+            raise ValueError("auditory frontend band aggregation overflowed") from exc
 
         frame_starts = np.arange(frame_count, dtype=np.float64) * config.hop_size_samples
         frame_times = (frame_starts + config.frame_size_samples / 2.0) / sample_rate
+        _require_finite_array(frequencies, "linear_frequencies_hz")
+        _require_finite_array(frame_times, "frame_times_seconds")
         duration = samples.shape[0] / sample_rate
         peak = float(np.max(np.abs(samples)))
         summary = AuditoryFrontendSummary(

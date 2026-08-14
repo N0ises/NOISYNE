@@ -88,6 +88,13 @@ frame/hop/FFT tradeoff without changing method 1.0.0 defaults or introducing a
 general DSP framework. FFT sizes may exceed frame sizes for explicit
 zero-padding; they may not be smaller.
 
+`frame_times_seconds` identifies the center of each complete analysis frame,
+including its zero-padded support. A padded frame center can therefore fall
+after the physical end of a short source and is not guaranteed to lie inside
+`source_time_range`. A downstream consumer that reports physical source events
+or intervals must clip or intersect analysis-frame support with
+`source_time_range`; the frontend intentionally does not clamp timestamps.
+
 For a windowed frame `x[n] w[n]` and FFT size `Nfft`, the one-sided bin
 contributions are based on:
 
@@ -107,6 +114,12 @@ band power. `AuditoryFrontendSummary` is the JSON-safe audit contract. It
 contains method/configuration identity, source facts, time coverage, band
 definitions, level assumptions, limitations, and matrix dimensions, but never
 serializes frame matrices. Its independent schema version is `1.0.0`.
+
+All runtime arrays must contain finite values. Input samples are not clipped or
+normalized; if a finite but extreme amplitude overflows the FFT, power
+calculation, or band aggregation, analysis raises `ValueError` instead of
+returning NaN or infinity. NumPy overflow/invalid handling is scoped only to
+these numerical operations.
 
 The Sprint 1 aggregate perceptual schema remains `1.0.0` and is unchanged.
 

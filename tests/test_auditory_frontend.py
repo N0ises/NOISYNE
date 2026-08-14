@@ -16,6 +16,7 @@ from noisyne.perception import (
 )
 from noisyne.perception.auditory import (
     AuditoryFrontend,
+    AuditoryFrontendResult,
     erb_rate_to_hz,
     hz_to_erb_rate,
 )
@@ -214,6 +215,37 @@ def test_above_full_scale_input_is_preserved_and_flagged() -> None:
     assert result.summary.nominal_full_scale_exceeded is True
 
 
+def test_extremely_large_finite_input_fails_instead_of_returning_non_finite_power() -> None:
+    samples = np.full(2048, np.finfo(np.float64).max)
+
+    with pytest.raises(ValueError, match="numerical transform"):
+        AuditoryFrontend().analyze(_audio(samples))
+
+
+def test_valid_result_runtime_arrays_are_all_finite() -> None:
+    result = AuditoryFrontend().analyze(_audio(_tone(1125.0, 4096)))
+
+    assert np.all(np.isfinite(result.linear_frequencies_hz))
+    assert np.all(np.isfinite(result.frame_times_seconds))
+    assert np.all(np.isfinite(result.channel_power_spectra))
+    assert np.all(np.isfinite(result.auditory_band_power))
+
+
+def test_runtime_result_rejects_non_finite_array_when_constructed_directly() -> None:
+    valid = AuditoryFrontend().analyze(_audio(np.zeros(2048)))
+    frequencies = valid.linear_frequencies_hz.copy()
+    frequencies[0] = np.inf
+
+    with pytest.raises(ValueError, match="linear_frequencies_hz"):
+        AuditoryFrontendResult(
+            summary=valid.summary,
+            linear_frequencies_hz=frequencies,
+            frame_times_seconds=valid.frame_times_seconds,
+            channel_power_spectra=valid.channel_power_spectra,
+            auditory_band_power=valid.auditory_band_power,
+        )
+
+
 def test_non_contiguous_input_is_supported_without_mutation() -> None:
     base = np.arange(8192, dtype=np.float64).reshape(4096, 2)
     samples = base[::2]
@@ -261,6 +293,14 @@ def test_frame_timestamps_are_monotonic_and_center_referenced() -> None:
 
     assert result.frame_times_seconds[0] == pytest.approx(1024 / 48_000)
     assert np.all(np.diff(result.frame_times_seconds) > 0.0)
+
+
+def test_padded_frame_center_may_extend_beyond_short_source_duration() -> None:
+    result = AuditoryFrontend().analyze(_audio(np.array([0.25]), 48_000))
+
+    assert result.summary.duration_seconds == pytest.approx(1 / 48_000)
+    assert result.frame_times_seconds[0] == pytest.approx(1024 / 48_000)
+    assert result.frame_times_seconds[0] > result.summary.source_time_range.end_seconds
 
 
 def test_summary_round_trip_is_json_safe_without_runtime_arrays() -> None:
