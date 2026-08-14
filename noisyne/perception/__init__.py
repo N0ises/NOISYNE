@@ -1,9 +1,17 @@
 """Lightweight V2 perceptual domain contracts.
 
-This package defines transport-safe value objects only. It does not implement
-auditory, loudness, masking, descriptor, playback, or translation algorithms.
+The NumPy auditory runtime remains in ``noisyne.perception.auditory`` so this
+package import stays lightweight. No loudness, masking, descriptor, playback,
+or translation algorithm is implemented here.
 """
 
+from .auditory_contracts import (
+    AUDITORY_FRONTEND_METHOD_ID,
+    AUDITORY_FRONTEND_METHOD_VERSION,
+    AUDITORY_FRONTEND_SCHEMA_VERSION,
+    AuditoryFrontendConfig,
+    AuditoryFrontendSummary,
+)
 from .common import (
     AuditoryBand,
     ComponentStatus,
@@ -44,9 +52,14 @@ from .results import (
 )
 
 __all__ = [
+    "AUDITORY_FRONTEND_METHOD_ID",
+    "AUDITORY_FRONTEND_METHOD_VERSION",
+    "AUDITORY_FRONTEND_SCHEMA_VERSION",
     "PERCEPTUAL_SCHEMA_VERSION",
     "AnalysisMetadata",
     "AuditoryBand",
+    "AuditoryFrontendConfig",
+    "AuditoryFrontendSummary",
     "ComponentStatus",
     "Confidence",
     "ConfidenceBasis",

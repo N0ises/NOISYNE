@@ -36,7 +36,7 @@ contracts.
 | `noisyne/reasoning/` and `noisyne/prompt/` | Structured reasoning, prompts, parsing and guards | Depend on contracts, not UI |
 | `noisyne/report/` | Report models, building, validation and export | Consumes domain results |
 | `noisyne/evaluation/` | Metrics, scoring, benchmarks and evaluation reports | Tests domain/application outputs |
-| `noisyne/perception/` | V2 perceptual domain contracts, validation and JSON-safe serialization | Stdlib-only domain package; no algorithms, providers, UI, API or DAW dependencies |
+| `noisyne/perception/` | V2 perceptual contracts plus the Sprint 2 auditory frontend | Root contracts remain lightweight; `auditory.py` uses NumPy only and has no providers, UI, API or DAW dependencies |
 | `noisyne/application/` | Canonical application facade and use-case orchestration | May compose domain modules; no Desktop imports |
 | `noisyne/orchestration/` and `noisyne/pipeline/` | Implemented alternate orchestration/stage infrastructure | Not the frozen V1 CLI production path |
 | `noisyne/integration/` | Deterministic DAW-named workflow export contracts | No live DAW communication or control |
@@ -52,14 +52,16 @@ as a compatibility alias.
 
 Sprint 1 established `noisyne/perception/` as the canonical package for V2
 perceptual domain contracts. The first top-level contract schema version is
-`1.0.0`. The package contains typed value objects and deterministic JSON-safe
-serialization only; auditory, loudness, masking, descriptor, playback and
-translation algorithms remain unimplemented until their owning sprints.
+`1.0.0`. Sprint 2 adds the deterministic, channel-preserving runtime in
+`noisyne/perception/auditory.py` and its minimal JSON-safe metadata contracts in
+`noisyne/perception/auditory_contracts.py`. The Sprint 1 schema remains
+unchanged; loudness, masking, descriptor, playback and translation algorithms
+remain unimplemented until their owning sprints.
 
 The package makes no ISO 226, ISO 532-1, ITU-R BS.1770 or EBU R128 conformance
-claim. Those standards remain future research and validation anchors. Because
-Sprint 1 adds no executable perceptual capability, the runtime capability
-registry remains unchanged and V2 Perceptual Core remains Planned.
+claim. Those standards remain future research and validation anchors. The
+runtime registry records the executable auditory frontend as Implemented while
+the broader V2 Perceptual Core remains Planned.
 
 The planned ownership boundaries are:
 

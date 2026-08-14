@@ -54,6 +54,7 @@ the start of V2. Machine availability must be evaluated separately.
 | SentenceTransformers Backend | Production | Installed dependency and model assets required |
 | Audio Loading | Production | Requires declared audio dependencies |
 | DSP Analysis | Production | Deterministic V1 path; declared DSP dependencies required |
+| Auditory Frontend | Implemented | NumPy-only deterministic spectral/ERB-rate inputs; no SPL calibration or perceptual conclusions |
 | Audio Context | Production | Deterministic rule-based context |
 | Engineering Analysis | Production | Deterministic rule engine |
 | CLAP Embedding | Verified | Local/downloaded model required; model not bundled |
@@ -93,7 +94,7 @@ with a successful runtime availability probe.
 | Local API | Planned (Sprint 16) | No tracked API implementation at V2 baseline |
 | Desktop V1 | Frozen release candidate | Exists on isolated `desktop-ui`; not runtime-registered here |
 | Desktop V2 Integration | Planned (Sprint 17) | Through `V2ApplicationAdapter` after service/API contracts |
-| V2 Perceptual Core | Planned | No validated perceptual implementation at V2 baseline |
+| V2 Perceptual Core | Planned | Sprint 2 frontend inputs are Implemented; loudness, masking, descriptors and translation remain planned |
 | ONNX | Benchmark spike (Sprint 14) | No adoption or runtime availability claim |
 | Voice / Agent Functionality | Future | Outside V2 |
 

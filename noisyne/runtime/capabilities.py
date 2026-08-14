@@ -152,6 +152,17 @@ registry.register(
 
 registry.register(
     Capability(
+        name="auditory_frontend",
+        description="Deterministic channel-preserving spectral and ERB-rate frontend",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements="Validated AudioData and NumPy; no model assets or calibration required",
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,
