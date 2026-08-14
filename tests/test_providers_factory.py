@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from brain.providers import (
+from noisyne.providers import (
     BaseAIProvider,
     GeminiProvider,
     LocalProvider,

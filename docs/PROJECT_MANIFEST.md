@@ -77,7 +77,7 @@ Creation
 
 # Repository Layout
 
-brain/
+noisyne/
 Core source code
 
 docs/

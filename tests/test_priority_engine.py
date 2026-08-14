@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from brain.audio.engineer.models import EngineerResult, Issue
-from brain.audio.mix.models import RootCause, RootCauseResult
-from brain.audio.mix.priority import PriorityEngine
+from noisyne.audio.engineer.models import EngineerResult, Issue
+from noisyne.audio.mix.models import RootCause, RootCauseResult
+from noisyne.audio.mix.priority import PriorityEngine
 
 
 def _make_engineer(issues) -> EngineerResult:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from brain.memory import MemoryLoader
-from brain.memory.models import MemoryBundle
+from noisyne.memory import MemoryLoader
+from noisyne.memory.models import MemoryBundle
 
 
 def test_loader_loads_default_bundle() -> None:

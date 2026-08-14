@@ -153,7 +153,7 @@ def _write_full(bundle: ExportBundle, config: ExportConfig, records: list[FileRe
     for category in ("root", "scripts", "docs"):
         bundle.text(f"{category}.txt", module_document(category, groups[category], analyses, generated_at))
     for category in sorted(BRAIN_MODULES | {"misc"} | (set(groups) - {"root", "scripts", "docs"})):
-        bundle.text(Path("brain") / f"{category}.txt", module_document(f"brain.{category}", groups.get(category, []), analyses, generated_at))
+        bundle.text(Path("brain") / f"{category}.txt", module_document(f"noisyne.{category}", groups.get(category, []), analyses, generated_at))
 
     bundle.text(Path("reports") / "unused_files.txt", unused_files_document(analyses, graph, generated_at))
     bundle.text(Path("reports") / "duplicate_names.txt", duplicate_names_document(duplicate_symbols(analyses), generated_at))
@@ -168,7 +168,7 @@ def _write_architecture(bundle: ExportBundle, analyses: dict, generated_at: str)
 
 def _write_module(bundle: ExportBundle, selector: str, records: list[FileRecord], analyses: dict, generated_at: str) -> None:
     safe_name = re.sub(r"[^a-zA-Z0-9_-]+", "_", selector).strip("_") or "module"
-    bundle.text(Path("brain") / f"{safe_name}.txt", module_document(f"brain.{selector}", records, analyses, generated_at))
+    bundle.text(Path("brain") / f"{safe_name}.txt", module_document(f"noisyne.{selector}", records, analyses, generated_at))
 
 
 def _finish(bundle: ExportBundle, output_dir: Path) -> None:

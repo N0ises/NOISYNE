@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from brain.audio.analysis.models import AnalysisResult
-from brain.audio.context.models import AudioContext
-from brain.audio.engineer.models import EngineerResult
-from brain.audio.io.models import AudioData, AudioMetadata
-from brain.report.models import SoundBrainReport
-from brain.application.audio_review_service import (
+from noisyne.audio.analysis.models import AnalysisResult
+from noisyne.audio.context.models import AudioContext
+from noisyne.audio.engineer.models import EngineerResult
+from noisyne.audio.io.models import AudioData, AudioMetadata
+from noisyne.report.models import SoundBrainReport
+from noisyne.application.audio_review_service import (
     AudioReviewRequest,
     AudioReviewService,
 )

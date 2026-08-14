@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from brain.audio.mix.models import MixIntelligenceResult
-from brain.audio.plugin.models import PluginIntelligenceResult, PluginIntelligenceStep
-from brain.evaluation import EvaluationService
-from brain.evaluation.models import BenchmarkCase
-from brain.report.models import ReportIssue, SoundBrainReport
+from noisyne.audio.mix.models import MixIntelligenceResult
+from noisyne.audio.plugin.models import PluginIntelligenceResult, PluginIntelligenceStep
+from noisyne.evaluation import EvaluationService
+from noisyne.evaluation.models import BenchmarkCase
+from noisyne.report.models import ReportIssue, SoundBrainReport
 
 
 def _make_report() -> SoundBrainReport:
@@ -123,7 +123,7 @@ def test_benchmark_runs_multiple_cases() -> None:
 
 
 def test_evaluation_service_with_knowledge_resolver() -> None:
-    from brain.knowledge import KnowledgeService
+    from noisyne.knowledge import KnowledgeService
 
     knowledge = KnowledgeService().resolver()
     service = EvaluationService(knowledge_resolver=knowledge)

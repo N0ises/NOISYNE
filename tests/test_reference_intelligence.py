@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from brain.audio.analysis.models import AnalysisResult
-from brain.audio.io.models import AudioData, AudioMetadata
-from brain.reference.models import (
+from noisyne.audio.analysis.models import AnalysisResult
+from noisyne.audio.io.models import AudioData, AudioMetadata
+from noisyne.reference.models import (
     Category,
     DecisionType,
     EngineerDecision,
@@ -16,8 +16,8 @@ from brain.reference.models import (
     SegmentDeviation,
     Severity,
 )
-from brain.reference.reasoner import ReferenceReasoner
-from brain.reference.service import ReferenceService
+from noisyne.reference.reasoner import ReferenceReasoner
+from noisyne.reference.service import ReferenceService
 
 AUDIO_PATH = Path("tests/assets/test.wav")
 
@@ -230,8 +230,8 @@ def test_low_confidence_decision_is_insufficient_evidence():
 
 # Regression tests for V1 reference comparison stabilization
 
-from brain.reference.comparator import ReferenceComparator
-from brain.reference.report_builder import ReferenceReportBuilder
+from noisyne.reference.comparator import ReferenceComparator
+from noisyne.reference.report_builder import ReferenceReportBuilder
 
 
 def test_reference_metric_includes_severity():
@@ -306,7 +306,7 @@ def test_category_scores_use_category_means():
 
 
 def test_report_builder_replaces_nonfinite_floats(tmp_path: Path):
-    from brain.reference.models import ReferenceComparison, ReferenceReport
+    from noisyne.reference.models import ReferenceComparison, ReferenceReport
 
     comparison = ReferenceComparison(
         similarity=float("nan"),

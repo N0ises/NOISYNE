@@ -6,9 +6,9 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import main
-from brain.application.audio_review_service import AudioReviewService
-from brain.reference.engine import ReferenceEngine
-from brain.reference.models import ReferenceComparison, ReferenceReport
+from noisyne.application.audio_review_service import AudioReviewService
+from noisyne.reference.engine import ReferenceEngine
+from noisyne.reference.models import ReferenceComparison, ReferenceReport
 
 
 def _reference_report() -> ReferenceReport:

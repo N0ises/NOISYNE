@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from brain.knowledge import KnowledgeService
-from brain.memory import MemoryService
+from noisyne.knowledge import KnowledgeService
+from noisyne.memory import MemoryService
 
 
 def test_service_loads_default_bundle() -> None:

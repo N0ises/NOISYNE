@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from brain.knowledge import KnowledgeValidator
-from brain.knowledge.loader import KnowledgeLoader
+from noisyne.knowledge import KnowledgeValidator
+from noisyne.knowledge.loader import KnowledgeLoader
 
 
 def test_validator_passes_default_bundle() -> None:

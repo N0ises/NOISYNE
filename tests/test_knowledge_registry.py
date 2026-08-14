@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from brain.knowledge import KnowledgeRegistry
-from brain.knowledge.loader import KnowledgeLoader
-from brain.knowledge.validator import KnowledgeValidator
+from noisyne.knowledge import KnowledgeRegistry
+from noisyne.knowledge.loader import KnowledgeLoader
+from noisyne.knowledge.validator import KnowledgeValidator
 
 
 def test_registry_loads_default_bundle() -> None:

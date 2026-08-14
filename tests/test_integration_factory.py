@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from brain.integration import AdapterFactory, WorkflowAdapter
-from brain.integration.ableton import AbletonAdapter
-from brain.integration.cubase import CubaseAdapter
-from brain.integration.flstudio import FLStudioAdapter
-from brain.integration.reaper import ReaperAdapter
-from brain.integration.studio_one import StudioOneAdapter
+from noisyne.integration import AdapterFactory, WorkflowAdapter
+from noisyne.integration.ableton import AbletonAdapter
+from noisyne.integration.cubase import CubaseAdapter
+from noisyne.integration.flstudio import FLStudioAdapter
+from noisyne.integration.reaper import ReaperAdapter
+from noisyne.integration.studio_one import StudioOneAdapter
 
 EXPECTED_ADAPTERS = {"ableton", "reaper", "cubase", "flstudio", "studio_one"}
 

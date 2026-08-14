@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from brain.providers import MockProvider, ProviderService
-from brain.providers.models import GenerateRequest, GenerateResponse
+from noisyne.providers import MockProvider, ProviderService
+from noisyne.providers.models import GenerateRequest, GenerateResponse
 
 
 def test_mock_provider_returns_deterministic_response():

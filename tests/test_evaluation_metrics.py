@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from brain.audio.plugin.models import (
+from noisyne.audio.plugin.models import (
     ParameterRecommendation,
     PluginIntelligenceResult,
     PluginIntelligenceStep,
 )
-from brain.evaluation.metrics import (
+from noisyne.evaluation.metrics import (
     AnalysisQualityMetrics,
     ConfidenceEvaluationMetrics,
     PluginRecommendationMetrics,
     RecommendationConsistencyMetrics,
 )
-from brain.report.models import ReportIssue, SoundBrainReport
+from noisyne.report.models import ReportIssue, SoundBrainReport
 
 
 def _report(

@@ -160,11 +160,16 @@ Autonomous Audio Intelligence System
 
 docs/ Documentation
 
-brain/ Core intelligence
+noisyne/ Canonical core intelligence
+
+brain/ Legacy Python import compatibility shim
 
 tests/ Automated tests
 
 reports/ Generated reports
+
+The installed distribution is `noisyne`. New Python integrations should import
+from `noisyne.*`; `brain.*` remains available only as a compatibility namespace.
 
 ------------------------------------------------------------------------
 

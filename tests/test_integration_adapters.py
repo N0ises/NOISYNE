@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from brain.audio.mix.models import MixIntelligenceResult, ProcessingStep
-from brain.audio.plugin.models import (
+from noisyne.audio.mix.models import MixIntelligenceResult, ProcessingStep
+from noisyne.audio.plugin.models import (
     ParameterRecommendation,
     PluginIntelligenceResult,
     PluginIntelligenceStep,
     ProcessingGoal,
 )
-from brain.integration import (
+from noisyne.integration import (
     AbletonAdapter,
     AdapterFactory,
     CubaseAdapter,
@@ -22,7 +22,7 @@ from brain.integration import (
     StudioOneAdapter,
     WorkflowSession,
 )
-from brain.report.models import ReportIssue, SoundBrainReport
+from noisyne.report.models import ReportIssue, SoundBrainReport
 
 
 @pytest.fixture

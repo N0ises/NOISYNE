@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from brain.knowledge import KnowledgeLoader
-from brain.knowledge.models import KnowledgeBundle
+from noisyne.knowledge import KnowledgeLoader
+from noisyne.knowledge.models import KnowledgeBundle
 
 
 def test_loader_loads_default_bundle() -> None:

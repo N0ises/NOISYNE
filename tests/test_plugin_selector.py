@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from brain.audio.plugin.registry import PluginRegistry
-from brain.audio.plugin.selector import PluginSelector
+from noisyne.audio.plugin.registry import PluginRegistry
+from noisyne.audio.plugin.selector import PluginSelector
 
 
 def test_selector_returns_options_by_category():

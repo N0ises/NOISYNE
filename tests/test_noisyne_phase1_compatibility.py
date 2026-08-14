@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+import importlib
 import io
 import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
 import pytest
-
-from brain.application.noisyne_service import NoisyneService as CanonicalService
 from brain.application.soundbrain_service import SoundBrainService
-from brain.reference.models import ReferenceComparison, ReferenceReport
-from brain.reference.report_builder import ReferenceReportBuilder
-from brain.runtime.engine_registry import registry
+
+from noisyne.application.noisyne_service import NoisyneService as CanonicalService
+from noisyne.reference.models import ReferenceComparison, ReferenceReport
+from noisyne.reference.report_builder import ReferenceReportBuilder
+from noisyne.runtime.engine_registry import registry
 
 
 class TestNoisyneServiceAlias:
@@ -24,7 +25,7 @@ class TestNoisyneServiceAlias:
         assert SoundBrainService is CanonicalService
 
     def test_application_module_exports_both(self):
-        from brain.application import NoisyneService, SoundBrainService
+        from noisyne.application import NoisyneService, SoundBrainService
 
         assert NoisyneService is CanonicalService
         assert SoundBrainService is CanonicalService
@@ -41,7 +42,7 @@ class TestNoisyneServiceAlias:
         assert AnalysisResponse is not None
 
     def test_noisyne_service_import_path_works(self):
-        from brain.application.noisyne_service import (
+        from noisyne.application.noisyne_service import (
             AnalysisRequest,
             AnalysisResponse,
             NoisyneService,
@@ -103,8 +104,8 @@ class TestCliAliases:
     def test_pyproject_has_both_entry_points(self):
         pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
         text = pyproject.read_text(encoding="utf-8")
-        assert 'noisyne = "brain.cli:main"' in text
-        assert 'soundbrain = "brain.cli:main"' in text
+        assert 'noisyne = "noisyne.cli:main"' in text
+        assert 'soundbrain = "noisyne.cli:main"' in text
 
 
 class TestReportIdentity:
@@ -141,22 +142,27 @@ class TestReportIdentity:
         assert markdown.startswith("# NØISYNE Reference Report")
 
 
-import importlib
+class TestNamespaceCompatibility:
+    """The canonical namespace is ``noisyne`` and ``brain`` remains compatible."""
 
+    def test_noisyne_namespace_importable(self):
+        import noisyne
 
-class TestNamespaceFreeze:
-    """Phase 1 must not rename the Python `brain` namespace."""
+        assert noisyne.__name__ == "noisyne"
 
     def test_brain_namespace_importable(self):
         import brain
 
         assert brain.__name__ == "brain"
 
-    def test_noisyne_service_module_under_brain(self):
-        import brain.application.noisyne_service
+    def test_noisyne_service_module_under_brain_is_canonical(self):
+        legacy_module = importlib.import_module("brain.application.noisyne_service")
+        canonical_module = importlib.import_module("noisyne.application.noisyne_service")
 
-        assert hasattr(brain.application.noisyne_service, "NoisyneService")
+        assert legacy_module is canonical_module
+        assert legacy_module.NoisyneService is CanonicalService
 
-    def test_no_noisyne_top_level_namespace(self):
-        with pytest.raises(ModuleNotFoundError):
-            importlib.import_module("noisyne")
+    def test_legacy_application_exports_canonical_service(self):
+        from brain.application import NoisyneService as LegacyNoisyneService
+
+        assert LegacyNoisyneService is CanonicalService

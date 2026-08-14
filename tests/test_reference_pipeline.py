@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from brain.reference.models import (
+from noisyne.reference.models import (
     ReferenceComparison,
     ReferenceReport,
 )
-from brain.reference.pipeline import ReferencePipeline
+from noisyne.reference.pipeline import ReferencePipeline
 
 
 class FakeEngine:

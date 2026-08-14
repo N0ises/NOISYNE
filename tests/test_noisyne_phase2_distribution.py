@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 import tomllib
 import venv
 import zipfile
@@ -65,35 +67,70 @@ def _assert_no_private_artifacts(names: set[str], *, strip_root: bool = False) -
         assert not PurePosixPath(name).name.endswith(tuple(forbidden_suffixes)), name
 
 
+@pytest.fixture
+def external_tmp_path() -> Path:
+    with tempfile.TemporaryDirectory(prefix="noisyne-phase3-") as raw:
+        yield Path(raw)
+
+
 class TestDistributionMetadata:
     def test_project_name_is_noisyne(self) -> None:
         assert _project_metadata()["project"]["name"] == "noisyne"
 
-    def test_python_namespace_and_package_discovery_remain_brain(self) -> None:
+    def test_canonical_and_compatibility_package_discovery(self) -> None:
         metadata = _project_metadata()
 
-        assert metadata["tool"]["setuptools"]["packages"]["find"]["include"] == ["brain*"]
+        assert metadata["tool"]["setuptools"]["packages"]["find"]["include"] == [
+            "noisyne*",
+            "brain",
+        ]
+        assert (ROOT / "noisyne" / "__init__.py").is_file()
         assert (ROOT / "brain" / "__init__.py").is_file()
-        assert not (ROOT / "noisyne").exists()
+        compatibility_sources = {
+            path.relative_to(ROOT / "brain")
+            for path in (ROOT / "brain").rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts
+        }
+        assert compatibility_sources == {Path("__init__.py")}
 
         import brain
+        import noisyne
 
+        assert noisyne.__name__ == "noisyne"
         assert brain.__name__ == "brain"
 
     def test_distribution_installs_both_cli_entry_points(self) -> None:
         scripts = _project_metadata()["project"]["scripts"]
 
         assert scripts == {
-            "noisyne": "brain.cli:main",
-            "soundbrain": "brain.cli:main",
+            "noisyne": "noisyne.cli:main",
+            "soundbrain": "noisyne.cli:main",
         }
 
 
 @pytest.mark.packaging
-def test_built_distribution_identity_and_fresh_install(tmp_path: Path) -> None:
+def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) -> None:
+    tmp_path = external_tmp_path
     metadata = _project_metadata()["project"]
     version = metadata["version"]
+    source = tmp_path / "source"
     artifacts = tmp_path / "dist"
+
+    shutil.copytree(
+        ROOT / "noisyne",
+        source / "noisyne",
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
+    shutil.copytree(
+        ROOT / "brain",
+        source / "brain",
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
+    shutil.copy2(PYPROJECT, source / "pyproject.toml")
+    shutil.copy2(ROOT / "main.py", source / "main.py")
+    shutil.copy2(ROOT / "LICENSE", source / "LICENSE")
+    (source / "docs").mkdir()
+    shutil.copy2(ROOT / "docs" / "README_v2.md", source / "docs" / "README_v2.md")
 
     subprocess.run(
         [
@@ -104,10 +141,10 @@ def test_built_distribution_identity_and_fresh_install(tmp_path: Path) -> None:
             "--sdist",
             "--outdir",
             str(artifacts),
-            str(ROOT),
+            str(source),
         ],
         check=True,
-        cwd=ROOT,
+        cwd=source,
     )
 
     wheel = artifacts / f"noisyne-{version}-py3-none-any.whl"
@@ -119,12 +156,13 @@ def test_built_distribution_identity_and_fresh_install(tmp_path: Path) -> None:
         names = set(archive.namelist())
         assert "brain/__init__.py" in names
         assert {
-            "brain/infrastructure/config/resources/audio.yaml",
-            "brain/infrastructure/config/resources/models.yaml",
-            "brain/infrastructure/config/resources/runtime.yaml",
+            "noisyne/infrastructure/config/resources/audio.yaml",
+            "noisyne/infrastructure/config/resources/models.yaml",
+            "noisyne/infrastructure/config/resources/runtime.yaml",
         } <= names
         assert f"noisyne-{version}.dist-info/METADATA" in names
-        assert not any(name.startswith("noisyne/") for name in names)
+        assert {name for name in names if name.startswith("brain/")} == {"brain/__init__.py"}
+        assert len({name for name in names if name.startswith("noisyne/")}) > 300
         _assert_no_private_artifacts(names)
 
     with tarfile.open(sdist, "r:gz") as archive:
@@ -145,20 +183,41 @@ def test_built_distribution_identity_and_fresh_install(tmp_path: Path) -> None:
         [str(python), "-m", "pip", "install", "--no-deps", str(wheel)],
         check=True,
     )
+    subprocess.run(
+        [str(python), "-m", "pip", "install", "PyYAML"],
+        check=True,
+    )
     metadata_result = subprocess.run(
         [
             str(python),
             "-c",
             (
-                "import brain; from importlib.metadata import version; "
-                "print(brain.__name__); print(version('noisyne'))"
+                "import brain, noisyne; from importlib.metadata import version; "
+                "from importlib.resources import files; from pathlib import Path; "
+                "from noisyne.application import NoisyneService; "
+                "from brain.application import SoundBrainService; "
+                "from noisyne.infrastructure.config import get_application_root; "
+                "resources = files('noisyne.infrastructure.config').joinpath('resources'); "
+                "print(noisyne.__name__); print(brain.__name__); "
+                "print(NoisyneService is SoundBrainService); print(version('noisyne')); "
+                "print(','.join(name for name in ('audio.yaml', 'models.yaml', 'runtime.yaml') "
+                "if resources.joinpath(name).is_file())); "
+                "print(get_application_root() == Path(noisyne.__file__).resolve().parent.parent)"
             ),
         ],
         check=True,
         capture_output=True,
         text=True,
+        cwd=tmp_path,
     )
-    assert metadata_result.stdout.splitlines() == ["brain", version]
+    assert metadata_result.stdout.splitlines() == [
+        "noisyne",
+        "brain",
+        "True",
+        version,
+        "audio.yaml,models.yaml,runtime.yaml",
+        "True",
+    ]
 
     for command in (noisyne, soundbrain):
         result = subprocess.run(
@@ -166,5 +225,6 @@ def test_built_distribution_identity_and_fresh_install(tmp_path: Path) -> None:
             check=True,
             capture_output=True,
             text=True,
+            cwd=tmp_path,
         )
         assert "N\u00d8ISYNE" in result.stdout

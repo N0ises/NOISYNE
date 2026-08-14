@@ -12,9 +12,9 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from brain.providers import ProviderFactory, ProviderService
-from brain.providers.mock import MockProvider
-from brain.providers.models import GenerateRequest
+from noisyne.providers import ProviderFactory, ProviderService
+from noisyne.providers.mock import MockProvider
+from noisyne.providers.models import GenerateRequest
 
 REPORTS_DIR = PROJECT_ROOT / "reports"
 VALIDATION_PATH = REPORTS_DIR / "v1_release_validation.json"
@@ -56,19 +56,19 @@ def parse_pytest_summary(output: str) -> dict:
 
 VALIDATED_FILES = [
     # Sprint 12 modified files.
-    "brain/infrastructure/config/models.py",
-    "brain/infrastructure/config/loader.py",
-    "brain/llm/qwen.py",
-    "brain/embedding.py",
-    "brain/rag/reranker.py",
-    "brain/text/embeddings/providers/sentence_transformer.py",
-    "brain/audio/plugin/parameter_generator.py",
-    "brain/report/exporter.py",
-    "brain/report/models.py",
-    "brain/application/soundbrain_service.py",
-    "brain/reasoning/parser.py",
-    "brain/providers/factory.py",
-    "brain/rag/pdf_ocr_loader.py",
+    "noisyne/infrastructure/config/models.py",
+    "noisyne/infrastructure/config/loader.py",
+    "noisyne/llm/qwen.py",
+    "noisyne/embedding.py",
+    "noisyne/rag/reranker.py",
+    "noisyne/text/embeddings/providers/sentence_transformer.py",
+    "noisyne/audio/plugin/parameter_generator.py",
+    "noisyne/report/exporter.py",
+    "noisyne/report/models.py",
+    "noisyne/application/soundbrain_service.py",
+    "noisyne/reasoning/parser.py",
+    "noisyne/providers/factory.py",
+    "noisyne/rag/pdf_ocr_loader.py",
     "scripts/generate_v1_release_validation.py",
 ]
 
@@ -165,14 +165,14 @@ def main() -> int:
     # Workflow export validation.
     workflow_output = PROJECT_ROOT / "outputs" / "v1_release_workflow"
     try:
-        from brain.audio.mix.models import MixIntelligenceResult, ProcessingStep
-        from brain.audio.plugin.models import (
+        from noisyne.audio.mix.models import MixIntelligenceResult, ProcessingStep
+        from noisyne.audio.plugin.models import (
             PluginIntelligenceResult,
             PluginIntelligenceStep,
             ProcessingGoal,
         )
-        from brain.integration import AdapterFactory, ExportRequest, WorkflowSession
-        from brain.report.models import ReportIssue, SoundBrainReport
+        from noisyne.integration import AdapterFactory, ExportRequest, WorkflowSession
+        from noisyne.report.models import ReportIssue, SoundBrainReport
 
         workflow_output.mkdir(parents=True, exist_ok=True)
         report = SoundBrainReport(
@@ -263,7 +263,7 @@ def main() -> int:
     # Evaluation validation.
     eval_report_path = REPORTS_DIR / "v1_release_evaluation.json"
     try:
-        from brain.evaluation.service import EvaluationService
+        from noisyne.evaluation.service import EvaluationService
 
         eval_service = EvaluationService()
         eval_result = eval_service.evaluate_components(report)

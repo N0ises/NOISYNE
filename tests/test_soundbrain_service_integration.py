@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from brain.application.soundbrain_service import (
+from noisyne.application.soundbrain_service import (
     AnalysisRequest,
     SoundBrainService,
 )

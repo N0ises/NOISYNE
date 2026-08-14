@@ -98,7 +98,7 @@ Models are replaceable without changing the pipeline.
 # Main Components
 
 ```
-brain/
+noisyne/
 │
 ├── runtime/
 ├── audio/
@@ -123,7 +123,7 @@ brain/
 ```
 SoundBrain/
 
-brain/
+noisyne/
 tests/
 docs/
 configs/
@@ -220,6 +220,22 @@ Install dependencies
 ```bash
 pip install -r requirements-dev.txt
 ```
+
+Installed distribution and Python namespaces:
+
+```text
+Distribution: noisyne
+Canonical Python package: noisyne
+Legacy Python package: brain (compatibility only)
+```
+
+New integrations should use canonical imports:
+
+```python
+from noisyne.application import NoisyneService
+```
+
+Existing `brain.*` imports remain supported during the compatibility period.
 
 ---
 

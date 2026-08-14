@@ -5,15 +5,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from brain.application.audio_review_service import (
+from noisyne.application.audio_review_service import (
     AudioReviewResult,
     AudioReviewService,
 )
-from brain.application.soundbrain_service import (
+from noisyne.application.soundbrain_service import (
     AnalysisRequest,
     SoundBrainService,
 )
-from brain.reference.models import (
+from noisyne.reference.models import (
     ReferenceComparison,
     ReferenceReport,
 )

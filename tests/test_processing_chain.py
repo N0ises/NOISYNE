@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from brain.audio.context.models import AudioContext
-from brain.audio.mix.chains import ProcessingChainRecommender
-from brain.audio.mix.models import PrioritizedIssue, RootCause, RootCauseResult
+from noisyne.audio.context.models import AudioContext
+from noisyne.audio.mix.chains import ProcessingChainRecommender
+from noisyne.audio.mix.models import PrioritizedIssue, RootCause, RootCauseResult
 
 
 def _make_prioritized(

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from brain.audio.plugin.models import (
+from noisyne.audio.plugin.models import (
     ParameterRecommendation,
     PluginIntelligenceResult,
     PluginIntelligenceStep,
     PluginMatch,
     ProcessingGoal,
 )
-from brain.audio.plugin.validator import PluginIntelligenceValidator
+from noisyne.audio.plugin.validator import PluginIntelligenceValidator
 
 
 def _make_step(value: float, category: str = "eq") -> PluginIntelligenceStep:

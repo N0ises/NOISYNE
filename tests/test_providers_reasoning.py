@@ -4,16 +4,16 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from brain.providers import (
+from noisyne.providers import (
     BaseAIProvider,
     GeminiProvider,
     LocalProvider,
     OpenAIProvider,
     QwenProvider,
 )
-from brain.providers.models import GenerateRequest, GenerateResponse
-from brain.reasoning.engine import LLMReasoningProvider, ReasoningEngine
-from brain.reasoning.models import (
+from noisyne.providers.models import GenerateRequest, GenerateResponse
+from noisyne.reasoning.engine import LLMReasoningProvider, ReasoningEngine
+from noisyne.reasoning.models import (
     ReasoningContext,
     ReasoningPrompt,
     ReasoningResult,

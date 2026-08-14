@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from brain.infrastructure.config import get_application_root
-from brain.memory import MemoryLoader
-from brain.memory.errors import MemoryConfigurationError
+from noisyne.infrastructure.config import get_application_root
+from noisyne.memory import MemoryLoader
+from noisyne.memory.errors import MemoryConfigurationError
 
 
 def test_loader_root_is_absolute_and_application_relative():

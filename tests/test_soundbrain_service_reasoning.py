@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from brain.application.soundbrain_service import (
+from noisyne.application.soundbrain_service import (
     AnalysisRequest,
     SoundBrainService,
 )
@@ -35,7 +35,7 @@ def test_soundbrain_service_reasoning_wires_llm_answer_into_report(
 ):
     """When reasoning succeeds, the report ai_summary uses the LLM answer."""
     monkeypatch.setattr(
-        "brain.reasoning.engine.ReasoningEngine",
+        "noisyne.reasoning.engine.ReasoningEngine",
         FakeReasoningEngine,
     )
 
@@ -64,7 +64,7 @@ def test_soundbrain_service_reasoning_fails_gracefully(monkeypatch):
             raise RuntimeError("LLM unavailable")
 
     monkeypatch.setattr(
-        "brain.reasoning.engine.ReasoningEngine",
+        "noisyne.reasoning.engine.ReasoningEngine",
         BrokenReasoningEngine,
     )
 

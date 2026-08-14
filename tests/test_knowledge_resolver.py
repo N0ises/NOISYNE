@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from brain.knowledge import KnowledgeLoader, KnowledgeResolver
+from noisyne.knowledge import KnowledgeLoader, KnowledgeResolver
 
 
 @pytest.fixture

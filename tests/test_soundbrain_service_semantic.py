@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from brain.application.soundbrain_service import (
+from noisyne.application.soundbrain_service import (
     AnalysisRequest,
     SoundBrainService,
 )
-from brain.infrastructure.config import settings
+from noisyne.infrastructure.config import settings
 
 
 AUDIO_PATH = Path("tests/assets/test.wav")

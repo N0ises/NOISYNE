@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from brain.knowledge import KnowledgeService
+from noisyne.knowledge import KnowledgeService
 
 
 def test_service_loads_default_bundle() -> None:

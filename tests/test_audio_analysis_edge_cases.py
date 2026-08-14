@@ -8,21 +8,21 @@ import numpy as np
 import pytest
 import torch
 
-from brain.audio.analysis.crest_factor import CrestFactorAnalysis
-from brain.audio.analysis.dynamic_range import DynamicRangeAnalysis
-from brain.audio.analysis.key import KeyAnalysis
-from brain.audio.analysis.lufs import LUFSAnalyzer
-from brain.audio.analysis.mfcc import MFCCAnalyzer
-from brain.audio.analysis.models import AnalysisResult
-from brain.audio.analysis.peak import PeakAnalyzer
-from brain.audio.analysis.phase import PhaseCorrelationAnalysis
-from brain.audio.analysis.stereo import StereoWidthAnalysis
-from brain.audio.analysis.tempo import TempoAnalyzer
-from brain.audio.context.models import AudioContext
-from brain.audio.context.rules import ContextRuleEngine
-from brain.audio.engineer.models import Issue
-from brain.audio.engineer.rules import RuleEngine
-from brain.audio.io.models import AudioData, AudioMetadata
+from noisyne.audio.analysis.crest_factor import CrestFactorAnalysis
+from noisyne.audio.analysis.dynamic_range import DynamicRangeAnalysis
+from noisyne.audio.analysis.key import KeyAnalysis
+from noisyne.audio.analysis.lufs import LUFSAnalyzer
+from noisyne.audio.analysis.mfcc import MFCCAnalyzer
+from noisyne.audio.analysis.models import AnalysisResult
+from noisyne.audio.analysis.peak import PeakAnalyzer
+from noisyne.audio.analysis.phase import PhaseCorrelationAnalysis
+from noisyne.audio.analysis.stereo import StereoWidthAnalysis
+from noisyne.audio.analysis.tempo import TempoAnalyzer
+from noisyne.audio.context.models import AudioContext
+from noisyne.audio.context.rules import ContextRuleEngine
+from noisyne.audio.engineer.models import Issue
+from noisyne.audio.engineer.rules import RuleEngine
+from noisyne.audio.io.models import AudioData, AudioMetadata
 
 
 def _audio(samples: np.ndarray, sample_rate: int = 44100, channels: int | None = None) -> AudioData:
@@ -234,8 +234,8 @@ class TestFullMixClassification:
         reason="Fixture tests/assets/test.wav is not available",
     )
     def test_real_fixture_classified_as_full_mix(self):
-        from brain.audio.io import AudioIOService
-        from brain.audio.analysis.analyzer import AudioAnalyzer
+        from noisyne.audio.io import AudioIOService
+        from noisyne.audio.analysis.analyzer import AudioAnalyzer
 
         audio = AudioIOService().load("tests/assets/test.wav")
         analysis = AudioAnalyzer().analyze(audio)
@@ -339,7 +339,7 @@ class TestKeyDetection:
 class TestCLAPDownmix:
 
     def test_encode_audio_downmixes_stereo_before_processing(self):
-        from brain.audio.embeddings.clap import CLAPEmbedding
+        from noisyne.audio.embeddings.clap import CLAPEmbedding
 
         sr = 44100
         left = np.ones(sr, dtype=np.float32) * 0.5

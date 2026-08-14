@@ -5,15 +5,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from brain.application.audio_review_service import (
+from noisyne.application.audio_review_service import (
     AudioReviewResult,
     AudioReviewService,
 )
-from brain.application.soundbrain_service import (
+from noisyne.application.soundbrain_service import (
     AnalysisRequest,
     SoundBrainService,
 )
-from brain.reference.models import ReferenceComparison, ReferenceReport
+from noisyne.reference.models import ReferenceComparison, ReferenceReport
 
 AUDIO_PATH = Path("tests/assets/test.wav")
 
@@ -122,7 +122,7 @@ def test_soundbrain_service_module_import_does_not_load_torch():
 
     script = (
         "import sys\n"
-        "from brain.application.soundbrain_service import AnalysisRequest\n"
+        "from noisyne.application.soundbrain_service import AnalysisRequest\n"
         "print('torch' in sys.modules, 'transformers' in sys.modules)\n"
     )
 

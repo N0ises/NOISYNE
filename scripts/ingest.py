@@ -3,8 +3,8 @@ from pathlib import Path
 
 import fitz
 
-from brain.embedding import embedding_model
-from brain.chroma import knowledge
+from noisyne.embedding import embedding_model
+from noisyne.chroma import knowledge
 
 PDF_FOLDER = Path(r"E:\SoundBrain\data\courses\psychoacoustics")
 

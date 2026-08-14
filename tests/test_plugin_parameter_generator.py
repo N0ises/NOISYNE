@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from brain.audio.plugin.models import ProcessingGoal
-from brain.audio.plugin.parameter_generator import ParameterGenerator
+from noisyne.audio.plugin.models import ProcessingGoal
+from noisyne.audio.plugin.parameter_generator import ParameterGenerator
 
 
 def test_eq_parameters():

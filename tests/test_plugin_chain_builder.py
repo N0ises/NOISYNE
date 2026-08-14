@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from brain.audio.context.models import AudioContext
-from brain.audio.mix.models import (
+from noisyne.audio.context.models import AudioContext
+from noisyne.audio.mix.models import (
     MixIntelligenceResult,
     PrioritizedIssue,
     RootCause,
 )
-from brain.audio.plugin.chain_builder import PluginChainBuilder
+from noisyne.audio.plugin.chain_builder import PluginChainBuilder
 
 
 def _make_mix_result() -> MixIntelligenceResult:

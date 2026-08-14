@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from brain.runtime.engine_registry import EngineRegistry, registry
+from noisyne.runtime.engine_registry import EngineRegistry, registry
 
 
 def test_engine_registry_register_and_get():

@@ -16,7 +16,7 @@ It defines ownership, responsibility, and allowed interactions between modules.
 
 # Repository
 
-brain/
+noisyne/
 
 ---
 
@@ -24,7 +24,7 @@ brain/
 
 Path
 
-brain/runtime/
+noisyne/runtime/
 
 Responsibilities
 
@@ -44,7 +44,7 @@ Infrastructure only.
 
 Path
 
-brain/audio/
+noisyne/audio/
 
 Responsibilities
 
@@ -65,7 +65,7 @@ Runtime
 
 Path
 
-brain/engineering/
+noisyne/engineering/
 
 Responsibilities
 
@@ -84,7 +84,7 @@ Audio
 
 Path
 
-brain/rag/
+noisyne/rag/
 
 Responsibilities
 
@@ -104,7 +104,7 @@ Runtime
 
 Path
 
-brain/llm/
+noisyne/llm/
 
 Responsibilities
 
@@ -127,7 +127,7 @@ Engineering
 
 Path
 
-brain/report/
+noisyne/report/
 
 Responsibilities
 
@@ -147,7 +147,7 @@ Reasoning
 
 Path
 
-brain/services/
+noisyne/services/
 
 Responsibilities
 
@@ -165,7 +165,7 @@ All domain modules.
 
 Path
 
-brain/cli/
+noisyne/cli/
 
 Responsibilities
 
@@ -181,7 +181,7 @@ Services only.
 
 Path
 
-brain/api/
+noisyne/api/
 
 Responsibilities
 
@@ -197,7 +197,7 @@ Services only.
 
 Path
 
-brain/ui/
+noisyne/ui/
 
 Responsibilities
 

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from brain.audio.analysis.models import AnalysisResult
-from brain.audio.context.models import AudioContext
-from brain.audio.engineer.models import EngineerResult
-from brain.audio.mix.explanation import ExplanationBuilder
-from brain.audio.mix.models import ProcessingStep, RootCause
+from noisyne.audio.analysis.models import AnalysisResult
+from noisyne.audio.context.models import AudioContext
+from noisyne.audio.engineer.models import EngineerResult
+from noisyne.audio.mix.explanation import ExplanationBuilder
+from noisyne.audio.mix.models import ProcessingStep, RootCause
 
 
 def _make_analysis(**kwargs) -> AnalysisResult:

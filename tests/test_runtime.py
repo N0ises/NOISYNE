@@ -6,9 +6,9 @@ from time import sleep
 
 import torch
 
-from brain.runtime import ModelRepository, ModelRuntime
-from brain.runtime.loader import ModelLoader
-from brain.runtime.models import LoadedModelAssets
+from noisyne.runtime import ModelRepository, ModelRuntime
+from noisyne.runtime.loader import ModelLoader
+from noisyne.runtime.models import LoadedModelAssets
 
 
 class FakeModel:

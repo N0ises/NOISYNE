@@ -10,10 +10,10 @@ import chromadb
 import pytest
 from chromadb.api.types import EmbeddingFunction
 
-from brain.infrastructure.config import get_application_root
-from brain.rag.ingestion import _chunk_id, _source_fingerprint, ingest_chunks
-from brain.rag.scoring import score_from_distance
-from brain.services.rag_service import RAGService
+from noisyne.infrastructure.config import get_application_root
+from noisyne.rag.ingestion import _chunk_id, _source_fingerprint, ingest_chunks
+from noisyne.rag.scoring import score_from_distance
+from noisyne.services.rag_service import RAGService
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +86,7 @@ def test_retrieval_scores_are_valid_cosine_similarities(
     temp_rag_collection,
     monkeypatch,
 ):
-    from brain.rag import retriever
+    from noisyne.rag import retriever
 
     monkeypatch.setattr(retriever, "collection", temp_rag_collection)
 
@@ -210,7 +210,7 @@ def test_chunk_id_is_deterministic():
 
 def test_ingest_chunks_fail_when_stale_deletion_fails():
     """Ingestion must not report success if stale chunks cannot be removed."""
-    from brain.rag.errors import IngestionError
+    from noisyne.rag.errors import IngestionError
 
     class _FailingCollection(_FakeChromaCollection):
         def get(self, where=None):
@@ -252,8 +252,8 @@ def test_ask_reuses_search_results_without_second_retrieval(monkeypatch):
         calls.append(("rerank", query, len(documents), top_k))
         return documents[:top_k]
 
-    monkeypatch.setattr("brain.services.rag_service.retrieve", fake_retrieve)
-    monkeypatch.setattr("brain.services.rag_service.rerank", fake_rerank)
+    monkeypatch.setattr("noisyne.services.rag_service.retrieve", fake_retrieve)
+    monkeypatch.setattr("noisyne.services.rag_service.rerank", fake_rerank)
 
     service = RAGService(retrieve_k=10, rerank_k=5)
     answer = service.ask("what is mixing?")
@@ -272,8 +272,8 @@ def test_ask_reuses_search_results_without_second_retrieval(monkeypatch):
 
 
 def test_persistence_paths_are_absolute_and_cwd_independent():
-    from brain.audio.catalog.database import DATABASE_PATH
-    from brain.memory.vector.config import PERSIST_DIRECTORY
+    from noisyne.audio.catalog.database import DATABASE_PATH
+    from noisyne.memory.vector.config import PERSIST_DIRECTORY
 
     root = get_application_root()
     assert Path(PERSIST_DIRECTORY).is_absolute()
@@ -288,9 +288,9 @@ def test_persistence_paths_stable_from_different_cwd(tmp_path: Path):
 import sys
 from pathlib import Path
 sys.path.insert(0, r"{root}")
-from brain.infrastructure.config import get_application_root
-from brain.memory.vector.config import PERSIST_DIRECTORY
-from brain.audio.catalog.database import DATABASE_PATH
+from noisyne.infrastructure.config import get_application_root
+from noisyne.memory.vector.config import PERSIST_DIRECTORY
+from noisyne.audio.catalog.database import DATABASE_PATH
 root = get_application_root()
 print(PERSIST_DIRECTORY)
 print(DATABASE_PATH)

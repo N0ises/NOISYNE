@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from brain.infrastructure.config.loader import get_application_root
+from noisyne.infrastructure.config.loader import get_application_root
 
 
 def _patch_config_file(monkeypatch, config_file: Path):
-    """Point sys.modules[brain.infrastructure.config].__file__ at a fake path."""
-    module = sys.modules["brain.infrastructure.config"]
+    """Point sys.modules[noisyne.infrastructure.config].__file__ at a fake path."""
+    module = sys.modules["noisyne.infrastructure.config"]
     monkeypatch.setattr(module, "__file__", str(config_file))
 
 
@@ -58,7 +58,7 @@ def test_source_checkout_root_resolution(no_env_root, monkeypatch):
         checkout = Path(raw) / "repo"
         checkout.mkdir()
         (checkout / "pyproject.toml").write_text("", encoding="utf-8")
-        config_file = checkout / "brain" / "infrastructure" / "config" / "__init__.py"
+        config_file = checkout / "noisyne" / "infrastructure" / "config" / "__init__.py"
         config_file.parent.mkdir(parents=True)
         config_file.write_text("", encoding="utf-8")
 
@@ -72,7 +72,7 @@ def test_source_checkout_with_configs_dir(no_env_root, monkeypatch):
         checkout = Path(raw) / "repo"
         checkout.mkdir()
         (checkout / "configs").mkdir()
-        config_file = checkout / "brain" / "infrastructure" / "config" / "__init__.py"
+        config_file = checkout / "noisyne" / "infrastructure" / "config" / "__init__.py"
         config_file.parent.mkdir(parents=True)
         config_file.write_text("", encoding="utf-8")
 
@@ -85,7 +85,7 @@ def test_installed_wheel_root_resolution(no_env_root, monkeypatch):
     with tempfile.TemporaryDirectory() as raw:
         site_packages = Path(raw) / "venv" / "Lib" / "site-packages"
         site_packages.mkdir(parents=True)
-        config_file = site_packages / "brain" / "infrastructure" / "config" / "__init__.py"
+        config_file = site_packages / "noisyne" / "infrastructure" / "config" / "__init__.py"
         config_file.parent.mkdir(parents=True)
         config_file.write_text("", encoding="utf-8")
 

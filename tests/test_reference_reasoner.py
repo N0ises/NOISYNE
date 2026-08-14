@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from brain.reference.models import (
+from noisyne.reference.models import (
     Category,
     EngineerDecision,
     ReferenceComparison,
     ReferenceIntent,
     Severity,
 )
-from brain.reference.reasoner import ReferenceReasoner
+from noisyne.reference.reasoner import ReferenceReasoner
 
 
 def _comparison() -> ReferenceComparison:

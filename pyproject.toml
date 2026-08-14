@@ -70,14 +70,14 @@ include-package-data = true
 py-modules = ["main"]
 
 [project.scripts]
-noisyne = "brain.cli:main"
-soundbrain = "brain.cli:main"
+noisyne = "noisyne.cli:main"
+soundbrain = "noisyne.cli:main"
 
 [tool.setuptools.package-data]
-"brain.infrastructure.config" = ["resources/*.yaml"]
+"noisyne.infrastructure.config" = ["resources/*.yaml"]
 
 [tool.setuptools.packages.find]
-include = ["brain*"]
+include = ["noisyne*", "brain"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
