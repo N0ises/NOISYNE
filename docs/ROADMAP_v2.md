@@ -1,368 +1,158 @@
-# SoundBrain Roadmap
+# NØISYNE Product and V2 Roadmap
+
+Version: 2.0
 
-## Overview
+Status: ACTIVE
+
+Repository: `N0ises/NOISYNE`
 
-This roadmap defines the long-term evolution of SoundBrain from an
-advanced audio analysis engine into a complete Audio Intelligence
-System.
+Canonical distribution and Python namespace: `noisyne`
 
-------------------------------------------------------------------------
+---
 
-# Current Status
+## Current Baseline
 
-## Completed
+NØISYNE V1 is the frozen Professional Audio Intelligence release candidate.
+Its backend and Desktop release-candidate work are complete and remain isolated
+from V2 development. The V1 backend provides deterministic audio analysis,
+engineering, reference, mix and plugin recommendations, reporting, evaluation,
+workflow export contracts, a service facade and the CLI.
 
--   Audio IO
--   Audio Analysis
--   DSP Metrics
--   Engineering Engine
--   Semantic Intelligence (CLAP)
--   Reasoning Engine
--   Prompt System
--   Output Validation
--   Report Generation
--   JSON Export
--   Comparison Engine
--   Reference Comparison
--   Reference Intelligence
--   Mix Intelligence
--   Plugin Intelligence
--   Knowledge Infrastructure
--   Memory & Personalization
--   Evaluation & Benchmark
--   Workflow Integration Contracts
--   AI Provider Layer
--   Runtime Layer
--   Service Layer
--   CLI
+The V1 Desktop exists as a frozen release candidate on the isolated
+`desktop-ui` branch. It is not a planned-but-unimplemented product surface, and
+it is not part of the V2 backend branch.
 
-Estimated Completion of V1 Core:
+The repository rename is complete. New code and active documentation use
+NØISYNE/NOISYNE, `N0ises/NOISYNE` and `noisyne`. The legacy `brain` namespace,
+`soundbrain` CLI, `SoundBrainService`, `SOUNDBRAIN_ROOT`, `soundbrain` engine
+alias and `soundbrain` Chroma collection remain intentional compatibility
+contracts.
+
+---
 
-**100% — V1.0.0-rc1 Release Candidate**
+## Product Progression
+
+### V1 — Professional Audio Intelligence
 
-------------------------------------------------------------------------
+Measure, analyze, explain and recommend. V1 does not modify source audio and
+does not control a DAW.
 
-# Product Roadmap
+### V2 — Perceptual Intelligence
 
-## Version 1 --- Professional Audio Intelligence (Current)
+Move from objective measurement toward research-anchored estimates of human
+perception:
 
-Goal:
+```text
+measurement
+    -> perception
+    -> context understanding
+    -> translation prediction
+    -> perceptual reference and mix intelligence
+    -> evidence-linked reasoning
+    -> recommendation
+```
 
-Deliver a production-ready AI capable of understanding and explaining
-professional audio engineering decisions.
+V2 includes an auditory frontend, perceived loudness, masking, perceptual
+descriptors, playback profiles, translation-risk prediction, listener/genre/
+delivery context and their integration into reference, mix and reasoning
+workflows.
 
-Main Features
+V2 is not an autonomous mixer. It must not perform unattended or destructive
+actions.
 
--   Audio Analysis
--   Engineering Reports
--   Semantic Audio Understanding
--   Reference Comparison
--   AI Reasoning
--   Mix Intelligence
--   Plugin Intelligence
--   Knowledge Infrastructure
--   Memory & Personalization
--   Evaluation & Benchmark
--   Workflow Integration Contracts
--   AI Provider Layer
--   Professional Reporting
--   Export
--   Validation
--   CLI
+### V3 — Autonomous Mixing and Deeper DAW-Aware Engineering
 
-Missing
+V3 may introduce user-approved processing proposals, deeper DAW awareness and
+reversible mixing actions only after V2 recommendations are scientifically
+validated and trustworthy.
 
--   UI
--   API
--   Desktop Application
+### Later Versions
 
-Launch Target
+Advanced action/control, audio foundation-model research, generation and
+autonomous-system work remain later-version concerns.
 
-First public MVP (V1.0.0-rc1).
+---
 
-------------------------------------------------------------------------
+## Canonical V2 Sprint Order
 
-## Version 2 --- Perceptual Intelligence
+| Sprint | Scope |
+| ---: | --- |
+| 0 | Roadmap / Capability Truth Reconciliation |
+| 1 | Perceptual Domain Contracts |
+| 2 | Auditory Frontend |
+| 3 | Perceived Loudness |
+| 4 | Frequency Masking |
+| 5 | Perceptual Descriptors |
+| 6 | Playback Profiles |
+| 7 | Translation Risk Prediction |
+| 8 | Listener / Genre / Delivery Context |
+| 9 | Perceptual Reference Intelligence |
+| 10 | Perceptual Mix Intelligence |
+| 11 | Perceptual Reasoning Integration |
+| 12 | Evaluation / Scientific Validation |
+| 13 | Knowledge / Memory / Personalization Integration |
+| 14 | Performance Baseline + ONNX Benchmark Spike |
+| 15 | V2 NoisyneService / Capability Contract |
+| 16 | Local API + Async Job / Progress Contract |
+| 17 | Desktop V2 Integration |
+| 18 | Desktop Identity / User-Data Compatibility |
+| 19 | Desktop Packaging / Clean-Machine Candidate |
+| 20 | Ableton Launch Bridge Smoke Integration |
+| 21 | V2 Regression / Release Hardening |
+| 22 | V2 Release Candidate |
 
-Goal
+Sprint 14 is a benchmark spike, not an authorization to adopt ONNX. Sprint 17
+is the first Desktop V2 integration sprint; earlier V2 backend sprints must not
+modify the frozen Desktop branch.
 
-Move from measurement to perception.
+---
 
-Features
+## V2 DAW and Ableton Boundary
 
--   Psychoacoustic Engine
--   Human Hearing Model
--   Translation Prediction
--   Loudness Perception
--   Frequency Masking
--   Listener Modeling
--   Genre Awareness
--   Context-Aware Decisions
+The existing `noisyne.integration` adapters are implemented workflow export
+contracts. They create deterministic JSON, text and Markdown files and do not
+communicate with a DAW. Contract implementation is not runtime DAW availability.
 
-------------------------------------------------------------------------
+Sprint 20 is limited to this smoke path:
 
-## Version 3 --- Autonomous Mixing
+```text
+Ableton Live
+    -> NØISYNE Max for Live device/surface
+    -> launch or connect
+    -> local NØISYNE service
+    -> health / version / status handshake
+```
 
-Goal
+Acceptance is limited to loading the surface/device, launch/connect behavior,
+visible connection state, stable start/stop/restart behavior, project reopen
+stability, and keeping heavy ML/audio analysis off Ableton's real-time audio
+thread.
 
-Allow AI to make and execute engineering decisions.
+The following are explicitly outside V2: track manipulation, device or plugin
+parameter changes, automation writes, session-wide control, automatic EQ,
+automatic compression, autonomous mixing, unattended DAW actions and
+destructive audio replacement.
 
-Features
+---
 
--   Plugin Recommendation
--   Automatic EQ
--   Compression Decisions
--   Chain Optimization
--   DAW Automation
--   Automatic Mastering
--   Intelligent Presets
+## Scientific Direction and Validation Gates
 
-------------------------------------------------------------------------
+V2 research and validation will use, at minimum:
 
-## Version 4 --- Audio Foundation Model
+- ISO 226 equal-loudness contours.
+- ISO 532-1 Zwicker loudness methodology.
+- ITU-R BS.1770 programme loudness and true-peak measurement.
+- EBU R128 production and broadcast loudness context.
 
-Goal
+These are planned research and validation anchors. No current implementation
+is claimed to conform to them until code, datasets, methodology and repeatable
+acceptance evidence establish that claim.
 
-Create a unified multimodal intelligence model.
+---
 
-Features
+## Definition of Success
 
--   Unified Audio Embeddings
--   Audio Memory
--   Knowledge Graph
--   Audio Search
--   Cross-modal Understanding
--   Long-Term Memory
--   Learning System
-
-------------------------------------------------------------------------
-
-## Version 5 --- Autonomous Audio Intelligence System
-
-Goal
-
-Build a complete AI operating system for audio.
-
-Features
-
--   Autonomous Agents
--   Music Generation
--   Voice Generation
--   Audio Restoration
--   Producer AI
--   Composer AI
--   Teacher AI
--   End-to-End Production
-
-------------------------------------------------------------------------
-
-# Technology Roadmap
-
-Phase 1
-
-Signal Processing
-
-↓
-
-Feature Extraction
-
-↓
-
-Engineering Rules
-
-↓
-
-Reasoning
-
-Completed
-
-------------------------------------------------------------------------
-
-Phase 2
-
-Perception
-
-↓
-
-Understanding
-
-↓
-
-Knowledge Graph
-
-↓
-
-Reference Intelligence
-
-↓
-
-Mix Intelligence
-
-↓
-
-Plugin Intelligence
-
-Completed
-
-------------------------------------------------------------------------
-
-Phase 3
-
-Decision
-
-↓
-
-Automation
-
-↓
-
-DAW Integration
-
-↓
-
-Plugin Control
-
-In Progress
-
-Contracts defined in V1; real control surfaces, VST3/AU preset export, and
-automation are V2 work.
-
-------------------------------------------------------------------------
-
-Phase 4
-
-Creation
-
-↓
-
-Composition
-
-↓
-
-Generation
-
-↓
-
-Agent Collaboration
-
-Future
-
-------------------------------------------------------------------------
-
-# Sprint Roadmap
-
-## Sprint 1
-
-Audio Infrastructure ✅
-
-## Sprint 2
-
-Engineering Engine ✅
-
-## Sprint 3
-
-Semantic Intelligence ✅
-
-## Sprint 4
-
-Reasoning Engine ✅
-
-## Sprint 5
-
-Comparison Engine ✅
-
-## Sprint 2.5
-
-Runtime Validation ✅
-
-## Sprint 2.6
-
-Core Integration ✅
-
-## Sprint 6
-
-Reference AI ✅
-
-## Sprint 7
-
-Mix Intelligence ✅
-
-## Sprint 8
-
-Plugin Intelligence ✅
-
-## Sprint 9
-
-Knowledge Infrastructure ✅
-
-## Sprint 10
-
-Memory & Personalization ✅
-
-## Sprint 11
-
-Evaluation & Benchmark ✅
-
-## Sprint 12
-
-AI Provider Layer ✅
-
-## Sprint 13
-
-Workflow Integration Contracts ✅
-
-## Sprint 14
-
-Release Hardening & V1 RC ✅
-
-## V1.1
-
-Release Cleanup & Hardening ⏳ Planning
-
-## V1.2
-
-Desktop UI ⏳ Planning
-
-## V1.3
-
-API ⏳ Planning
-
-------------------------------------------------------------------------
-
-# Research Roadmap
-
-Research Areas
-
--   Psychoacoustics
--   Music Information Retrieval
--   DSP
--   Machine Learning
--   Large Language Models
--   Audio Foundation Models
--   Multimodal AI
--   Reinforcement Learning
--   Human Perception
-
-------------------------------------------------------------------------
-
-# Definition of Success
-
-Version 1
-
-Professional engineering assistant.
-
-Version 2
-
-Perceptual engineering assistant.
-
-Version 3
-
-Autonomous mixing engineer.
-
-Version 4
-
-General Audio Foundation Model.
-
-Version 5
-
-World-class Audio Intelligence System.
+- V1: a professional audio intelligence assistant.
+- V2: a scientifically evaluated perceptual engineering assistant.
+- V3: a human-controlled, reversible autonomous mixing system.
+- Later: foundation-model and bounded autonomous audio-intelligence systems.

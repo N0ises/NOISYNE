@@ -1,198 +1,170 @@
-# SoundBrain Architecture Decisions
+# NØISYNE Architecture Decisions
 
-Version: 2.0
+Version: 2.1
 
 Status: ACTIVE
 
 ---
 
-# Purpose
+## Purpose
 
-This document records long-term architectural decisions that define the direction of SoundBrain.
+This document records accepted long-term architectural decisions for NØISYNE.
+Historical compatibility identifiers remain governed by the technical rename
+freeze.
 
 ---
 
-# Decision 001 — Project Identity
+## Decision 001 — Project Identity
 
-SoundBrain is an **Audio Intelligence System**.
-
-It is not merely an audio analyzer or a mixing assistant.
+NØISYNE is an Audio Intelligence System, distributed as `noisyne` from
+`N0ises/NOISYNE`. It is not merely an audio analyzer or mixing assistant.
 
 Status: Accepted
 
----
+## Decision 002 — Perception Before Measurement Alone
 
-# Decision 002 — Perception Before Measurement
-
-Human perception has higher priority than raw metrics.
-
-Status: Accepted
-
----
-
-# Decision 003 — Understanding Before Recommendation
-
-Recommendations must consider:
-
-- Audio context
-- Genre
-- Artistic intent
-- Reference tracks
-- Psychoacoustics
-- Engineering knowledge
+Recommendations must account for human perception; objective measurements
+remain preserved as auditable evidence and are never silently replaced.
 
 Status: Accepted
 
----
+## Decision 003 — Understanding Before Recommendation
 
-# Decision 004 — Explainable AI
-
-Every decision should contain:
-
-- Observation
-- Evidence
-- Reasoning
-- Confidence
-- Recommendation
+Recommendations consider available audio context, genre, artistic intent,
+references, perceptual evidence and engineering knowledge. Missing context is
+reported rather than invented.
 
 Status: Accepted
 
----
+## Decision 004 — Explainable AI
 
-# Decision 005 — Clean Architecture
-
-Business logic remains independent from providers, libraries and UI.
-
-Status: Accepted
-
----
-
-# Decision 006 — Provider Pattern
-
-Providers are replaceable.
-
-Current:
-
-- LM Studio
-- CLAP
-- ChromaDB
-
-Future:
-
-- OpenAI
-- Ollama
-- Claude
-- Gemini
-- Qwen Audio
+Every recommendation follows observation -> evidence -> reasoning -> confidence
+-> recommendation.
 
 Status: Accepted
 
----
+## Decision 005 — Clean Architecture
 
-# Decision 007 — Dependency Injection
-
-Dependencies are injected.
-
-Hidden dependencies are forbidden.
+Business and perceptual domain logic remain independent from providers,
+libraries, UI frameworks and DAW-specific protocols.
 
 Status: Accepted
 
----
+## Decision 006 — Provider Pattern
 
-# Decision 008 — Generic Reasoning Engine
-
-There is only one reasoning engine.
-
-Different workflows use different Prompt Builders.
+Providers are replaceable and optional. Business logic depends on provider
+contracts, and provider/model unavailability degrades gracefully.
 
 Status: Accepted
 
----
+## Decision 007 — Dependency Injection
 
-# Decision 009 — Multimodal Intelligence
-
-Supported modalities include:
-
-- Audio
-- Waveform
-- Spectrogram
-- Spectrum
-- Images
-- Voice
-- Text
-- MIDI
-- DAW Sessions
+Dependencies are injected. Hidden dependencies are forbidden.
 
 Status: Accepted
 
----
+## Decision 008 — Generic Reasoning Engine
 
-# Decision 010 — Knowledge Graph
+There is one reasoning architecture. Different workflows use different prompt
+builders and typed contexts rather than duplicate reasoning engines.
 
-Engineering intelligence should be built on trusted professional knowledge.
+Status: Accepted
+
+## Decision 009 — Multimodal Direction
+
+Audio and text are current architectural inputs. Images, voice, MIDI and DAW
+sessions are long-term target modalities; listing them does not claim a current
+runtime capability.
+
+Status: Accepted
+
+## Decision 010 — Trusted Knowledge
+
+Engineering intelligence should use trusted, attributable professional
+knowledge and primary standards/research where applicable.
+
+Status: Accepted
+
+## Decision 011 — Agent Architecture
+
+Specialized agents are a later-version direction. Agent classes or concepts in
+the repository do not make autonomous agents a V2 product capability.
 
 Status: Planned
 
----
+## Decision 012 — Audio Memory
 
-# Decision 011 — Agent Architecture
+Persistent memory is a first-class architectural component. Personalization
+must use explicit provenance and controlled override rules.
 
-Future agents:
+Status: Accepted
 
-- Mix Agent
-- Master Agent
-- Reference Agent
-- Psychoacoustic Agent
-- Producer Agent
-- Composer Agent
-- Teacher Agent
+## Decision 013 — Automation
 
-Status: Planned
+Reasoning and safety validation precede automation. V2 recommendations are
+non-destructive; deeper action/control belongs to later versions.
 
----
+Status: Accepted
 
-# Decision 012 — Audio Memory
+## Decision 014 — Human-Centered AI
 
-Persistent memory is a first-class architectural component.
+Humans remain in control of creative decisions. Unattended destructive actions
+are forbidden.
 
-Status: Planned
+Status: Accepted
 
----
+## Decision 015 — Product Progression
 
-# Decision 013 — Automation
+```text
+V1 -> Professional Audio Intelligence
+V2 -> Perceptual Intelligence
+V3 -> Autonomous Mixing / deeper DAW-aware engineering
+V4+ -> Foundation-model, advanced action/control and autonomous-system work
+```
 
-Reasoning precedes automation.
+Status: Accepted
 
-Status: Planned
+## Decision 016 — Capability Truth
 
----
+Actual runtime code and `noisyne/runtime/capabilities.py` determine present
+capability truth. Lifecycle state and current-machine availability are separate.
+A module, adapter or contract does not by itself establish runtime availability.
 
-# Decision 014 — Human-Centered AI
+Status: Accepted
 
-Humans remain in control of creative decisions.
+## Decision 017 — Desktop Isolation
+
+The frozen V1 Desktop remains isolated from V2 backend development. Desktop V2
+integrates only after stable V2 service and async-operation contracts through:
+
+```text
+NØISYNE Desktop -> V2ApplicationAdapter -> NØISYNE V2 backend
+```
+
+Status: Accepted
+
+## Decision 018 — V2 DAW Boundary
+
+Existing DAW-named adapters are deterministic export contracts, not live DAW
+integrations. V2 permits only a late Ableton launch/connect smoke bridge with a
+health/version/status handshake. Session read/control, parameter or automation
+writes and autonomous mixing are outside V2.
+
+Status: Accepted
+
+## Decision 019 — Scientific Claims
+
+ISO 226, ISO 532-1, ITU-R BS.1770 and EBU R128 are minimum planned validation
+anchors for relevant V2 work. Referencing them is not a conformance claim;
+conformance requires reviewed scope, implementation, fixtures, tolerances and
+repeatable evidence.
 
 Status: Accepted
 
 ---
 
-# Decision 015 — Long-Term Vision
+## Final Rule
 
-V1 → Professional Audio Intelligence
-
-V2 → Perceptual Intelligence
-
-V3 → Autonomous Mixing
-
-V4 → Audio Foundation Model
-
-V5 → Autonomous Audio Intelligence System
-
-Status: Accepted
-
----
-
-# Final Rule
-
-Whenever implementation conflicts with architecture,
-
-architecture wins.
+Architecture defines intended boundaries; repository code and runtime metadata
+define current capability truth. A conflict must be documented and reviewed
+before either architecture or implementation is changed.

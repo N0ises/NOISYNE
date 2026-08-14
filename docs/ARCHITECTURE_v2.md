@@ -1,223 +1,141 @@
-# SoundBrain Architecture
+# NØISYNE V2 Architecture
 
-## Overview
+Version: 2.0
 
-SoundBrain is designed as a layered Audio Intelligence System rather
-than a traditional audio analyzer. Each layer has a single
-responsibility while communicating through structured data models.
+Status: ACTIVE
 
-------------------------------------------------------------------------
+---
 
-# Layer 0 --- Infrastructure
+## System Boundary
 
-Responsibilities
+NØISYNE is an Audio Intelligence System. The V2 workstream adds Perceptual
+Intelligence to the frozen V1 Professional Audio Intelligence backend. V2
+estimates perception and translation risk, links conclusions to evidence and
+returns non-destructive recommendations. Autonomous mixing is V3, not V2.
 
--   Runtime
--   GPU execution
--   Model management
--   Configuration
--   Logging
--   Caching
--   Dependency injection
+The canonical codebase is `N0ises/NOISYNE`, distributed as `noisyne` with the
+`noisyne` Python namespace. Approved legacy identifiers remain compatibility
+contracts and are not alternate implementations.
 
-------------------------------------------------------------------------
+---
 
-# Layer 1 --- Perception
+## Layered Architecture
 
-Purpose: Convert raw inputs into structured representations.
+### Layer 0 — Infrastructure
 
-Inputs
+Configuration, logging, dependency injection, model repository, device
+selection, lazy loading and runtime cache. Domain layers must not own model
+loading or external provider setup.
 
--   Audio
--   Waveform
--   Spectrogram
--   Spectrum
--   Plugin screenshots
--   DAW sessions
--   MIDI
--   Voice
--   Text
+### Layer 1 — Measurement and Auditory Frontend
 
-Modules
+V1 audio I/O and deterministic DSP measurements feed a versioned V2 auditory
+frontend. Raw audio and objective measurements remain preserved as evidence.
 
--   Audio IO
--   Analysis
--   Embeddings
--   Vision
--   Speech
+### Layer 2 — Perception and Context Understanding
 
-Output
+V2 estimates perceived loudness, frequency masking, perceptual descriptors,
+playback-profile effects and translation risk. Listener, genre, artistic intent
+and delivery context qualify those estimates; missing context must produce an
+explicit fallback or uncertainty, not an invented fact.
 
-Perceptual representations.
+### Layer 3 — Reference and Mix Intelligence
 
-------------------------------------------------------------------------
+Perceptual evidence augments the existing V1 comparison, root-cause, priority
+and recommendation contracts. Numerical difference alone is not an error.
 
-# Layer 2 --- Understanding
+### Layer 4 — Reasoning
 
-Purpose: Interpret perceptual data.
+Deterministic rules, knowledge, memory and optional model-backed reasoning form
+an auditable chain:
 
-Capabilities
+```text
+observation -> evidence -> reasoning -> confidence -> recommendation
+```
 
--   Signal processing
--   Psychoacoustics
--   Harmonic analysis
--   Frequency response understanding
--   Genre recognition
--   Instrument detection
--   Emotion estimation
--   Mix structure understanding
+Optional provider failure must not invalidate deterministic output.
 
-Output
+### Layer 5 — Application Boundary
 
-Semantic understanding.
+The V2 `NoisyneService` capability contract is scheduled for Sprint 15. The
+local API and asynchronous job/progress contract follow in Sprint 16. Domain
+models do not depend on API, UI or DAW-specific types.
 
-------------------------------------------------------------------------
+### Later Action and Creation Layers
 
-# Layer 3 --- Reasoning
+DAW session read/control, plugin or automation writes, automatic processing,
+generation, voice and autonomous agents are later-version capabilities. Their
+conceptual position in the architecture does not imply current implementation
+or availability.
 
-Purpose: Combine engineering rules, memory and AI reasoning.
+---
 
-Components
+## Canonical V2 Data Flow
 
--   Prompt builders
--   LLM providers
--   Knowledge Graph
--   Memory
--   Reference reasoning
--   Validation
--   Confidence estimation
+```text
+audio + optional references + context
+    -> V1 validation and measurements
+    -> V2 auditory frontend
+    -> perceived loudness / masking / descriptors
+    -> playback and translation-risk models
+    -> perceptual reference and mix intelligence
+    -> evidence-linked reasoning and confidence
+    -> non-destructive recommendation/report
+```
 
-Output
+Each stage uses typed, versioned contracts and records whether it ran, skipped
+or failed. Lifecycle status and current-machine availability remain separate.
 
-Structured engineering decisions.
+---
 
-------------------------------------------------------------------------
+## Desktop Boundary
 
-# Layer 4 --- Decision
+Desktop V1 is a frozen release candidate on the isolated `desktop-ui` branch.
+No tracked Desktop implementation belongs to the V2 backend baseline. Desktop
+V2 integration begins only in Sprint 17 and retains this boundary:
 
-Purpose: Transform reasoning into actionable engineering decisions.
+```text
+NØISYNE Desktop
+    -> V2ApplicationAdapter
+    -> NØISYNE V2 backend
+```
 
-Examples
+The adapter shields the Desktop from backend domain evolution and binds only to
+the stable service/API and async operation contracts established in Sprints
+15-16.
 
--   EQ changes
--   Compression strategy
--   Stereo recommendations
--   Loudness targets
--   Translation improvements
+---
 
-------------------------------------------------------------------------
+## DAW and Ableton Boundary
 
-# Layer 5 --- Action
+The current `noisyne.integration` package owns implemented deterministic export
+contracts. It does not connect to, read from or control any DAW.
 
-Purpose: Execute engineering decisions.
+Sprint 20 may add only an Ableton launch/connect smoke bridge and a local
+health/version/status handshake. It must remain outside Ableton's real-time
+audio thread and tolerate NØISYNE start/stop/restart and project save/reopen.
+Track manipulation, parameter changes, automation writes, session control and
+autonomous mixing are outside V2.
 
-Targets
+---
 
--   DAW automation
--   Plugin control
--   Batch processing
--   Restoration
--   Stem editing
--   Export
+## Scientific Architecture Constraints
 
-------------------------------------------------------------------------
+V2 methodology and evaluation must be anchored in primary research and, at
+minimum, ISO 226, ISO 532-1, ITU-R BS.1770 and EBU R128. These references are
+validation targets, not claims that the current code conforms.
 
-# Layer 6 --- Creation
+Perceptual contracts must expose scale/units, valid range, evidence,
+uncertainty, required context, model/method version and failure semantics.
 
-Purpose: Generate new audio.
+---
 
-Capabilities
+## Current Capability Boundary
 
--   Composition
--   Arrangement
--   Sound design
--   Music generation
--   Voice generation
--   Style transfer
-
-------------------------------------------------------------------------
-
-# Agent Architecture
-
-Specialized agents cooperate instead of one monolithic model.
-
-Agents
-
--   Mix Agent
--   Master Agent
--   Reference Agent
--   Psychoacoustic Agent
--   Producer Agent
--   Composer Agent
--   Teacher Agent
-
-------------------------------------------------------------------------
-
-# Knowledge Layer
-
-Knowledge sources include
-
--   AES
--   ITU
--   EBU
--   Dolby
--   Academic papers
--   Engineering books
--   Trusted community knowledge
-
-------------------------------------------------------------------------
-
-# Data Flow
-
-Input
-
-↓
-
-Perception
-
-↓
-
-Understanding
-
-↓
-
-Reasoning
-
-↓
-
-Decision
-
-↓
-
-Action
-
-↓
-
-Creation
-
-------------------------------------------------------------------------
-
-# Current Status
-
-Completed
-
--   Audio analysis
--   Engineering engine
--   Semantic intelligence
--   Comparison engine
--   Reasoning
--   Reporting
--   Export
--   Validation
-
-In Progress
-
--   Reference AI
--   Mix Intelligence
-
-Planned
-
--   Psychoacoustic Intelligence
--   Agent OS
--   Autonomous Mixing
--   Audio Foundation Model
+- Production V1 deterministic paths: audio loading, DSP, context, engineering,
+  reference comparison, mix/plugin recommendations, reports and service facade.
+- Optional/incomplete paths retain their runtime registry states and require
+  separate availability checks.
+- Planned V2: the validated perceptual core and integrations in the canonical
+  Sprint 1-22 sequence.
+- Future/V3+: autonomous mixing, deeper DAW control, action and creation.

@@ -1,233 +1,142 @@
-# Audio Architecture
+# NØISYNE V2 Audio Architecture
+
+Version: 2.0
+
+Status: ACTIVE
+
+---
 
 ## Purpose
 
-The Audio Architecture defines how SoundBrain transforms raw audio into
-engineering knowledge, perceptual understanding, intelligent decisions,
-automation, and creative output.
+The V2 audio architecture extends NØISYNE's frozen V1 measurement pipeline with
+research-anchored perceptual modeling. It predicts how audio may be perceived
+and translated across playback contexts, then produces evidence-linked,
+non-destructive recommendations. It does not process source audio or control a
+DAW.
 
-Unlike traditional analyzers, every stage is designed to preserve
-semantic information for downstream AI reasoning.
+---
 
-------------------------------------------------------------------------
+## Processing Pipeline
 
-# Processing Pipeline
+```text
+Audio input
+    -> validation and canonical AudioData
+    -> deterministic V1 measurement
+    -> V2 auditory frontend
+    -> perceived loudness and masking
+    -> perceptual descriptors
+    -> playback/listener/genre/delivery context
+    -> translation-risk prediction
+    -> perceptual reference and mix intelligence
+    -> evidence-linked reasoning
+    -> report and recommendation
+```
 
-Audio Input
+The original measurements, context inputs, method versions and uncertainty must
+remain available for audit. A later stage may enrich evidence but must not
+silently replace or relabel an objective measurement.
 
-↓
+---
 
-Loading
+## V1 Measurement Baseline
 
-↓
+The current backend includes audio loading/validation and metrics such as tempo,
+key, pitch, LUFS, peak, RMS, crest factor, dynamic range, stereo width, phase,
+MFCC, chroma, spectral centroid/bandwidth/contrast/flatness/rolloff, zero-
+crossing rate and onsets.
 
-Preprocessing
+These are objective or algorithmic measurements. Their existence does not mean
+V2 perceptual loudness, masking, descriptor or translation models are already
+implemented.
 
-↓
+Supported file behavior is determined by the configured SoundFile/librosa
+backend and installed codecs. Stems, multitrack sessions, live streams and DAW
+sessions must not be claimed as available merely because they appear in a
+future architecture.
 
-Feature Extraction
+---
 
-↓
+## V2 Perceptual Components
 
-Perception
+### Auditory Frontend — Sprint 2
 
-↓
+Produces stable, versioned inputs for perceptual models from validated audio.
+Its sampling, windowing, channel, level and boundary behavior must be explicit.
 
-Understanding
+### Perceived Loudness — Sprint 3
 
-↓
+Estimates perceptual loudness without conflating that estimate with the existing
+LUFS measurement. Units/scales, calibration, supported signal conditions and
+uncertainty must be defined.
 
-Reasoning
+### Frequency Masking — Sprint 4
 
-↓
+Produces frequency/time-local masking evidence and confidence. It must not label
+intentional overlap as a defect without musical and delivery context.
 
-Decision
+### Perceptual Descriptors — Sprint 5
 
-↓
+Defines testable descriptors such as brightness, warmth, harshness, punch and
+width perception. Each descriptor needs an operational definition, range,
+evidence and validation method before capability promotion.
 
-Action
+### Playback Profiles — Sprint 6
 
-↓
+Represents versioned reproduction contexts. Profiles are analysis inputs, not
+claims that NØISYNE emulates every physical playback system.
 
-Creation
+### Translation Risk — Sprint 7
 
-------------------------------------------------------------------------
+Predicts a calibrated risk with contributing evidence, target profile and
+uncertainty. It is not a guarantee of listener response.
 
-# Audio Input
+### Context — Sprint 8
 
-Supported sources
+Listener, genre, artistic intent and delivery context qualify perceptual
+conclusions. Missing/unknown context must be represented explicitly.
 
--   WAV
--   FLAC
--   AIFF
--   MP3
--   OGG
--   Stems
--   Multitrack
--   Reference Tracks
+### Reference, Mix and Reasoning — Sprints 9-11
 
-Future
+Perceptual evidence augments existing V1 reference/mix contracts and the
+observation-to-recommendation trace. Recommendations remain advisory and
+non-destructive.
 
--   DAW Sessions
--   Live Streams
--   Plugin Chains
+---
 
-------------------------------------------------------------------------
+## Scientific Validation Anchors
 
-# Preprocessing
+At minimum, future research and validation must consider:
 
-Responsibilities
+- ISO 226 for equal-loudness contours.
+- ISO 532-1 for Zwicker loudness methodology.
+- ITU-R BS.1770 for programme loudness and true peak.
+- EBU R128 for production/broadcast loudness context.
 
--   Resampling
--   Channel conversion
--   Loudness normalization (analysis only)
--   Silence trimming
--   Windowing
--   Chunking
+NØISYNE does not claim present conformance to these standards. A conformance
+claim requires reviewed implementation scope, fixtures, tolerances, repeatable
+results and recorded limitations.
 
-Output
+---
 
-Canonical audio representation.
+## Real-Time and DAW Safety Boundary
 
-------------------------------------------------------------------------
+Current workflow adapters only export files. The planned Sprint 20 Ableton
+bridge is limited to launch/connect and health/version/status. Heavy ML or audio
+analysis must never run on Ableton's real-time audio thread.
 
-# Feature Extraction
+V2 excludes track manipulation, plugin/device changes, automation writes,
+automatic EQ/compression, automatic mastering, unattended actions and
+destructive audio replacement. Deeper DAW-aware action belongs to V3 or later.
 
-Current
+---
 
--   Tempo
--   Key
--   Pitch
--   LUFS
--   Peak
--   RMS
--   Crest Factor
--   Dynamic Range
--   Stereo Width
--   Phase
--   MFCC
--   Chroma
--   Spectral Centroid
--   Spectral Bandwidth
--   Spectral Contrast
--   Spectral Flatness
--   Spectral Rolloff
--   Zero Crossing Rate
--   Onsets
+## Design Rules
 
-Future
-
--   Harmonic fingerprints
--   Timbre embeddings
--   Transient maps
--   Resonance maps
--   Room response estimation
-
-------------------------------------------------------------------------
-
-# Perception Layer
-
-Objective metrics alone are insufficient.
-
-The perception layer estimates how humans are likely to hear the
-material.
-
-Capabilities
-
--   Loudness perception
--   Masking estimation
--   Brightness perception
--   Warmth estimation
--   Harshness detection
--   Punch estimation
--   Width perception
--   Translation prediction
-
-------------------------------------------------------------------------
-
-# Understanding Layer
-
-Transforms measurements into musical meaning.
-
-Examples
-
--   Genre recognition
--   Instrument recognition
--   Mix structure
--   Harmonic balance
--   Frequency interaction
--   Dynamic behaviour
--   Arrangement awareness
-
-------------------------------------------------------------------------
-
-# Intelligence Layer
-
-Combines
-
--   DSP
--   Engineering rules
--   Psychoacoustics
--   Reference comparison
--   Memory
--   Knowledge graph
--   LLM reasoning
-
-Produces
-
--   Explanations
--   Decisions
--   Recommendations
-
-------------------------------------------------------------------------
-
-# Action Layer
-
-Targets
-
--   DAW
--   Plugins
--   Batch processing
--   Automatic mastering
--   Automatic mixing
--   Restoration
-
-Future
-
--   Full autonomous engineering
-
-------------------------------------------------------------------------
-
-# Creation Layer
-
-Long-term capabilities
-
--   Music generation
--   Sound design
--   Voice generation
--   Style transfer
--   Stem synthesis
--   Arrangement generation
-
-------------------------------------------------------------------------
-
-# Design Principles
-
-1.  Modular
-2.  Deterministic where possible
-3.  Explainable AI
-4.  Human-in-the-loop
-5.  Multimodal by design
-6.  Reference-aware
-7.  Psychoacoustic-first
-8.  Extensible
-
-------------------------------------------------------------------------
-
-# Long-Term Vision
-
-Every module should contribute to one objective:
-
-Create an Audio Intelligence System capable of perceiving,
-understanding, reasoning, deciding, acting, and creating like an expert
-audio engineer.
+1. Preserve objective measurements as evidence.
+2. Keep perceptual models versioned, testable and independently replaceable.
+3. Separate lifecycle maturity from machine availability.
+4. Represent uncertainty and missing context explicitly.
+5. Prefer deterministic behavior and graceful optional-provider failure.
+6. Keep domain logic independent from UI, API, DAW and provider libraries.
+7. Require scientific evaluation before capability promotion or conformance
+   language.

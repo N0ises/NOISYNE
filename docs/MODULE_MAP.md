@@ -1,228 +1,104 @@
-# NØISYNE Module Map
+# NØISYNE V2 Module Map
 
-Version: 1.0
+Version: 2.0
 
 Status: ACTIVE
 
----
+Repository: `N0ises/NOISYNE`
 
-# Purpose
-
-This document maps every major module in the NØISYNE codebase.
-
-It defines ownership, responsibility, and allowed interactions between modules.
+Canonical package: `noisyne/`
 
 ---
 
-# Repository
+## Identity and Compatibility
 
-noisyne/
-
----
-
-# Runtime
-
-Path
-
-noisyne/runtime/
-
-Responsibilities
-
-- Model lifecycle
-- Lazy loading
-- Device selection
-- Runtime cache
-- Repository access
-
-Depends On
-
-Infrastructure only.
+All implementation lives under `noisyne`. The top-level `brain` package is a
+legacy import shim and must not receive duplicate implementations. The
+`soundbrain` CLI, `SoundBrainService`, `SOUNDBRAIN_ROOT`, `soundbrain` engine
+alias and `soundbrain` Chroma collection remain approved compatibility
+contracts.
 
 ---
 
-# Audio
+## Current Backend Modules
 
-Path
+| Path | Ownership | Dependency boundary |
+| --- | --- | --- |
+| `noisyne/runtime/` | Model lifecycle, repository resolution, devices, loading, cache and runtime capability registry | Infrastructure/providers only; domain code does not load models directly |
+| `noisyne/infrastructure/` | Configuration, provider plumbing and infrastructure concerns | No UI ownership |
+| `noisyne/audio/` | Audio I/O, measurements, context, embeddings, comparison, V1 mix/plugin intelligence and audio-domain models | May use runtime; does not depend on Desktop/DAW protocols |
+| `noisyne/engineering/` and `noisyne/audio/engineer/` | Existing rule/engineering analysis paths | Consume audio-domain evidence |
+| `noisyne/reference/` | Reference comparison, reasoning, pipeline and reports | Consumes analysis/context; no DAW control |
+| `noisyne/knowledge/` | Structured knowledge loading, validation, registry and resolution | Domain knowledge contracts |
+| `noisyne/rag/` | Retrieval, ingestion, vector database and reranking | Optional model/data availability |
+| `noisyne/memory/` | Memory/profile models, resolution and vector storage | Persistence identifiers remain compatibility-sensitive |
+| `noisyne/providers/` | Replaceable AI provider contracts, registry, factory and services | Heavy/remote providers remain optional |
+| `noisyne/reasoning/` and `noisyne/prompt/` | Structured reasoning, prompts, parsing and guards | Depend on contracts, not UI |
+| `noisyne/report/` | Report models, building, validation and export | Consumes domain results |
+| `noisyne/evaluation/` | Metrics, scoring, benchmarks and evaluation reports | Tests domain/application outputs |
+| `noisyne/application/` | Canonical application facade and use-case orchestration | May compose domain modules; no Desktop imports |
+| `noisyne/orchestration/` and `noisyne/pipeline/` | Implemented alternate orchestration/stage infrastructure | Not the frozen V1 CLI production path |
+| `noisyne/integration/` | Deterministic DAW-named workflow export contracts | No live DAW communication or control |
+| `noisyne/cli.py` | Canonical command-line surface | Calls application services |
 
-noisyne/audio/
-
-Responsibilities
-
-- Audio IO
-- DSP
-- Feature extraction
-- Context
-- Embeddings
-- Comparison
-
-Depends On
-
-Runtime
-
----
-
-# Engineering
-
-Path
-
-noisyne/engineering/
-
-Responsibilities
-
-- Rule Engine
-- Recommendations
-- Validation
-- Scoring
-
-Depends On
-
-Audio
+`noisyne.application.noisyne_service.NoisyneService` is the canonical V1
+facade. `noisyne.application.soundbrain_service.SoundBrainService` is retained
+as a compatibility alias.
 
 ---
 
-# Knowledge
+## V2 Planned Module Boundaries
 
-Path
+Exact package names are established by Sprint 1 contracts, not by this roadmap
+sprint. The planned ownership boundaries are:
 
-noisyne/rag/
+- Perceptual domain contracts — shared types for evidence, confidence,
+  uncertainty and versioned model output.
+- Auditory frontend — deterministic inputs for perceptual models.
+- Loudness, masking and descriptors — independently testable perceptual
+  components.
+- Playback/translation context — versioned playback profiles and calibrated
+  risk output.
+- Perceptual reference/mix/reasoning integration — adapters over existing V1
+  contracts rather than duplicate pipelines.
+- V2 application contract — `NoisyneService` boundary in Sprint 15.
+- Local API/async operations — Sprint 16, after the service contract is stable.
 
-Responsibilities
-
-- Loading
-- Chunking
-- Retrieval
-- Vector Search
-- Reranking
-
-Depends On
-
-Runtime
-
----
-
-# LLM
-
-Path
-
-noisyne/llm/
-
-Responsibilities
-
-- Prompt Builders
-- Providers
-- Parsing
-- Validation
-
-Depends On
-
-Runtime
-
-Knowledge
-
-Engineering
+No directories should be created for these areas before their owning sprint.
 
 ---
 
-# Reports
+## Desktop Boundary
 
-Path
+The V1 Desktop is frozen on the isolated `desktop-ui` branch. There is no
+tracked Desktop implementation in the `v2-development` baseline. Desktop V2
+integration starts in Sprint 17:
 
-noisyne/report/
+```text
+NØISYNE Desktop -> V2ApplicationAdapter -> NØISYNE V2 backend
+```
 
-Responsibilities
-
-- JSON Export
-- Human Reports
-- Validation
-
-Depends On
-
-Engineering
-
-Reasoning
+Desktop code must not be moved into backend domain modules, and backend modules
+must not import a UI toolkit.
 
 ---
 
-# Services
+## DAW Boundary
 
-Path
-
-noisyne/services/
-
-Responsibilities
-
-- Public APIs
-- Application Facade
-- Use Cases
-
-Depends On
-
-All domain modules.
+`noisyne/integration` owns file-export contracts only. The Sprint 20 Ableton
+launch bridge is a separate planned integration limited to launch/connect and
+health/version/status. DAW session read/control, parameter changes, automation
+writes and autonomous actions are future capabilities and must not be placed in
+the current adapters.
 
 ---
 
-# CLI
+## Final Rules
 
-Path
-
-noisyne/cli/
-
-Responsibilities
-
-- Command-line interface
-
-Depends On
-
-Services only.
-
----
-
-# API
-
-Path
-
-noisyne/api/
-
-Responsibilities
-
-- REST API
-
-Depends On
-
-Services only.
-
----
-
-# Desktop
-
-Path
-
-noisyne/ui/
-
-Responsibilities
-
-- Desktop application
-
-Depends On
-
-Services only.
-
----
-
-# Future Modules
-
-- Vision
-- Speech
-- MIDI
-- Agent OS
-- Knowledge Graph
-- Memory
-- Foundation Model
-
----
-
-# Final Rule
-
-Each module owns one responsibility.
-
-If a module begins solving another module's problems, refactor before adding features.
+- One canonical implementation per responsibility; compatibility packages only
+  delegate.
+- Runtime owns model lifecycle; application services orchestrate use cases.
+- Domain modules do not depend on Desktop, API transports or DAW protocols.
+- Capability lifecycle and machine availability are separate contracts.
+- Historical documents may retain former SoundBrain naming; current modules and
+  new code use NØISYNE/NOISYNE and `noisyne`.
