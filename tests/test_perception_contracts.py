@@ -220,6 +220,82 @@ def test_insufficient_evidence_is_distinct_from_unavailable() -> None:
     assert descriptor.estimate is None
 
 
+def test_insufficient_evidence_masking_rejects_event() -> None:
+    state = ResultState(ResultStatus.INSUFFICIENT_EVIDENCE, "Masking evidence is incomplete.")
+
+    with pytest.raises(ValueError, match="must not contain events"):
+        FrequencyMaskingResult(state=state, events=[_masking_event("unsupported-mask")])
+
+
+def test_insufficient_evidence_translation_rejects_dimension_and_aggregate_risk() -> None:
+    state = ResultState(ResultStatus.INSUFFICIENT_EVIDENCE, "Translation evidence is incomplete.")
+    dimension = TranslationRiskDimension(dimension_id="stereo_collapse", state=state)
+    target = PlaybackProfileReference("mono", "1.0.0")
+
+    with pytest.raises(ValueError, match="must not carry risks"):
+        TranslationResult(target_profile=target, state=state, dimensions=[dimension])
+    with pytest.raises(ValueError, match="must not carry risks"):
+        TranslationResult(target_profile=target, state=state, aggregate_risk=_normalized(0.4))
+
+
+def test_insufficient_evidence_top_level_rejects_computed_component() -> None:
+    state = ResultState(ResultStatus.INSUFFICIENT_EVIDENCE, "Analysis evidence is incomplete.")
+
+    with pytest.raises(ValueError, match="must not contain computed components"):
+        PerceptualAnalysisResult(state=state, descriptors=[_descriptor("brightness", 0.4)])
+
+
+def test_insufficient_evidence_retains_supporting_information() -> None:
+    state = ResultState(ResultStatus.INSUFFICIENT_EVIDENCE, "Evidence threshold not met.")
+    result = PerceivedLoudnessResult(
+        state=state,
+        evidence=[_evidence()],
+        confidence=Confidence(
+            basis=ConfidenceBasis.MEASUREMENT_QUALITY,
+            reason="Available measurements do not support a final estimate.",
+            limitations=["Perceptual method has not run."],
+        ),
+        limitations=["No final perceived-loudness estimate is available."],
+    )
+
+    assert result.estimate is None
+    assert result.evidence
+    assert result.confidence.reason
+    assert result.limitations
+
+
+def test_insufficient_evidence_loudness_rejects_computed_observation() -> None:
+    state = ResultState(ResultStatus.INSUFFICIENT_EVIDENCE, "Evidence threshold not met.")
+    observation = PerceptualObservation(
+        observation_id="loudness-observation",
+        category=ObservationCategory.LOUDNESS,
+        kind="perceived_loudness",
+        state=COMPUTED,
+        value=_normalized(0.4, "future_perceived_loudness_scale"),
+    )
+
+    with pytest.raises(ValueError, match="has computed observation"):
+        PerceivedLoudnessResult(state=state, observations=[observation])
+
+
+def test_computed_partial_top_level_uses_component_statuses() -> None:
+    insufficient = ResultState(
+        ResultStatus.INSUFFICIENT_EVIDENCE,
+        "Translation evidence threshold not met.",
+    )
+    result = PerceptualAnalysisResult(
+        state=COMPUTED,
+        descriptors=[_descriptor("brightness", 0.4)],
+        component_statuses=[
+            ComponentStatus("descriptors", COMPUTED),
+            ComponentStatus("translation", insufficient),
+        ],
+    )
+
+    assert result.state.status is ResultStatus.COMPUTED
+    assert result.component_statuses[1].state.status is ResultStatus.INSUFFICIENT_EVIDENCE
+
+
 @pytest.mark.parametrize("score", [0.0, 1.0, 0.25, None])
 def test_confidence_boundaries(score: float | None) -> None:
     assert Confidence(score=score).score == score
@@ -366,6 +442,71 @@ def test_unknown_serialized_fields_are_rejected() -> None:
 
     with pytest.raises(ValueError, match="Unknown"):
         PerceptualAnalysisResult.from_dict(payload)
+
+
+def test_deserialization_rejects_wrong_primitive_type() -> None:
+    with pytest.raises(TypeError, match="float"):
+        TimeRange.from_dict({"start_seconds": "0.0", "end_seconds": 1.0})
+    with pytest.raises(TypeError, match="bool"):
+        ScalarValue.from_dict(
+            {
+                "value": 1.0,
+                "unit_basis": "undefined",
+                "unit": None,
+                "scale": None,
+                "normalized": 1,
+            }
+        )
+
+
+def test_deserialization_rejects_invalid_scalar_union_payload() -> None:
+    payload = {
+        "value": {"unexpected": "object"},
+        "unit_basis": "undefined",
+        "unit": None,
+        "scale": None,
+        "normalized": False,
+    }
+
+    with pytest.raises(TypeError, match="does not match union"):
+        ScalarValue.from_dict(payload)
+
+
+def test_deserialization_rejects_non_string_list_member() -> None:
+    with pytest.raises(TypeError, match="str"):
+        Confidence.from_dict(
+            {
+                "score": None,
+                "basis": "unknown",
+                "reason": None,
+                "limitations": ["valid", 3],
+            }
+        )
+
+
+def test_deserialization_rejects_non_string_mapping_value() -> None:
+    payload = PlaybackProfile(
+        profile_id="reference",
+        display_name="Reference",
+        version="1.0.0",
+        description="Reference playback context.",
+    ).to_dict()
+    payload["metadata"] = {"owner": 7}
+
+    with pytest.raises(TypeError, match="str"):
+        PlaybackProfile.from_dict(payload)
+
+
+def test_deserialization_rejects_invalid_enum_value() -> None:
+    with pytest.raises(ValueError):
+        ResultState.from_dict({"status": "not_a_status", "reason": None})
+
+
+def test_deserialization_rejects_union_with_no_valid_candidate() -> None:
+    with pytest.raises(TypeError, match="does not match union"):
+        MethodMetadata.from_dict(
+            {"method_id": "method", "version": "1", "description": ["invalid"]}
+        )
 
 
 def test_perception_import_is_lightweight() -> None:

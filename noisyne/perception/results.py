@@ -72,6 +72,10 @@ class PerceivedLoudnessResult(JsonContract):
 
     def __post_init__(self) -> None:
         _validate_estimate_state(self.state, self.estimate, "perceived loudness result")
+        if self.state.status is not ResultStatus.COMPUTED and any(
+            observation.state.status is ResultStatus.COMPUTED for observation in self.observations
+        ):
+            raise ValueError("non-computed perceived loudness result has computed observation")
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,7 +102,7 @@ class MaskingEvent(JsonContract):
 
 @dataclass(frozen=True, slots=True)
 class FrequencyMaskingResult(JsonContract):
-    """Collection shape for future masking events; zero events is a valid result."""
+    """Collection shape; only a computed result may contain masking events."""
 
     state: ResultState
     events: list[MaskingEvent] = field(default_factory=list)
@@ -109,8 +113,8 @@ class FrequencyMaskingResult(JsonContract):
     limitations: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        if self.state.status in (ResultStatus.UNAVAILABLE, ResultStatus.SKIPPED) and self.events:
-            raise ValueError("unavailable or skipped masking result must not contain events")
+        if self.state.status is not ResultStatus.COMPUTED and self.events:
+            raise ValueError("non-computed masking result must not contain events")
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,6 +153,10 @@ class TranslationRiskDimension(JsonContract):
     def __post_init__(self) -> None:
         _require_identifier(self.dimension_id, "dimension_id")
         _validate_estimate_state(self.state, self.risk, "translation-risk dimension")
+        if self.state.status is not ResultStatus.COMPUTED and any(
+            observation.state.status is ResultStatus.COMPUTED for observation in self.observations
+        ):
+            raise ValueError("non-computed translation-risk dimension has computed observation")
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,13 +178,8 @@ class TranslationResult(JsonContract):
                 raise ValueError(
                     "computed translation result requires dimensions or aggregate risk"
                 )
-        elif (
-            self.state.status in (ResultStatus.UNAVAILABLE, ResultStatus.SKIPPED)
-            and self.dimensions
-        ):
-            raise ValueError("unavailable or skipped translation result must not carry risks")
-        elif self.state.status is not ResultStatus.COMPUTED and self.aggregate_risk is not None:
-            raise ValueError("non-computed translation result must not carry aggregate risk")
+        elif self.dimensions or self.aggregate_risk is not None:
+            raise ValueError("non-computed translation result must not carry risks")
 
 
 @dataclass(frozen=True, slots=True)
@@ -220,6 +223,26 @@ class PerceptualAnalysisResult(JsonContract):
             raise ValueError("computed analysis requires at least one result component")
         if self.state.status in (ResultStatus.UNAVAILABLE, ResultStatus.SKIPPED) and has_results:
             raise ValueError("unavailable or skipped analysis must not contain result components")
+        if self.state.status is ResultStatus.INSUFFICIENT_EVIDENCE:
+            computed_components = any(
+                (
+                    self.perceived_loudness is not None
+                    and self.perceived_loudness.state.status is ResultStatus.COMPUTED,
+                    self.frequency_masking is not None
+                    and self.frequency_masking.state.status is ResultStatus.COMPUTED,
+                    any(item.state.status is ResultStatus.COMPUTED for item in self.descriptors),
+                    any(item.state.status is ResultStatus.COMPUTED for item in self.translations),
+                    any(item.state.status is ResultStatus.COMPUTED for item in self.observations),
+                    any(
+                        item.state.status is ResultStatus.COMPUTED
+                        for item in self.component_statuses
+                    ),
+                )
+            )
+            if computed_components:
+                raise ValueError(
+                    "insufficient-evidence analysis must not contain computed components"
+                )
 
 
 def descriptor_observation(
