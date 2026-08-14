@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from noisyne.rag.retriever import retrieve
 from noisyne.rag.reranker import rerank
+from noisyne.rag.retriever import retrieve
 
 
 @dataclass(slots=True)
@@ -18,7 +18,7 @@ class SearchResult:
 
 class RAGService:
     """
-    Public API for the SoundBrain Retrieval-Augmented Generation subsystem.
+    Public API for the NØISYNE Retrieval-Augmented Generation subsystem.
 
     All higher-level modules (Executor, Audio, Vision, Recommendation,
     Reasoning, Agents...) must access RAG only through this class.
@@ -92,10 +92,7 @@ class RAGService:
 
         for item in results:
 
-            block = (
-                f"[Source: {item.source} | Page: {item.page}]\n"
-                f"{item.text}"
-            )
+            block = f"[Source: {item.source} | Page: {item.page}]\n" f"{item.text}"
 
             blocks.append(block)
 

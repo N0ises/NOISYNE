@@ -9,7 +9,7 @@ class BrainRouter:
     High-level AI router.
 
     This class will become the single entry point
-    for all AI capabilities in SoundBrain.
+    for all AI capabilities in NØISYNE.
     """
 
     def route(
@@ -17,6 +17,4 @@ class BrainRouter:
         request: BrainRequest,
     ) -> BrainResponse:
 
-        raise NotImplementedError(
-            "Routing is not connected yet."
-        )
+        raise NotImplementedError("Routing is not connected yet.")

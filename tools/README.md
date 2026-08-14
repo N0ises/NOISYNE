@@ -3,7 +3,7 @@
 This tool creates review-friendly exports for large codebases. The default output
 folder is `exports/`; it is automatically excluded from later scans.
 
-## SoundBrain developer-tool standard
+## NØISYNE developer-tool standard
 
 All development-only commands live in `tools/`. Each tool has one descriptive
 entry-point file (for example, `lint_project.py`) and may keep its reusable logic

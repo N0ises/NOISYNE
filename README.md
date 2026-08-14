@@ -121,7 +121,7 @@ noisyne/
 # Project Structure
 
 ```
-SoundBrain/
+<repository-directory>/
 
 noisyne/
 tests/
@@ -192,7 +192,7 @@ Clone the repository
 
 ```bash
 git clone <repository-url>
-cd SoundBrain
+cd <repository-directory>
 ```
 
 Create virtual environment

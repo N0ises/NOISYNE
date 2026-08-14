@@ -21,7 +21,7 @@ from .scoring import ScoreAggregator
 
 class EvaluationService:
     """
-    Isolated Evaluation layer for SoundBrain outputs.
+    Isolated Evaluation layer for NØISYNE outputs.
 
     The service consumes existing outputs (reports, comparisons, intelligence
     results) and produces scores. It never influences analysis decisions.
@@ -48,7 +48,7 @@ class EvaluationService:
         response: Any,
         evaluation_id: str | None = None,
     ) -> EvaluationResult:
-        """Evaluate a complete SoundBrain analysis response."""
+        """Evaluate a complete NØISYNE analysis response."""
         report = getattr(response, "report", None)
         comparison = getattr(response, "comparison", None)
         mix = getattr(response, "mix_intelligence", None)

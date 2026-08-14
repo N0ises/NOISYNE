@@ -17,7 +17,7 @@ class State:
     question: str = ""
 
     # ------------------------------------------------------------------
-    # V1 SoundBrain Request / Response
+    # V1 NØISYNE Request / Response
     # ------------------------------------------------------------------
 
     audio_path: str | Path | None = None

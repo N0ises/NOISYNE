@@ -11,7 +11,7 @@ from .report_builder import ReferenceReportBuilder
 
 class ReferencePipeline:
     """
-    SoundBrain Reference Intelligence Pipeline
+    NØISYNE Reference Intelligence Pipeline
 
     Pipeline
 

@@ -1,4 +1,4 @@
-# SoundBrain Project Manifest
+# NØISYNE Project Manifest
 
 Version: 1.0
 
@@ -8,7 +8,7 @@ Status: ACTIVE
 
 # Purpose
 
-This document serves as the single navigation entry point for the entire SoundBrain project.
+This document serves as the single navigation entry point for the entire NØISYNE project.
 
 It describes what exists, what is planned, where every major subsystem lives, and how the architecture evolves over time.
 
@@ -18,7 +18,7 @@ Every contributor and every AI assistant should read this document before making
 
 # Project Identity
 
-SoundBrain is an Audio Intelligence System.
+NØISYNE is an Audio Intelligence System.
 
 It combines:
 

@@ -1,5 +1,7 @@
 DEFAULT_PROVIDER = "chroma"
 
+# Stable persisted compatibility identifier. Renaming this collection would
+# orphan existing vector data, so canonical and legacy runtimes share it.
 DEFAULT_COLLECTION = "soundbrain"
 
 DEFAULT_TOP_K = 5

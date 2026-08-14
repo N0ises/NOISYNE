@@ -1,4 +1,4 @@
-"""SoundBrain audio package.
+"""NØISYNE audio package.
 
 Heavy exports are loaded lazily via ``__getattr__`` so that importing
 submodules like ``noisyne.audio.io.models`` does not pull in torch or
@@ -11,12 +11,15 @@ from __future__ import annotations
 def __getattr__(name: str):
     if name == "AudioPipeline":
         from .pipeline import AudioPipeline
+
         return AudioPipeline
     if name == "AudioMemory":
         from .memory import AudioMemory
+
         return AudioMemory
     if name == "AudioSearchService":
         from .search.service import AudioSearchService
+
         return AudioSearchService
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
@@ -30,7 +33,7 @@ def __dir__() -> list[str]:
 
 
 __all__ = [
-    "AudioPipeline",
     "AudioMemory",
+    "AudioPipeline",
     "AudioSearchService",
 ]

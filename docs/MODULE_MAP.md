@@ -1,4 +1,4 @@
-# SoundBrain Module Map
+# NØISYNE Module Map
 
 Version: 1.0
 
@@ -8,7 +8,7 @@ Status: ACTIVE
 
 # Purpose
 
-This document maps every major module in the SoundBrain codebase.
+This document maps every major module in the NØISYNE codebase.
 
 It defines ownership, responsibility, and allowed interactions between modules.
 

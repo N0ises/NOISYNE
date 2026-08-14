@@ -2,11 +2,12 @@ import uuid
 from pathlib import Path
 
 import fitz
-
-from noisyne.embedding import embedding_model
 from noisyne.chroma import knowledge
 
-PDF_FOLDER = Path(r"E:\SoundBrain\data\courses\psychoacoustics")
+from noisyne.embedding import embedding_model
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PDF_FOLDER = PROJECT_ROOT / "data" / "courses" / "psychoacoustics"
 
 
 def chunk_text(text, chunk_size=700, overlap=100):
@@ -45,10 +46,7 @@ for pdf_file in PDF_FOLDER.glob("*.pdf"):
                 ids=[str(uuid.uuid4())],
                 documents=[chunk],
                 embeddings=[embedding],
-                metadatas=[{
-                    "source": pdf_file.name,
-                    "page": page_number + 1
-                }]
+                metadatas=[{"source": pdf_file.name, "page": page_number + 1}],
             )
 
 print("✅ Finished")

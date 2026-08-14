@@ -12,7 +12,7 @@ from .service import ReferenceService
 
 class ReferenceEngine:
     """
-    High level entry point for SoundBrain Reference Intelligence.
+    High level entry point for NØISYNE Reference Intelligence.
 
     Workflow
 

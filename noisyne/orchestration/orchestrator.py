@@ -19,9 +19,7 @@ class Orchestrator:
 
     def run(self, question: str) -> State:
 
-        state = State(
-            question=question
-        )
+        state = State(question=question)
 
         state = self.planner.plan(state)
 
@@ -45,7 +43,7 @@ class Orchestrator:
         **kwargs: Any,
     ) -> State:
         """
-        Execute the V1 SoundBrain deterministic analysis workflow.
+        Execute the V1 NØISYNE deterministic analysis workflow.
 
         This is a dedicated path that bypasses the generic question planning
         pipeline and routes directly through ``SoundBrainService``.

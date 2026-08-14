@@ -7,7 +7,7 @@ from .models import GenerateRequest, GenerateResponse
 
 
 class BaseAIProvider(ABC):
-    """Abstract contract for all AI providers in SoundBrain."""
+    """Abstract contract for all AI providers in NØISYNE."""
 
     name: ClassVar[str]
 

@@ -1,4 +1,4 @@
-"""SoundBrain reference comparison package.
+"""NØISYNE reference comparison package.
 
 Heavy exports are loaded lazily via ``__getattr__`` so that importing
 ``noisyne.reference.models`` does not pull in the full engine stack at import time.
@@ -16,7 +16,6 @@ from .models import (
     Severity,
 )
 
-
 __all__ = [
     "BandDifference",
     "Category",
@@ -31,21 +30,27 @@ __all__ = [
 def __getattr__(name: str):
     if name == "ReferenceEngine":
         from .engine import ReferenceEngine
+
         return ReferenceEngine
     if name == "ReferencePipeline":
         from .pipeline import ReferencePipeline
+
         return ReferencePipeline
     if name == "ReferenceReasoner":
         from .reasoner import ReferenceReasoner
+
         return ReferenceReasoner
     if name == "ReferenceReportBuilder":
         from .report_builder import ReferenceReportBuilder
+
         return ReferenceReportBuilder
     if name == "ReferenceService":
         from .service import ReferenceService
+
         return ReferenceService
     if name == "ReferenceComparator":
         from .comparator import ReferenceComparator
+
         return ReferenceComparator
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

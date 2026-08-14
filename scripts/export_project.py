@@ -36,15 +36,7 @@ IGNORE_FILES = {
 
 
 def separator(title: str) -> str:
-    return (
-        "\n"
-        + "=" * 100
-        + "\n"
-        + title
-        + "\n"
-        + "=" * 100
-        + "\n\n"
-    )
+    return "\n" + "=" * 100 + "\n" + title + "\n" + "=" * 100 + "\n\n"
 
 
 def write_tree(output):
@@ -66,11 +58,7 @@ def write_tree(output):
 
 def write_file(path: Path, output):
 
-    output.write(
-        separator(
-            str(path.relative_to(ROOT))
-        )
-    )
+    output.write(separator(str(path.relative_to(ROOT))))
 
     try:
 
@@ -81,11 +69,9 @@ def write_file(path: Path, output):
             )
         )
 
-    except Exception as ex:
+    except (OSError, UnicodeError) as ex:
 
-        output.write(
-            f"<< ERROR READING FILE >>\n{ex}"
-        )
+        output.write(f"<< ERROR READING FILE >>\n{ex}")
 
     output.write("\n")
 
@@ -126,13 +112,9 @@ def main():
         encoding="utf-8",
     ) as output:
 
-        output.write(
-            "SOUNDBRAIN PROJECT EXPORT\n"
-        )
+        output.write("NOISYNE PROJECT EXPORT\n")
 
-        output.write(
-            "Architecture Review Package\n\n"
-        )
+        output.write("Architecture Review Package\n\n")
 
         write_tree(output)
 

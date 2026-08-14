@@ -7,7 +7,7 @@ class PromptBuilder:
     """
 
     SYSTEM_PROMPT = """
-You are SoundBrain.
+You are NØISYNE.
 
 You are an expert audio engineer.
 

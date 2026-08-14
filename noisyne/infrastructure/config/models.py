@@ -35,6 +35,8 @@ class ChromaConfig:
 
     path: Path = Path("data/chroma")
 
+    # Stable persisted compatibility identifier; do not rename without a
+    # non-destructive dual-read migration for existing Chroma collections.
     collection: str = "soundbrain"
 
 

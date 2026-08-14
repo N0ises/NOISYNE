@@ -3,7 +3,6 @@ from __future__ import annotations
 import numpy as np
 import torch
 import torchaudio
-
 from transformers import (
     ClapAudioModelWithProjection,
     ClapModel,
@@ -20,7 +19,7 @@ from noisyne.runtime import ModelRuntime
 
 class CLAPEmbedding(AudioEmbeddingModel):
     """
-    Canonical CLAP audio embedding provider for SoundBrain.
+    Canonical CLAP audio embedding provider for NØISYNE.
 
     New code should use this class. The legacy ``CLAPAudioEmbeddingModel`` in
     ``noisyne.audio.intelligence.embeddings`` is kept for backward compatibility
@@ -83,9 +82,7 @@ class CLAPEmbedding(AudioEmbeddingModel):
         sample_rate = audio.metadata.sample_rate
 
         waveform = (
-            samples.squeeze()
-            if hasattr(samples, "squeeze")
-            else np.asarray(samples).squeeze()
+            samples.squeeze() if hasattr(samples, "squeeze") else np.asarray(samples).squeeze()
         )
         waveform = np.asarray(waveform, dtype=np.float32)
 

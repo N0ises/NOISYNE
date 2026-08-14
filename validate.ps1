@@ -1,5 +1,5 @@
 # -----------------------------
-# SoundBrain Validation Runner
+# NØISYNE Validation Runner
 # -----------------------------
 
 $musicFolder = "E:\Build\Music"

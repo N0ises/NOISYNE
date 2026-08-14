@@ -18,7 +18,7 @@ mfcc = analyzer.mfcc()
 chroma = analyzer.chroma()
 
 print("=" * 60)
-print("SoundBrain Audio Analysis")
+print("NØISYNE Audio Analysis")
 print("=" * 60)
 
 print(f"Filename            : {audio.metadata.filename}")
