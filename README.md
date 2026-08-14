@@ -276,14 +276,13 @@ Application-root precedence is `NOISYNE_ROOT`, then the legacy
 The product and distribution are NØISYNE/noisyne.
 
 ```text
-Current GitHub repository: N0ises/SoundBrain
-Planned repository target: N0ises/NOISYNE
-Repository rename status: not performed
+Repository: N0ises/NOISYNE
+Repository rename: completed
+Canonical origin: https://github.com/N0ises/NOISYNE.git
 ```
 
-The configured local `origin` may still use a legacy owner URL that GitHub
-redirects to the current repository. Remote configuration will be updated only
-after the repository rename is separately approved and verified.
+The canonical repository URL and local `origin` now use the final NOISYNE
+repository identity directly and do not rely on the legacy redirect.
 
 ---
 

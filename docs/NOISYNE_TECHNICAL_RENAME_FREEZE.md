@@ -1,7 +1,8 @@
 # NØISYNE Technical Rename Freeze
 
-Status: Phase 6 review candidate
+Status: Final technical rename freeze
 Approved pre-Phase 6 baseline: `bf5ac42128ded14159b7952d916729206c3d3174`
+Approved Phase 6 freeze commit: `eb3d7ce7c5044b82b92fc5a1a8bda84df56bb9ce`
 
 ## Technical identity matrix
 
@@ -16,7 +17,7 @@ Approved pre-Phase 6 baseline: `bf5ac42128ded14159b7952d916729206c3d3174`
 | Application root environment | `NOISYNE_ROOT` | `SOUNDBRAIN_ROOT` |
 | Engine key | `noisyne` | `soundbrain` |
 | Persisted Chroma collection | `soundbrain` | Stable; intentionally unchanged |
-| Repository | Target: `N0ises/NOISYNE` | Current: `N0ises/SoundBrain` |
+| Repository | `N0ises/NOISYNE` | Rename complete |
 
 Environment precedence is `NOISYNE_ROOT` → `SOUNDBRAIN_ROOT` → automatic
 structural detection.
@@ -29,26 +30,19 @@ structural detection.
 - Phase 3: Python namespace migration
 - Phase 4: technical IDs and persistence compatibility
 - Phase 5: packaging, documentation, and CI alignment
-- Phase 6: repository readiness and final technical-identity freeze candidate
+- Phase 6: repository readiness and final technical-identity freeze
 
-The Phase 6 commit is the commit containing this document; its final SHA is
-reported with the review candidate because a commit cannot contain its own SHA.
+Technical Rename Phases 0–6: **COMPLETE**
 
 ## Repository status
 
-The GitHub repository has **not** been renamed. The configured local `origin`
-remains `https://github.com/HamidCooper7/SoundBrain.git`, which GitHub currently
-redirects to `N0ises/SoundBrain`. Redirect behavior is transitional and is not
-the intended permanent configuration.
+- Repository rename: **COMPLETE**
+- Canonical repository: `N0ises/NOISYNE`
+- Canonical origin: `https://github.com/N0ises/NOISYNE.git`
+- Default branch: `main`
 
-After explicit Phase 6 approval, the repository owner should:
-
-1. Reconfirm permissions and that `N0ises/NOISYNE` is available.
-2. Rename `N0ises/SoundBrain` to `N0ises/NOISYNE` in GitHub.
-3. Verify the canonical URL and the default and protected branches immediately.
-4. Update `origin` to `https://github.com/N0ises/NOISYNE.git`.
-5. Update only current repository links/status text; preserve historical URLs.
-6. Rerun package, fresh-install, CLI, exporter, and regression validation.
+The canonical origin resolves directly to the renamed repository and no longer
+relies on the legacy repository redirect.
 
 ## Intentional freezes and exclusions
 
@@ -59,8 +53,8 @@ After explicit Phase 6 approval, the repository owner should:
 - Desktop code, application ID, and Desktop user-data paths remain frozen.
 - Historical reports, archived roadmaps, artifact names, and prior URLs remain
   unchanged.
-- No repository rename, remote change, release, tag, or package publication is
-  part of this candidate.
+- No release, tag, package publication, ownership transfer, or repository
+  creation was performed.
 - No ONNX, Voice, Agent behavior, or V2 feature work is included.
 
 ## Validation note

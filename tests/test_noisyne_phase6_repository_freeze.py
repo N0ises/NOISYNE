@@ -24,14 +24,16 @@ def test_final_identity_matrix_records_canonical_and_compatibility_contracts():
         assert expected in text
 
 
-def test_repository_docs_report_current_and_target_states_without_claiming_rename():
+def test_repository_docs_report_completed_canonical_rename():
     readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
     freeze = FREEZE_DOCUMENT.read_text(encoding="utf-8")
 
-    assert "Current GitHub repository: N0ises/SoundBrain" in readme
-    assert "Planned repository target: N0ises/NOISYNE" in readme
-    assert "Repository rename status: not performed" in readme
-    assert "The GitHub repository has **not** been renamed." in freeze
+    assert "Repository: N0ises/NOISYNE" in readme
+    assert "Repository rename: completed" in readme
+    assert "Canonical origin: https://github.com/N0ises/NOISYNE.git" in readme
+    assert "Repository rename: **COMPLETE**" in freeze
+    assert "Canonical repository: `N0ises/NOISYNE`" in freeze
+    assert "Canonical origin: `https://github.com/N0ises/NOISYNE.git`" in freeze
 
 
 def test_setup_docs_do_not_require_repository_basename():
