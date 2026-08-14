@@ -273,9 +273,17 @@ soundbrain --help
 Application-root precedence is `NOISYNE_ROOT`, then the legacy
 `SOUNDBRAIN_ROOT`, then automatic structural detection.
 
-The product and distribution are NØISYNE/noisyne. The GitHub repository retains
-its current `SoundBrain` hosting name until a separately approved repository
-rename.
+The product and distribution are NØISYNE/noisyne.
+
+```text
+Current GitHub repository: N0ises/SoundBrain
+Planned repository target: N0ises/NOISYNE
+Repository rename status: not performed
+```
+
+The configured local `origin` may still use a legacy owner URL that GitHub
+redirects to the current repository. Remote configuration will be updated only
+after the repository rename is separately approved and verified.
 
 ---
 
@@ -293,6 +301,7 @@ Complete project documentation is available inside the `docs/` directory.
 
 Main documents include:
 
+- [Technical Rename Freeze](docs/NOISYNE_TECHNICAL_RENAME_FREEZE.md)
 - Architecture
 - Vision
 - Engineering Guidelines

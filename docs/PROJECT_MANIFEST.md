@@ -83,6 +83,9 @@ Core source code
 docs/
 Architecture & documentation
 
+Current technical identity and repository-rename readiness are recorded in
+`docs/NOISYNE_TECHNICAL_RENAME_FREEZE.md`.
+
 tests/
 Automated tests
 
