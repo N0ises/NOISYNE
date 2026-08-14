@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from math import isfinite
 
 from ._serialization import JsonContract
 
@@ -59,9 +60,27 @@ def _require_identifier(value: str, field_name: str) -> None:
         raise ValueError(f"{field_name} must be a non-empty string")
 
 
+def _require_finite_number(value: float, field_name: str) -> None:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise TypeError(f"{field_name} must be a number")
+    if isinstance(value, float) and not isfinite(value):
+        raise ValueError(f"{field_name} must be a finite number")
+
+
 def _require_non_negative(value: float, field_name: str) -> None:
-    if isinstance(value, bool) or not isinstance(value, int | float) or value < 0:
+    _require_finite_number(value, field_name)
+    if value < 0:
         raise ValueError(f"{field_name} must be a non-negative number")
+
+
+def _require_non_negative_integer(value: int, field_name: str) -> None:
+    if type(value) is not int or value < 0:
+        raise ValueError(f"{field_name} must be a non-negative integer")
+
+
+def _require_positive_integer(value: int, field_name: str) -> None:
+    if type(value) is not int or value <= 0:
+        raise ValueError(f"{field_name} must be a positive integer")
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,6 +135,10 @@ class ScalarValue(JsonContract):
     normalized: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.value) not in (float, int, str, bool):
+            raise ValueError("value must be a float, int, string, or bool")
+        if type(self.value) in (float, int):
+            _require_finite_number(self.value, "value")
         if self.unit is not None:
             _require_identifier(self.unit, "unit")
         if self.scale is not None:
@@ -150,8 +173,7 @@ class Confidence(JsonContract):
 
     def __post_init__(self) -> None:
         if self.score is not None:
-            if isinstance(self.score, bool) or not isinstance(self.score, int | float):
-                raise ValueError("confidence score must be numeric")
+            _require_finite_number(self.score, "confidence score")
             if not 0.0 <= float(self.score) <= 1.0:
                 raise ValueError("confidence score must be within [0, 1]")
         if self.reason is not None:
@@ -233,7 +255,7 @@ class AuditoryBand(JsonContract):
             if not self.frequency_range.lower_hz <= self.center_hz <= self.frequency_range.upper_hz:
                 raise ValueError("center_hz must fall within frequency_range")
         if self.band_index is not None:
-            _require_non_negative(self.band_index, "band_index")
+            _require_non_negative_integer(self.band_index, "band_index")
         if self.scale_id is not None:
             _require_identifier(self.scale_id, "scale_id")
 

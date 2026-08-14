@@ -185,6 +185,7 @@ def test_nested_serialization_and_round_trip_are_json_compatible() -> None:
     assert reconstructed == result
     assert payload["state"]["status"] == "computed"
     assert payload["context"]["listening_level"] == "moderate"
+    json.dumps(payload, allow_nan=False)
 
 
 def test_top_level_optional_components_and_unknown_context() -> None:
@@ -457,6 +458,99 @@ def test_deserialization_rejects_wrong_primitive_type() -> None:
                 "normalized": 1,
             }
         )
+
+
+def test_float_transport_accepts_json_integer_and_preserves_float() -> None:
+    integer_payload = TimeRange.from_dict({"start_seconds": 1, "end_seconds": 2})
+    float_payload = TimeRange.from_dict({"start_seconds": 1.25, "end_seconds": 2.5})
+
+    assert integer_payload == TimeRange(1.0, 2.0)
+    assert type(integer_payload.start_seconds) is float
+    assert float_payload == TimeRange(1.25, 2.5)
+    assert type(float_payload.start_seconds) is float
+
+
+@pytest.mark.parametrize("value", [True, "1.0"])
+def test_float_transport_rejects_bool_and_numeric_string(value: object) -> None:
+    with pytest.raises(TypeError, match="float"):
+        TimeRange.from_dict({"start_seconds": value, "end_seconds": 2.0})
+
+
+@pytest.mark.parametrize("value", [1.0, True])
+def test_int_transport_rejects_float_and_bool(value: object) -> None:
+    with pytest.raises(TypeError, match="int"):
+        AnalysisMetadata.from_dict(
+            {
+                "source_id": None,
+                "duration_seconds": None,
+                "sample_rate_hz": value,
+                "channel_count": 2,
+                "auditory_frontend": None,
+            }
+        )
+
+
+def test_scalar_integer_round_trip_preserves_integer_variant() -> None:
+    value = ScalarValue(value=1, unit_basis=UnitBasis.UNDEFINED)
+    reconstructed = ScalarValue.from_dict(value.to_dict())
+
+    assert type(reconstructed.value) is int
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_time_range_rejects_non_finite_values(value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        TimeRange(value, 1.0)
+    with pytest.raises(ValueError, match="finite"):
+        TimeRange(0.0, value)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_frequency_range_rejects_non_finite_values(value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        FrequencyRange(value, 1_000.0)
+    with pytest.raises(ValueError, match="finite"):
+        FrequencyRange(20.0, value)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_confidence_and_scalar_reject_non_finite_values(value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        Confidence(score=value)
+    with pytest.raises(ValueError, match="finite"):
+        ScalarValue(value=value, unit_basis=UnitBasis.UNDEFINED)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_auditory_metadata_and_context_reject_non_finite_values(value: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        AuditoryBand(FrequencyRange(20.0, 20_000.0), center_hz=value)
+    with pytest.raises(ValueError, match="finite"):
+        AnalysisMetadata(duration_seconds=value)
+    with pytest.raises(ValueError):
+        AnalysisMetadata(sample_rate_hz=value)
+    with pytest.raises(ValueError):
+        AnalysisMetadata(channel_count=value)
+    with pytest.raises(ValueError, match="finite"):
+        PerceptualContext(listening_level_db_spl=value)
+
+
+def test_valid_nested_payload_uses_strict_json_numbers() -> None:
+    result = PerceptualAnalysisResult(
+        state=COMPUTED,
+        metadata=AnalysisMetadata(
+            source_id="fixture.wav",
+            duration_seconds=10.0,
+            sample_rate_hz=48_000,
+            channel_count=2,
+        ),
+        context=PerceptualContext(listening_level_db_spl=72.5),
+        descriptors=[_descriptor("brightness", 0.4)],
+    )
+
+    payload = result.to_dict()
+    json.dumps(payload, allow_nan=False)
+    assert PerceptualAnalysisResult.from_dict(payload) == result
 
 
 def test_deserialization_rejects_invalid_scalar_union_payload() -> None:

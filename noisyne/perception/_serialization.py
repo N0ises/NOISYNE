@@ -3,6 +3,7 @@ from __future__ import annotations
 import types
 from dataclasses import fields, is_dataclass
 from enum import Enum
+from math import isfinite
 from typing import Any, Self, Union, get_args, get_origin, get_type_hints
 
 JsonScalar = str | int | float | bool | None
@@ -38,6 +39,8 @@ def _encode(value: Any) -> JsonValue:
         if not all(isinstance(key, str) for key in value):
             raise TypeError("JSON contract mapping keys must be strings")
         return {key: _encode(item) for key, item in value.items()}
+    if isinstance(value, float) and not isfinite(value):
+        raise ValueError("JSON contract numbers must be finite")
     if value is None or isinstance(value, str | int | float | bool):
         return value
     raise TypeError(f"Unsupported contract value: {type(value).__name__}")
@@ -72,6 +75,9 @@ def _decode(annotation: Any, value: Any) -> Any:
     if origin in (types.UnionType, Union):
         if value is None and type(None) in arguments:
             return None
+        for candidate in arguments:
+            if _is_exact_primitive_match(candidate, value):
+                return _decode(candidate, value)
         for candidate in arguments:
             if candidate is type(None):
                 continue
@@ -114,9 +120,15 @@ def _decode(annotation: Any, value: Any) -> Any:
             raise TypeError("Serialized int field must be an int")
         return value
     if annotation is float:
-        if type(value) is not float:
-            raise TypeError("Serialized float field must be a float")
-        return value
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            raise TypeError("Serialized float field must be an int or float")
+        try:
+            decoded = float(value)
+        except OverflowError as exc:
+            raise ValueError("Serialized float field must be finite") from exc
+        if not isfinite(decoded):
+            raise ValueError("Serialized float field must be finite")
+        return decoded
     if annotation is str:
         if type(value) is not str:
             raise TypeError("Serialized str field must be a string")
@@ -127,3 +139,9 @@ def _decode(annotation: Any, value: Any) -> Any:
 
 def _annotation_name(annotation: Any) -> str:
     return getattr(annotation, "__name__", repr(annotation))
+
+
+def _is_exact_primitive_match(annotation: Any, value: Any) -> bool:
+    if annotation in (bool, int, float, str):
+        return type(value) is annotation
+    return False

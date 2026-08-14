@@ -19,6 +19,7 @@ from .common import (
     TimeRange,
     _require_identifier,
     _require_non_negative,
+    _require_positive_integer,
 )
 from .context import PerceptualContext, PlaybackProfileReference
 
@@ -48,13 +49,9 @@ class AnalysisMetadata(JsonContract):
         if self.duration_seconds is not None:
             _require_non_negative(self.duration_seconds, "duration_seconds")
         if self.sample_rate_hz is not None:
-            _require_non_negative(self.sample_rate_hz, "sample_rate_hz")
-            if self.sample_rate_hz == 0:
-                raise ValueError("sample_rate_hz must be greater than zero")
+            _require_positive_integer(self.sample_rate_hz, "sample_rate_hz")
         if self.channel_count is not None:
-            _require_non_negative(self.channel_count, "channel_count")
-            if self.channel_count == 0:
-                raise ValueError("channel_count must be greater than zero")
+            _require_positive_integer(self.channel_count, "channel_count")
 
 
 @dataclass(frozen=True, slots=True)
