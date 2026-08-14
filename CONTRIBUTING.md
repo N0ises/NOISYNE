@@ -11,6 +11,24 @@ Thank you for your interest in contributing to NØISYNE.
 5. Run all tests before committing.
 6. Submit a Pull Request.
 
+## Development Setup
+
+```bash
+python -m venv .venv
+pip install -e .
+pip install -r requirements-dev.txt
+```
+
+Use canonical interfaces in new code and validation:
+
+```bash
+python -c "import noisyne"
+noisyne --help
+```
+
+The `brain` Python namespace and `soundbrain` CLI remain compatibility aliases
+and should only appear in explicit compatibility tests or documentation.
+
 ---
 
 ## Coding Standards
@@ -38,7 +56,7 @@ Thank you for your interest in contributing to NØISYNE.
 Run before every commit:
 
 ```bash
-pytest
+python -m pytest
 ```
 
 ---

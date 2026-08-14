@@ -188,6 +188,20 @@ Additional providers can be integrated without modifying the Runtime.
 
 # Installation
 
+Install the published package:
+
+```bash
+pip install noisyne
+```
+
+Install optional PDF/OCR support when required:
+
+```bash
+pip install "noisyne[pdf]"
+```
+
+For development from a source checkout:
+
 Clone the repository
 
 ```bash
@@ -218,15 +232,22 @@ source .venv/bin/activate
 Install dependencies
 
 ```bash
+pip install -e .
 pip install -r requirements-dev.txt
 ```
 
-Installed distribution and Python namespaces:
+Canonical product and compatibility identities:
 
 ```text
+Product: NØISYNE
+ASCII identity: NOISYNE
 Distribution: noisyne
 Canonical Python package: noisyne
 Legacy Python package: brain (compatibility only)
+Canonical CLI: noisyne
+Legacy CLI: soundbrain (compatibility alias)
+Canonical service: NoisyneService
+Legacy service: SoundBrainService (compatibility alias)
 ```
 
 New integrations should use canonical imports:
@@ -236,6 +257,25 @@ from noisyne.application import NoisyneService
 ```
 
 Existing `brain.*` imports remain supported during the compatibility period.
+
+Use the canonical CLI for new workflows:
+
+```bash
+noisyne --help
+```
+
+The legacy CLI remains available for compatibility:
+
+```bash
+soundbrain --help
+```
+
+Application-root precedence is `NOISYNE_ROOT`, then the legacy
+`SOUNDBRAIN_ROOT`, then automatic structural detection.
+
+The product and distribution are NØISYNE/noisyne. The GitHub repository retains
+its current `SoundBrain` hosting name until a separately approved repository
+rename.
 
 ---
 

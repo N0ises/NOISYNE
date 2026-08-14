@@ -1,0 +1,91 @@
+import json
+import subprocess
+import sys
+import tomllib
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_package_metadata_and_console_scripts_are_canonical():
+    metadata = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+    assert metadata["project"]["name"] == "noisyne"
+    assert metadata["project"]["version"] == "1.0.0"
+    assert metadata["project"]["description"].startswith("NØISYNE")
+    assert metadata["project"]["scripts"] == {
+        "noisyne": "noisyne.cli:main",
+        "soundbrain": "noisyne.cli:main",
+    }
+    assert metadata["tool"]["setuptools"]["packages"]["find"]["include"] == [
+        "noisyne*",
+        "brain",
+    ]
+
+
+def test_current_docs_present_canonical_interfaces_first():
+    readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
+    contributing = (PROJECT_ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
+
+    for expected in (
+        "Product: NØISYNE",
+        "Distribution: noisyne",
+        "Canonical Python package: noisyne",
+        "Legacy Python package: brain (compatibility only)",
+        "Canonical CLI: noisyne",
+        "Legacy CLI: soundbrain (compatibility alias)",
+        "pip install noisyne",
+        'pip install "noisyne[pdf]"',
+        "NOISYNE_ROOT",
+        "SOUNDBRAIN_ROOT",
+    ):
+        assert expected in readme
+
+    assert 'python -c "import noisyne"' in contributing
+    assert "noisyne --help" in contributing
+
+
+def test_validation_tooling_prefers_canonical_cli_and_namespace():
+    validation = (PROJECT_ROOT / "validate.ps1").read_text(encoding="utf-8")
+    release_validation = (PROJECT_ROOT / "scripts" / "generate_v1_release_validation.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python -m noisyne.cli analyze" in validation
+    assert '"compileall", "noisyne", "brain", "tests"' in release_validation
+    assert '"-m",\n            "noisyne.cli"' in release_validation
+
+
+def test_export_tool_groups_canonical_and_compatibility_packages(tmp_path):
+    project = tmp_path / "arbitrary-repository-name"
+    output = tmp_path / "export-output"
+    canonical = project / "noisyne" / "audio" / "sample.py"
+    compatibility = project / "brain" / "__init__.py"
+    canonical.parent.mkdir(parents=True)
+    compatibility.parent.mkdir(parents=True)
+    canonical.write_text("VALUE = 'canonical'\n", encoding="utf-8")
+    compatibility.write_text("LEGACY = True\n", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(PROJECT_ROOT / "tools" / "export_project.py"),
+            str(project),
+            "--full",
+            "--output-dir",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "VALUE = 'canonical'" in (output / "noisyne" / "audio.txt").read_text(encoding="utf-8")
+    assert "LEGACY = True" in (output / "brain" / "compatibility.txt").read_text(encoding="utf-8")
+    assert not (output / "brain" / "audio.txt").exists()
+
+    manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["product"] == "NOISYNE"
+    assert manifest["distribution"] == "noisyne"

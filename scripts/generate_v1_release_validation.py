@@ -86,7 +86,7 @@ def main() -> int:
         },
         "formatting": run_command([python, "-m", "black", "--check"] + VALIDATED_FILES),
         "lint": run_command([python, "-m", "ruff", "check"] + VALIDATED_FILES),
-        "compileall": run_command([python, "-m", "compileall", "brain", "tests"]),
+        "compileall": run_command([python, "-m", "compileall", "noisyne", "brain", "tests"]),
         "tests": {},
         "cli": {},
         "workflow_export": {},
@@ -152,7 +152,8 @@ def main() -> int:
     validation["cli"] = run_command(
         [
             python,
-            "main.py",
+            "-m",
+            "noisyne.cli",
             "analyze",
             "tests/audio.wav",
             "--reasoning",

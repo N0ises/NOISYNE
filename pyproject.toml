@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "noisyne"
 version = "1.0.0"
-description = "AI-powered modular audio intelligence platform."
+description = "NØISYNE modular audio intelligence platform."
 readme = "docs/README_v2.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }

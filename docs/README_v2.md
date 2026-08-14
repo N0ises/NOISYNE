@@ -171,6 +171,22 @@ reports/ Generated reports
 The installed distribution is `noisyne`. New Python integrations should import
 from `noisyne.*`; `brain.*` remains available only as a compatibility namespace.
 
+Canonical installation and interfaces:
+
+```bash
+pip install noisyne
+pip install "noisyne[pdf]"
+noisyne --help
+```
+
+```python
+from noisyne.application import NoisyneService
+```
+
+The legacy `soundbrain` CLI, `brain` namespace, and `SoundBrainService` remain
+supported compatibility aliases. Application-root precedence is `NOISYNE_ROOT`,
+then legacy `SOUNDBRAIN_ROOT`, then automatic structural detection.
+
 ------------------------------------------------------------------------
 
 # Status
@@ -201,7 +217,7 @@ AI Provider Layer: ✅ Production
 
 CLI: ✅ Production
 
-Release Status: **V1.0.0-rc1 — Release Candidate**
+Release Status: **1.0.0**
 
 Next: V1.1 cleanup, real HTTP LLM providers, full reference segmentation, and
 perceptual intelligence research.

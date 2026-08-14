@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
-from pathlib import Path
 import platform
 import subprocess
+from dataclasses import asdict, dataclass
+from pathlib import Path
 
 from .writer import write_json, write_text
 
@@ -46,6 +46,8 @@ class ExportBundle:
         manifest = self.directory / "manifest.json"
         payload = {
             "format": "ChatGPT Export V2",
+            "product": "NOISYNE",
+            "distribution": "noisyne",
             "project": str(self.project),
             "git_commit": self._git_value("rev-parse", "HEAD"),
             "git_branch": self._git_value("branch", "--show-current"),

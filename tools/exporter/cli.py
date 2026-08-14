@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
-from pathlib import Path
 import re
 import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
 
-from .analyzer import api_manifest, analyze_records, build_import_graph, duplicate_symbols, find_cycles
+from .analyzer import (
+    analyze_records,
+    api_manifest,
+    build_import_graph,
+    duplicate_symbols,
+    find_cycles,
+)
 from .architecture import architecture_json, render_structure_tree
 from .bundle import ExportBundle
 from .config import DEFAULT_MAX_FILE_SIZE, ExportConfig
@@ -26,27 +32,50 @@ from .statistics import statistics_json
 from .utils import load_ignore_patterns
 
 
-BRAIN_MODULES = {
-    "ai", "audio", "runtime", "rag", "llm", "infrastructure", "services",
-    "config", "cli", "orchestration", "agents", "tests",
-}
-
-
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Export a project into modular development-review files.")
-    parser.add_argument("path", nargs="?", type=Path, default=Path("."), help="project directory (default: current directory)")
-    parser.add_argument("--full", action="store_true", help="write all exports and reports (default action)")
+    parser = argparse.ArgumentParser(
+        description="Export a project into modular development-review files."
+    )
+    parser.add_argument(
+        "path",
+        nargs="?",
+        type=Path,
+        default=Path("."),
+        help="project directory (default: current directory)",
+    )
+    parser.add_argument(
+        "--full", action="store_true", help="write all exports and reports (default action)"
+    )
     parser.add_argument("--tree", action="store_true", help="write only the complete project tree")
-    parser.add_argument("--module", metavar="NAME", help="export only files matching one module or folder name")
+    parser.add_argument(
+        "--module", metavar="NAME", help="export only files matching one module or folder name"
+    )
     parser.add_argument("--stats", action="store_true", help="write only statistics.json")
-    parser.add_argument("--architecture", action="store_true", help="write only architecture and import graph outputs")
-    parser.add_argument("--changed", action="store_true", help="limit selected files to Git changes")
-    parser.add_argument("--search", metavar="TEXT", help="limit selected files to readable files containing text")
-    parser.add_argument("-o", "--output-dir", type=Path, help="exports directory (default: <project>/exports)")
+    parser.add_argument(
+        "--architecture",
+        action="store_true",
+        help="write only architecture and import graph outputs",
+    )
+    parser.add_argument(
+        "--changed", action="store_true", help="limit selected files to Git changes"
+    )
+    parser.add_argument(
+        "--search", metavar="TEXT", help="limit selected files to readable files containing text"
+    )
+    parser.add_argument(
+        "-o", "--output-dir", type=Path, help="exports directory (default: <project>/exports)"
+    )
     parser.add_argument("--max-file-size", type=int, default=DEFAULT_MAX_FILE_SIZE, metavar="BYTES")
-    parser.add_argument("--extensions", nargs="+", help="only export these extensions, e.g. py js ts md")
+    parser.add_argument(
+        "--extensions", nargs="+", help="only export these extensions, e.g. py js ts md"
+    )
     parser.add_argument("--exclude-dir", action="append", default=[], metavar="NAME")
-    parser.add_argument("--ignore-file", type=Path, metavar="PATH", help="rules file (default: <project>/.exportignore)")
+    parser.add_argument(
+        "--ignore-file",
+        type=Path,
+        metavar="PATH",
+        help="rules file (default: <project>/.exportignore)",
+    )
     parser.add_argument("--include-hidden", action="store_true")
     parser.add_argument("--tree-depth", type=int, metavar="LEVELS")
     return parser
@@ -75,19 +104,28 @@ def main(argv: list[str] | None = None) -> int:
         ignore_patterns=load_ignore_patterns(ignore_file),
         tree_depth=args.tree_depth,
     )
-    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     bundle = ExportBundle(output_dir, root, generated_at)
     if args.tree:
         print(f"Scanning project structure: {root}", flush=True)
         structure = scan_structure(config)
-        bundle.text("tree.txt", document_header("PROJECT TREE", generated_at) + render_structure_tree(root, structure, config.tree_depth) + "\n")
+        bundle.text(
+            "tree.txt",
+            document_header("PROJECT TREE", generated_at)
+            + render_structure_tree(root, structure, config.tree_depth)
+            + "\n",
+        )
         _finish(bundle, output_dir)
         return 0
 
     print(f"Scanning: {root}", flush=True)
-    records = scan_project(config, on_progress=lambda count: print(f"  Scanned {count:,} files...", flush=True))
+    records = scan_project(
+        config, on_progress=lambda count: print(f"  Scanned {count:,} files...", flush=True)
+    )
     records = _filter_records(records, root, args.changed, args.search)
-    structure = scan_structure(config) if not (args.module or args.stats or args.architecture) else []
+    structure = (
+        scan_structure(config) if not (args.module or args.stats or args.architecture) else []
+    )
     print(f"Analyzing {len(records):,} selected files...", flush=True)
     analyses = analyze_records(records)
 
@@ -109,11 +147,14 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _filter_records(records: list[FileRecord], root: Path, changed: bool, search: str | None) -> list[FileRecord]:
+def _filter_records(
+    records: list[FileRecord], root: Path, changed: bool, search: str | None
+) -> list[FileRecord]:
     changed_paths = _git_changed_paths(root) if changed else None
     needle = search.casefold() if search else None
     return [
-        record for record in records
+        record
+        for record in records
         if (changed_paths is None or record.relative_path.as_posix() in changed_paths)
         and (needle is None or (record.content is not None and needle in record.content.casefold()))
     ]
@@ -131,14 +172,28 @@ def _git_changed_paths(root: Path) -> set[str]:
 def _select_module(records: list[FileRecord], selector: str) -> list[FileRecord]:
     needle = selector.casefold()
     return [
-        record for record in records
+        record
+        for record in records
         if any(needle in part.casefold() for part in record.relative_path.parts)
         or needle in record.relative_path.stem.casefold()
     ]
 
 
-def _write_full(bundle: ExportBundle, config: ExportConfig, records: list[FileRecord], structure: list[tuple[Path, bool]], analyses: dict, project: str, generated_at: str) -> None:
-    bundle.text("tree.txt", document_header("PROJECT TREE", generated_at) + render_structure_tree(config.root, structure, config.tree_depth) + "\n")
+def _write_full(
+    bundle: ExportBundle,
+    config: ExportConfig,
+    records: list[FileRecord],
+    structure: list[tuple[Path, bool]],
+    analyses: dict,
+    project: str,
+    generated_at: str,
+) -> None:
+    bundle.text(
+        "tree.txt",
+        document_header("PROJECT TREE", generated_at)
+        + render_structure_tree(config.root, structure, config.tree_depth)
+        + "\n",
+    )
     graph, external = build_import_graph(analyses)
     external_imports = {item for values in external.values() for item in values}
     bundle.text("requirements.txt", requirements_document(records, external_imports, generated_at))
@@ -146,18 +201,47 @@ def _write_full(bundle: ExportBundle, config: ExportConfig, records: list[FileRe
     bundle.json("api_manifest.json", api_manifest(analyses))
     _write_architecture(bundle, analyses, generated_at)
 
-    groups: dict[str, list[FileRecord]] = {"root": [], "scripts": [], "docs": []}
+    groups: dict[str, list[FileRecord]] = {
+        "root": [],
+        "scripts": [],
+        "docs": [],
+        "compatibility": [],
+    }
     for record in records:
         category = _category_for(record)
         groups.setdefault(category, []).append(record)
     for category in ("root", "scripts", "docs"):
-        bundle.text(f"{category}.txt", module_document(category, groups[category], analyses, generated_at))
-    for category in sorted(BRAIN_MODULES | {"misc"} | (set(groups) - {"root", "scripts", "docs"})):
-        bundle.text(Path("brain") / f"{category}.txt", module_document(f"noisyne.{category}", groups.get(category, []), analyses, generated_at))
+        bundle.text(
+            f"{category}.txt", module_document(category, groups[category], analyses, generated_at)
+        )
+    canonical_groups = set(groups) - {"root", "scripts", "docs", "compatibility"}
+    for category in sorted({"misc"} | canonical_groups):
+        bundle.text(
+            Path("noisyne") / f"{category}.txt",
+            module_document(
+                f"noisyne.{category}", groups.get(category, []), analyses, generated_at
+            ),
+        )
+    bundle.text(
+        Path("brain") / "compatibility.txt",
+        module_document(
+            "brain compatibility namespace",
+            groups["compatibility"],
+            analyses,
+            generated_at,
+        ),
+    )
 
-    bundle.text(Path("reports") / "unused_files.txt", unused_files_document(analyses, graph, generated_at))
-    bundle.text(Path("reports") / "duplicate_names.txt", duplicate_names_document(duplicate_symbols(analyses), generated_at))
-    bundle.text(Path("reports") / "circular_imports.txt", cycles_document(find_cycles(graph), generated_at))
+    bundle.text(
+        Path("reports") / "unused_files.txt", unused_files_document(analyses, graph, generated_at)
+    )
+    bundle.text(
+        Path("reports") / "duplicate_names.txt",
+        duplicate_names_document(duplicate_symbols(analyses), generated_at),
+    )
+    bundle.text(
+        Path("reports") / "circular_imports.txt", cycles_document(find_cycles(graph), generated_at)
+    )
 
 
 def _write_architecture(bundle: ExportBundle, analyses: dict, generated_at: str) -> None:
@@ -166,9 +250,24 @@ def _write_architecture(bundle: ExportBundle, analyses: dict, generated_at: str)
     bundle.text(Path("reports") / "import_graph.txt", import_graph_document(graph, generated_at))
 
 
-def _write_module(bundle: ExportBundle, selector: str, records: list[FileRecord], analyses: dict, generated_at: str) -> None:
+def _write_module(
+    bundle: ExportBundle,
+    selector: str,
+    records: list[FileRecord],
+    analyses: dict,
+    generated_at: str,
+) -> None:
     safe_name = re.sub(r"[^a-zA-Z0-9_-]+", "_", selector).strip("_") or "module"
-    bundle.text(Path("brain") / f"{safe_name}.txt", module_document(f"noisyne.{selector}", records, analyses, generated_at))
+    legacy_only = all(
+        record.relative_path.parts and record.relative_path.parts[0].casefold() == "brain"
+        for record in records
+    )
+    package = "brain" if legacy_only else "noisyne"
+    title = "brain compatibility namespace" if legacy_only else f"noisyne.{selector}"
+    bundle.text(
+        Path(package) / f"{safe_name}.txt",
+        module_document(title, records, analyses, generated_at),
+    )
 
 
 def _finish(bundle: ExportBundle, output_dir: Path) -> None:
@@ -189,10 +288,14 @@ def _category_for(record: FileRecord) -> str:
         return "scripts"
     if parts[0].casefold() in {"docs", "doc"}:
         return "docs"
-    if parts[0].casefold() != "brain":
+    package = parts[0].casefold()
+    if package == "brain":
+        return "compatibility"
+    if package != "noisyne":
         return "root"
-    if len(parts) > 1 and parts[1].casefold() in BRAIN_MODULES:
+    if len(parts) > 2:
         return parts[1].casefold()
-    if len(parts) == 2 and Path(parts[1]).stem.casefold() in BRAIN_MODULES:
-        return Path(parts[1]).stem.casefold()
+    if len(parts) == 2:
+        module = Path(parts[1]).stem.casefold()
+        return "misc" if module == "__init__" else module
     return "misc"

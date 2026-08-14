@@ -45,15 +45,16 @@ py -3 tools/export_project.py --search AudioEncoder --full
 ```
 
 `--module embeddings` matches any file whose path contains `embeddings`, so a
-directory such as `brain/audio/embeddings/` is exported by itself.
+directory such as `noisyne/audio/embeddings/` is exported by itself.
 
 ## Output
 
 `--full` produces `tree.txt`, `requirements.txt`, `statistics.json`,
-`architecture.json`, `api_manifest.json`, the `root.txt`/`scripts.txt`/`docs.txt` groups, a file for
-each standard `brain` module, and reports for unused modules, duplicate symbols,
-circular imports, and the import graph. Every text file includes its generation
-time; module files also contain file contents, a summary, and an end marker.
+`architecture.json`, `api_manifest.json`, the `root.txt`/`scripts.txt`/`docs.txt`
+groups, a file for each standard `noisyne` module, the explicit `brain`
+compatibility report, and reports for unused modules, duplicate symbols, circular
+imports, and the import graph. Every text file includes its generation time;
+module files also contain file contents, a summary, and an end marker.
 
 `tree.txt` now contains the full logical project structure, including empty
 directories and files outside the content filters. It excludes only intentional
