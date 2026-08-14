@@ -36,7 +36,7 @@ contracts.
 | `noisyne/reasoning/` and `noisyne/prompt/` | Structured reasoning, prompts, parsing and guards | Depend on contracts, not UI |
 | `noisyne/report/` | Report models, building, validation and export | Consumes domain results |
 | `noisyne/evaluation/` | Metrics, scoring, benchmarks and evaluation reports | Tests domain/application outputs |
-| `noisyne/perception/` | V2 perceptual contracts plus the Sprint 2 auditory frontend | Root contracts remain lightweight; `auditory.py` uses NumPy only and has no providers, UI, API or DAW dependencies |
+| `noisyne/perception/` | V2 perceptual contracts, Sprint 2 auditory frontend and Sprint 3 calibrated loudness foundation | Root contracts remain lightweight; numerical runtimes use existing audio/NumPy dependencies and have no providers, UI, API or DAW dependencies |
 | `noisyne/application/` | Canonical application facade and use-case orchestration | May compose domain modules; no Desktop imports |
 | `noisyne/orchestration/` and `noisyne/pipeline/` | Implemented alternate orchestration/stage infrastructure | Not the frozen V1 CLI production path |
 | `noisyne/integration/` | Deterministic DAW-named workflow export contracts | No live DAW communication or control |
@@ -62,6 +62,14 @@ The package makes no ISO 226, ISO 532-1, ITU-R BS.1770 or EBU R128 conformance
 claim. Those standards remain future research and validation anchors. The
 runtime registry records the executable auditory frontend as Implemented while
 the broader V2 Perceptual Core remains Planned.
+
+Sprint 3 adds `noisyne/perception/loudness_contracts.py` and
+`noisyne/perception/loudness.py`. This is an explicit digital-to-pascal
+calibration, channel/presentation and evidence foundation only. The complete
+ISO 532-3:2023 algorithm, companion source and verification fixtures are not
+available in the development environment, so the runtime returns
+`INSUFFICIENT_EVIDENCE` and produces no sones, phons or psychoacoustic loudness.
+The frozen Sprint 1 schema and Sprint 2 frontend behavior remain unchanged.
 
 The planned ownership boundaries are:
 

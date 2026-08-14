@@ -163,6 +163,20 @@ registry.register(
 
 registry.register(
     Capability(
+        name="loudness_foundation",
+        description="Explicit acoustic calibration and loudness evidence foundation",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Existing NumPy/pyloudnorm dependencies; explicit calibration for pressure. "
+            "No psychoacoustic loudness algorithm is included."
+        ),
+        dependencies=("numpy", "pyloudnorm"),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,
