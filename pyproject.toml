@@ -3,7 +3,7 @@ requires = ["setuptools>=80", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "soundbrain"
+name = "noisyne"
 version = "1.0.0"
 description = "AI-powered modular audio intelligence platform."
 readme = "docs/README_v2.md"
@@ -24,6 +24,7 @@ keywords = [
     "embedding",
     "analysis",
     "reference",
+    "noisyne",
     "soundbrain"
 ]
 
@@ -57,7 +58,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # PDF/OCR ingestion is only required for RAG corpus building, not for the core
-# V1 analyze/reference runtime. Install with `pip install soundbrain[pdf]`.
+# V1 analyze/reference runtime. Install with `pip install noisyne[pdf]`.
 pdf = [
     "pymupdf",
     "marker-pdf",
