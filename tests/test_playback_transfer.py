@@ -219,6 +219,43 @@ def test_absolute_acoustic_evidence_is_not_digital_gain() -> None:
     assert not hasattr(evidence, "apply")
 
 
+def test_magnitude_response_requires_shared_channel_topology() -> None:
+    shared = _profile(TransferKind.MAGNITUDE_RESPONSE)
+    assert shared.channel_topology is TransferChannelTopology.CHANNEL_INDEPENDENT_SHARED
+    assert shared.expected_input_channels is None
+
+    with pytest.raises(ValueError, match="shared single response only"):
+        _profile(
+            TransferKind.MAGNITUDE_RESPONSE,
+            topology=TransferChannelTopology.EXPLICIT_PER_CHANNEL,
+            channels=2,
+        )
+
+
+def test_amplitude_conversion_rejects_overflow_and_underflow() -> None:
+    for magnitude_db in (10_000.0, -10_000.0):
+        evidence = MagnitudeResponseEvidence(
+            _profile(TransferKind.MAGNITUDE_RESPONSE),
+            _readonly([100.0, 1000.0]),
+            _readonly([magnitude_db, magnitude_db]),
+        )
+        with pytest.raises(ValueError, match="not representable as a positive float64"):
+            evidence.amplitude_ratio_at(440.0)
+
+
+def test_successful_amplitude_vectors_are_finite_positive_and_read_only() -> None:
+    evidence = MagnitudeResponseEvidence(
+        _profile(TransferKind.MAGNITUDE_RESPONSE),
+        _readonly([100.0, 1000.0]),
+        _readonly([-6.020599913279624, 6.020599913279624]),
+    )
+    result = evidence.amplitude_ratio_at(_readonly([100.0, 316.22776601683796, 1000.0]))
+    assert result[0] == pytest.approx(0.5, rel=1e-15)
+    assert np.all(np.isfinite(result))
+    assert np.all(result > 0.0)
+    assert not result.flags.writeable
+
+
 def test_impulse_response_validation_and_topology() -> None:
     with pytest.raises(ValueError, match="read-only"):
         ImpulseResponseTransfer(_profile(), np.array([[1.0]], dtype=np.float64))

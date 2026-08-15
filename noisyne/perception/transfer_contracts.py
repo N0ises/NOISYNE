@@ -142,6 +142,11 @@ class PlaybackTransferProfile(JsonContract):
             )
 
         if self.transfer_kind is TransferKind.MAGNITUDE_RESPONSE:
+            if self.channel_topology is not TransferChannelTopology.CHANNEL_INDEPENDENT_SHARED:
+                raise ValueError(
+                    "Sprint 6 magnitude evidence is a shared single response only; "
+                    "explicit_per_channel is unsupported"
+                )
             if self.valid_frequency_range is None:
                 raise ValueError("magnitude_response requires valid_frequency_range")
             if not isinstance(self.valid_frequency_range, FrequencyRange):

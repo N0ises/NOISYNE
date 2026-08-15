@@ -92,10 +92,16 @@ class MagnitudeResponseEvidence:
             raise ValueError("absolute acoustic output evidence is not an amplitude ratio")
         magnitude_db = self.magnitude_at(frequency_hz)
         try:
-            with np.errstate(over="raise", invalid="raise"):
+            with np.errstate(over="raise", under="raise", invalid="raise"):
                 result = np.power(10.0, np.asarray(magnitude_db) / 20.0)
         except FloatingPointError as exc:
-            raise ValueError("magnitude-to-amplitude conversion overflowed") from exc
+            raise ValueError(
+                "magnitude-to-amplitude conversion is not representable as a positive float64"
+            ) from exc
+        if np.any(~np.isfinite(result)) or np.any(result <= 0.0):
+            raise ValueError(
+                "magnitude-to-amplitude conversion must produce finite, positive values"
+            )
         if np.asarray(frequency_hz).ndim == 0:
             return float(result)
         result.setflags(write=False)
