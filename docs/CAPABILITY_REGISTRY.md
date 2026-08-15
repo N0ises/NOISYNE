@@ -65,6 +65,9 @@ the start of V2. Machine availability must be evaluated separately.
 | Policy-Conditioned Translation Risk | Implemented | Boolean evaluation of explicit provenance-backed, dimension- and unit-matched criteria; no universal threshold, normalized score or aggregation |
 | Perceptual Context Foundation | Implemented | Provenance-backed literal declarations and deterministic conflicts; no classification, preference prediction or signal evidence |
 | Context Policy Binding | Implemented | Exact versioned binding to supplied Sprint 7 policies; no hidden precedence, fallback or policy generation |
+| Perceptual Reference Foundation | Implemented | Stable logical reference identity/provenance and compact evidence contracts; a reference is not ground truth |
+| Reference Objective Comparison | Implemented | Whole-programme brightness-correlate, ERB-power, sum-square energy and sample-peak deltas; no temporal alignment, policy or quality score |
+| Reference Embedding Contract | Implemented | Exact provider/model/checkpoint/preprocessing identity plus raw cosine math; no live model or percentage score |
 | Audio Context | Production | Deterministic rule-based context |
 | Engineering Analysis | Production | Deterministic rule engine |
 | CLAP Embedding | Verified | Local/downloaded model required; model not bundled |

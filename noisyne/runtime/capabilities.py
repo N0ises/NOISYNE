@@ -301,6 +301,47 @@ registry.register(
 
 registry.register(
     Capability(
+        name="perceptual_reference_foundation",
+        description="Stable reference identity, provenance, and evidence transport contracts",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Caller-supplied logical reference identity and explicit comparison mode. References "
+            "are examples, not ground truth or quality targets."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="reference_objective_comparison",
+        description="Whole-programme objective source-minus-reference evidence",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Validated AudioData and existing Sprint 2/5 analysis. ERB comparison requires exact "
+            "channel and band compatibility; no temporal alignment or aggregate match score."
+        ),
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="reference_embedding_contract",
+        description="Identified embedding-provider transport and raw cosine comparison contract",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Exact provider/model/checkpoint/preprocessing identity and finite runtime vectors. "
+            "No live provider, model asset, or embedding is bundled by this capability."
+        ),
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,
