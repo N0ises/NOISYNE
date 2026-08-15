@@ -57,6 +57,8 @@ the start of V2. Machine availability must be evaluated separately.
 | Auditory Frontend | Implemented | NumPy-only deterministic spectral/ERB-rate inputs; no SPL calibration or perceptual conclusions |
 | Loudness Foundation | Implemented | Explicit calibration, pressure mapping and LUFS evidence; no sone/phon or ISO 532-3 algorithm |
 | Frequency Masking Foundation | Implemented | Pairwise common-gain relative excitation margin only; no threshold, events, full-mix attribution or temporal masking |
+| Perceptual Descriptors Foundation | Implemented | Ten-descriptor scientific taxonomy; unavailable descriptors carry explicit blockers and no substitute values |
+| Brightness Correlate | Implemented | Power-spectral centroid in Hz only; no normalized or universal perceived-brightness score |
 | Audio Context | Production | Deterministic rule-based context |
 | Engineering Analysis | Production | Deterministic rule engine |
 | CLAP Embedding | Verified | Local/downloaded model required; model not bundled |
@@ -96,7 +98,7 @@ with a successful runtime availability probe.
 | Local API | Planned (Sprint 16) | No tracked API implementation at V2 baseline |
 | Desktop V1 | Frozen release candidate | Exists on isolated `desktop-ui`; not runtime-registered here |
 | Desktop V2 Integration | Planned (Sprint 17) | Through `V2ApplicationAdapter` after service/API contracts |
-| V2 Perceptual Core | Planned | Auditory inputs, loudness calibration, and relative simultaneous-masking foundations are Implemented; absolute loudness, masking thresholds/events, descriptors and translation remain planned |
+| V2 Perceptual Core | Planned | Auditory, loudness-calibration, relative-masking and descriptor-taxonomy foundations plus a brightness correlate are Implemented; standardized descriptor engines, absolute masking and translation remain planned |
 | ONNX | Benchmark spike (Sprint 14) | No adoption or runtime availability claim |
 | Voice / Agent Functionality | Future | Outside V2 |
 

@@ -38,6 +38,14 @@ from .context import (
     PlaybackProfile,
     PlaybackProfileReference,
 )
+from .descriptor_contracts import (
+    BRIGHTNESS_CORRELATE_METHOD_ID,
+    BRIGHTNESS_CORRELATE_METHOD_VERSION,
+    DescriptorClass,
+    DescriptorDefinition,
+    DescriptorImplementationState,
+    descriptor_taxonomy,
+)
 from .loudness_contracts import (
     LOUDNESS_FOUNDATION_METHOD_ID,
     LOUDNESS_FOUNDATION_METHOD_VERSION,
@@ -68,6 +76,8 @@ __all__ = [
     "AUDITORY_FRONTEND_METHOD_ID",
     "AUDITORY_FRONTEND_METHOD_VERSION",
     "AUDITORY_FRONTEND_SCHEMA_VERSION",
+    "BRIGHTNESS_CORRELATE_METHOD_ID",
+    "BRIGHTNESS_CORRELATE_METHOD_VERSION",
     "LOUDNESS_FOUNDATION_METHOD_ID",
     "LOUDNESS_FOUNDATION_METHOD_VERSION",
     "PERCEPTUAL_SCHEMA_VERSION",
@@ -82,6 +92,9 @@ __all__ = [
     "ComponentStatus",
     "Confidence",
     "ConfidenceBasis",
+    "DescriptorClass",
+    "DescriptorDefinition",
+    "DescriptorImplementationState",
     "EvidenceSource",
     "FrequencyMaskingResult",
     "FrequencyRange",
@@ -111,4 +124,5 @@ __all__ = [
     "TranslationRiskDimension",
     "UnitBasis",
     "descriptor_observation",
+    "descriptor_taxonomy",
 ]

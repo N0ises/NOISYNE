@@ -193,6 +193,33 @@ registry.register(
 
 registry.register(
     Capability(
+        name="perceptual_descriptors_foundation",
+        description="Scientific descriptor taxonomy and truthful executable-state foundation",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Lightweight contracts; standardized descriptors remain unavailable until their "
+            "complete prerequisite models and validation materials exist."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="brightness_correlate",
+        description="Power-spectral-centroid correlate of timbral brightness in hertz",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Existing NumPy auditory frontend and positive spectral power; no SPL calibration. "
+            "Not a universal perceived-brightness score."
+        ),
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,
