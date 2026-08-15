@@ -12,6 +12,7 @@ from noisyne.audio.analysis.lufs import LUFSAnalyzer
 from noisyne.audio.io.models import AudioData, AudioMetadata
 from noisyne.perception import (
     AcousticPresentation,
+    FrequencyResponseCompensation,
     LoudnessCalibration,
     PerceivedLoudnessResult,
     ResultStatus,
@@ -20,6 +21,14 @@ from noisyne.perception.loudness import PerceivedLoudnessFoundation
 from noisyne.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _compensation() -> FrequencyResponseCompensation:
+    return FrequencyResponseCompensation(
+        method_reference="manufacturer-field-equalization",
+        version="rev-3",
+        traceability="Equalization record EQ-TEST-001",
+    )
 
 
 def _audio(samples: np.ndarray, sample_rate: int = 48_000) -> AudioData:
@@ -61,6 +70,7 @@ def _free_field_calibration(**changes: object) -> LoudnessCalibration:
         "left_channel_index": 0,
         "right_channel_index": 0,
         "frequency_response_compensated": True,
+        "frequency_response_compensation": _compensation(),
         "traceability": "Calibration certificate TEST-001",
     }
     values.update(changes)
@@ -75,14 +85,14 @@ def test_uncalibrated_audio_returns_insufficient_evidence_without_estimate() -> 
     assert "calibration" in result.state.reason.lower()
     assert result.estimate is None
     assert output.calibration is None
-    assert output.pressure_by_ear_pa is None
+    assert output.presentation_pressure_pa is None
 
 
 def test_uncalibrated_stereo_is_not_assumed_to_be_binaural() -> None:
     tone = _tone()
     output = PerceivedLoudnessFoundation().analyze(_audio(np.column_stack((tone, -tone))))
 
-    assert output.pressure_by_ear_pa is None
+    assert output.presentation_pressure_pa is None
     assert output.perceived_loudness.estimate is None
     assert any("stereo" in item.lower() for item in output.perceived_loudness.limitations)
 
@@ -114,7 +124,7 @@ def test_short_audio_keeps_honest_state_when_lufs_is_unavailable() -> None:
     assert output.perceived_loudness.state.status is ResultStatus.INSUFFICIENT_EVIDENCE
 
 
-def test_calibrated_single_microphone_maps_diotic_pressure_but_not_loudness() -> None:
+def test_free_field_microphone_uses_presentation_columns_not_eardrum_pressure() -> None:
     samples = np.array([0.0, 0.25, -0.5, 1.0])
     calibration = _free_field_calibration()
     output = PerceivedLoudnessFoundation().analyze(
@@ -122,12 +132,32 @@ def test_calibrated_single_microphone_maps_diotic_pressure_but_not_loudness() ->
     )
 
     expected = samples * 2.0
-    assert np.array_equal(output.pressure_by_ear_pa[:, 0], expected)
-    assert np.array_equal(output.pressure_by_ear_pa[:, 1], expected)
-    assert output.pressure_by_ear_pa.flags.writeable is False
+    assert np.array_equal(output.presentation_pressure_pa[:, 0], expected)
+    assert np.array_equal(output.presentation_pressure_pa[:, 1], expected)
+    assert output.presentation_pressure_pa.flags.writeable is False
+    assert all(
+        "eardrum" not in item.measurement.name for item in output.perceived_loudness.evidence
+    )
     assert output.perceived_loudness.state.status is ResultStatus.INSUFFICIENT_EVIDENCE
     assert "ISO 532-3:2023" in output.perceived_loudness.state.reason
     assert output.perceived_loudness.estimate is None
+
+
+def test_diffuse_field_microphone_uses_presentation_columns_not_eardrum_pressure() -> None:
+    output = PerceivedLoudnessFoundation().analyze(
+        _audio(np.array([0.25, -0.5])),
+        calibration=_free_field_calibration(
+            presentation=AcousticPresentation.DIFFUSE_FIELD_SINGLE_MICROPHONE
+        ),
+        include_programme_loudness=False,
+    )
+
+    assert np.array_equal(
+        output.presentation_pressure_pa[:, 0], output.presentation_pressure_pa[:, 1]
+    )
+    assert all(
+        "eardrum" not in item.measurement.name for item in output.perceived_loudness.evidence
+    )
 
 
 def test_calibrated_pressure_evidence_uses_pascal_not_sone_or_phon() -> None:
@@ -156,8 +186,12 @@ def test_explicit_eardrum_pressure_mapping_preserves_two_ear_channels() -> None:
         _audio(samples), calibration=calibration, include_programme_loudness=False
     )
 
-    assert np.array_equal(output.pressure_by_ear_pa[:, 0], samples[:, 0] * 0.25)
-    assert np.array_equal(output.pressure_by_ear_pa[:, 1], samples[:, 1] * 0.25)
+    assert np.array_equal(output.presentation_pressure_pa[:, 0], samples[:, 0] * 0.25)
+    assert np.array_equal(output.presentation_pressure_pa[:, 1], samples[:, 1] * 0.25)
+    assert [item.measurement.name for item in output.perceived_loudness.evidence] == [
+        "Calibrated left eardrum RMS pressure",
+        "Calibrated right eardrum RMS pressure",
+    ]
 
 
 def test_single_microphone_requires_one_diotic_channel_mapping() -> None:
@@ -191,15 +225,41 @@ def test_invalid_pressure_scale_is_rejected(scale: float) -> None:
         _free_field_calibration(pascals_per_sample=scale)
 
 
+def test_compensated_calibration_requires_provenance() -> None:
+    with pytest.raises(ValueError, match="frequency_response_compensation is required"):
+        _free_field_calibration(frequency_response_compensation=None)
+
+
+@pytest.mark.parametrize("field", ["method_reference", "version", "traceability"])
+def test_compensation_provenance_fields_must_be_non_empty(field: str) -> None:
+    values = {
+        "method_reference": "manufacturer-field-equalization",
+        "version": "rev-3",
+        "traceability": "Equalization record EQ-TEST-001",
+    }
+    values[field] = " "
+
+    with pytest.raises(ValueError, match=field):
+        FrequencyResponseCompensation(**values)
+
+
 def test_uncompensated_frequency_response_is_insufficient_for_pressure_input() -> None:
-    calibration = _free_field_calibration(frequency_response_compensated=False)
+    calibration = _free_field_calibration(
+        frequency_response_compensated=False,
+        frequency_response_compensation=None,
+    )
     output = PerceivedLoudnessFoundation().analyze(
         _audio(np.ones(32)), calibration=calibration, include_programme_loudness=False
     )
 
-    assert output.pressure_by_ear_pa is None
+    assert output.presentation_pressure_pa is None
     assert output.perceived_loudness.state.status is ResultStatus.INSUFFICIENT_EVIDENCE
     assert "frequency-response" in output.perceived_loudness.state.reason
+
+
+def test_uncompensated_calibration_rejects_compensation_identity() -> None:
+    with pytest.raises(ValueError, match="must be omitted"):
+        _free_field_calibration(frequency_response_compensated=False)
 
 
 def test_calibrated_pressure_overflow_is_rejected_without_clipping() -> None:
@@ -221,7 +281,8 @@ def test_large_finite_calibrated_pressure_uses_overflow_safe_rms() -> None:
         include_programme_loudness=False,
     )
 
-    assert np.all(np.isfinite(output.pressure_by_ear_pa))
+    assert np.all(np.isfinite(output.presentation_pressure_pa))
+    assert output.presentation_pressure_pa.flags.writeable is False
     for evidence in output.perceived_loudness.evidence:
         assert evidence.measurement.value.value == pytest.approx(value)
 
@@ -240,6 +301,11 @@ def test_calibration_contract_round_trip_is_json_safe() -> None:
     payload = calibration.to_dict()
 
     assert LoudnessCalibration.from_dict(payload) == calibration
+    assert payload["frequency_response_compensation"] == {
+        "method_reference": "manufacturer-field-equalization",
+        "version": "rev-3",
+        "traceability": "Equalization record EQ-TEST-001",
+    }
     assert json.loads(json.dumps(payload, allow_nan=False)) == payload
 
 
@@ -253,7 +319,7 @@ def test_loudness_transport_result_round_trip_contains_no_runtime_pressure_array
 
     assert PerceivedLoudnessResult.from_dict(payload) == output.perceived_loudness
     assert json.loads(json.dumps(payload, allow_nan=False)) == payload
-    assert "pressure_by_ear_pa" not in payload
+    assert "presentation_pressure_pa" not in payload
 
 
 def test_loudness_foundation_capability_is_implemented_but_not_verified() -> None:

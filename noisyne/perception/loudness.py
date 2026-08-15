@@ -25,6 +25,7 @@ from .common import (
 from .loudness_contracts import (
     LOUDNESS_FOUNDATION_METHOD_ID,
     LOUDNESS_FOUNDATION_METHOD_VERSION,
+    AcousticPresentation,
     LoudnessCalibration,
 )
 from .results import PerceivedLoudnessResult
@@ -44,23 +45,28 @@ _CALIBRATION_REQUIRED = (
 
 @dataclass(frozen=True, slots=True)
 class LoudnessFoundationResult:
-    """Runtime result for calibration/evidence preparation, not a loudness calculation."""
+    """Runtime calibration preparation, not a loudness calculation.
+
+    For single-microphone field presentations, the two pressure columns are equal
+    preparation inputs and do not represent measured ears. For eardrum presentation,
+    they represent separately calibrated left and right eardrum measurements.
+    """
 
     perceived_loudness: PerceivedLoudnessResult
     calibration: LoudnessCalibration | None = None
-    pressure_by_ear_pa: FloatArray | None = None
+    presentation_pressure_pa: FloatArray | None = None
 
     def __post_init__(self) -> None:
-        if self.pressure_by_ear_pa is None:
+        if self.presentation_pressure_pa is None:
             return
         if self.calibration is None:
-            raise ValueError("pressure_by_ear_pa requires calibration")
-        if self.pressure_by_ear_pa.ndim != 2 or self.pressure_by_ear_pa.shape[1] != 2:
-            raise ValueError("pressure_by_ear_pa must have shape (frames, 2)")
-        if not np.all(np.isfinite(self.pressure_by_ear_pa)):
-            raise ValueError("pressure_by_ear_pa must contain only finite values")
-        if self.pressure_by_ear_pa.flags.writeable:
-            raise ValueError("pressure_by_ear_pa must be read-only")
+            raise ValueError("presentation_pressure_pa requires calibration")
+        if self.presentation_pressure_pa.ndim != 2 or self.presentation_pressure_pa.shape[1] != 2:
+            raise ValueError("presentation_pressure_pa must have shape (frames, 2)")
+        if not np.all(np.isfinite(self.presentation_pressure_pa)):
+            raise ValueError("presentation_pressure_pa must contain only finite values")
+        if self.presentation_pressure_pa.flags.writeable:
+            raise ValueError("presentation_pressure_pa must be read-only")
 
 
 class PerceivedLoudnessFoundation:
@@ -98,7 +104,7 @@ class PerceivedLoudnessFoundation:
                     note="No digital-to-acoustic calibration or presentation mapping was supplied.",
                 )
             ]
-            pressure_by_ear_pa = None
+            presentation_pressure_pa = None
         elif not calibration.frequency_response_compensated:
             reason = (
                 "Calibration does not declare frequency-response compensation; calibrated "
@@ -112,11 +118,11 @@ class PerceivedLoudnessFoundation:
                     note=reason,
                 )
             ]
-            pressure_by_ear_pa = None
+            presentation_pressure_pa = None
         else:
-            pressure_by_ear_pa = _calibrated_pressure(samples, calibration)
+            presentation_pressure_pa = _calibrated_presentation_pressure(samples, calibration)
             reason = _ABSOLUTE_MODEL_UNAVAILABLE
-            evidence = _pressure_evidence(pressure_by_ear_pa, method, calibration)
+            evidence = _pressure_evidence(presentation_pressure_pa, method, calibration)
 
         limitations = [
             "No sone or phon estimate is produced.",
@@ -141,37 +147,56 @@ class PerceivedLoudnessFoundation:
         return LoudnessFoundationResult(
             perceived_loudness=result,
             calibration=calibration,
-            pressure_by_ear_pa=pressure_by_ear_pa,
+            presentation_pressure_pa=presentation_pressure_pa,
         )
 
 
-def _calibrated_pressure(samples: FloatArray, calibration: LoudnessCalibration) -> FloatArray:
+def _calibrated_presentation_pressure(
+    samples: FloatArray, calibration: LoudnessCalibration
+) -> FloatArray:
     channel_count = samples.shape[1]
     indexes = (calibration.left_channel_index, calibration.right_channel_index)
     if any(index >= channel_count for index in indexes):
         raise ValueError("calibration channel mapping exceeds the audio channel count")
     try:
         with np.errstate(over="raise", invalid="raise"):
-            pressure = samples[:, indexes] * calibration.pascals_per_sample
+            presentation_pressure = samples[:, indexes] * calibration.pascals_per_sample
     except FloatingPointError as exc:
         raise ValueError("calibrated pressure conversion overflowed") from exc
-    if not np.all(np.isfinite(pressure)):
+    if not np.all(np.isfinite(presentation_pressure)):
         raise ValueError("calibrated pressure conversion produced non-finite values")
-    pressure.setflags(write=False)
-    return pressure
+    presentation_pressure.setflags(write=False)
+    return presentation_pressure
 
 
 def _pressure_evidence(
-    pressure_by_ear_pa: FloatArray,
+    presentation_pressure_pa: FloatArray,
     method: MethodMetadata,
     calibration: LoudnessCalibration,
 ) -> list[PerceptualEvidence]:
     evidence = []
-    for channel, side in enumerate(("left", "right")):
-        rms_pressure = _stable_rms(pressure_by_ear_pa[:, channel])
+    is_eardrum = calibration.presentation is AcousticPresentation.EARDRUM_PRESSURE
+    labels = (
+        ("left eardrum", "right eardrum")
+        if is_eardrum
+        else (
+            "presentation column 0",
+            "presentation column 1",
+        )
+    )
+    identifiers = (
+        ("left_eardrum", "right_eardrum")
+        if is_eardrum
+        else (
+            "presentation_column_0",
+            "presentation_column_1",
+        )
+    )
+    for channel, (label, identifier) in enumerate(zip(labels, identifiers, strict=True)):
+        rms_pressure = _stable_rms(presentation_pressure_pa[:, channel])
         measurement = Measurement(
-            measurement_id=f"calibrated_{side}_rms_pressure_pa",
-            name=f"Calibrated {side} RMS pressure",
+            measurement_id=f"calibrated_{identifier}_rms_pressure_pa",
+            name=f"Calibrated {label} RMS pressure",
             value=ScalarValue(
                 value=rms_pressure,
                 unit_basis=UnitBasis.DECLARED_UNIT,
@@ -180,13 +205,14 @@ def _pressure_evidence(
             source=calibration.calibration_id,
             method=method,
             note=(
-                "Linear calibrated pressure evidence only; not dB SPL, sone, phon, or "
+                "Linear calibrated presentation pressure evidence only; field microphone "
+                "columns are not eardrum measurements; not dB SPL, sone, phon, or "
                 "psychoacoustic loudness."
             ),
         )
         evidence.append(
             PerceptualEvidence(
-                evidence_id=f"calibrated_{side}_pressure_evidence",
+                evidence_id=f"calibrated_{identifier}_pressure_evidence",
                 source=EvidenceSource.MEASUREMENT,
                 origin=calibration.traceability,
                 measurement=measurement,

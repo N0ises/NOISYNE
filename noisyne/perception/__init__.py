@@ -42,6 +42,7 @@ from .loudness_contracts import (
     LOUDNESS_FOUNDATION_METHOD_ID,
     LOUDNESS_FOUNDATION_METHOD_VERSION,
     AcousticPresentation,
+    FrequencyResponseCompensation,
     LoudnessCalibration,
 )
 from .results import (
@@ -75,6 +76,7 @@ __all__ = [
     "EvidenceSource",
     "FrequencyMaskingResult",
     "FrequencyRange",
+    "FrequencyResponseCompensation",
     "ListeningLevel",
     "LoudnessCalibration",
     "MaskingEvent",

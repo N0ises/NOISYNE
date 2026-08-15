@@ -11,7 +11,7 @@ from .common import (
 )
 
 LOUDNESS_FOUNDATION_METHOD_ID = "noisyne.calibrated_loudness_foundation"
-LOUDNESS_FOUNDATION_METHOD_VERSION = "1.0.0"
+LOUDNESS_FOUNDATION_METHOD_VERSION = "1.1.0"
 
 
 class AcousticPresentation(str, Enum):
@@ -20,6 +20,20 @@ class AcousticPresentation(str, Enum):
     FREE_FIELD_SINGLE_MICROPHONE = "free_field_single_microphone"
     DIFFUSE_FIELD_SINGLE_MICROPHONE = "diffuse_field_single_microphone"
     EARDRUM_PRESSURE = "eardrum_pressure"
+
+
+@dataclass(frozen=True, slots=True)
+class FrequencyResponseCompensation(JsonContract):
+    """Identity and traceability for compensation already applied upstream."""
+
+    method_reference: str
+    version: str
+    traceability: str
+
+    def __post_init__(self) -> None:
+        _require_identifier(self.method_reference, "method_reference")
+        _require_identifier(self.version, "version")
+        _require_identifier(self.traceability, "traceability")
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +48,7 @@ class LoudnessCalibration(JsonContract):
     right_channel_index: int
     frequency_response_compensated: bool
     traceability: str
+    frequency_response_compensation: FrequencyResponseCompensation | None = None
     input_quantity: str = "digital_sample_amplitude"
     output_quantity: str = "sound_pressure_pa"
 
@@ -48,6 +63,21 @@ class LoudnessCalibration(JsonContract):
         if type(self.frequency_response_compensated) is not bool:
             raise TypeError("frequency_response_compensated must be a bool")
         _require_identifier(self.traceability, "traceability")
+        if self.frequency_response_compensated:
+            if self.frequency_response_compensation is None:
+                raise ValueError(
+                    "frequency_response_compensation is required when "
+                    "frequency_response_compensated is true"
+                )
+            if not isinstance(self.frequency_response_compensation, FrequencyResponseCompensation):
+                raise TypeError(
+                    "frequency_response_compensation must be a " "FrequencyResponseCompensation"
+                )
+        elif self.frequency_response_compensation is not None:
+            raise ValueError(
+                "frequency_response_compensation must be omitted when "
+                "frequency_response_compensated is false"
+            )
         if self.input_quantity != "digital_sample_amplitude":
             raise ValueError("input_quantity must be digital_sample_amplitude")
         if self.output_quantity != "sound_pressure_pa":

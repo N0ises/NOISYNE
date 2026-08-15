@@ -1,6 +1,6 @@
 # NØISYNE V2 Calibrated Loudness Foundation
 
-Version: 1.0
+Version: 1.1
 
 Status: Sprint 3 foundation implemented; psychoacoustic algorithm blocked
 
@@ -71,23 +71,28 @@ shortcut to calculate sones from arbitrary audio.
 - a finite positive linear scale in pascals per digital sample unit;
 - a traceability statement;
 - whether the source frequency response has been compensated;
+- when compensated, a structured compensation method/reference identifier,
+  version/revision, and traceability/source;
 - the declared acoustic presentation path;
 - explicit left/right source-channel indexes.
 
 Supported presentation declarations are deliberately limited to input paths
 confirmed by accessible ISO 532-3 material:
 
-- free-field single microphone, mapped diotically;
-- diffuse-field single microphone, mapped diotically;
+- free-field single microphone, prepared as two equal presentation columns;
+- diffuse-field single microphone, prepared as two equal presentation columns;
 - separately calibrated pressure at the left and right eardrum measurement
   points, requiring distinct channels.
 
 The scalar calibration assumes the supplied waveform has already received the
-measurement-system frequency-response compensation declared by the caller. An
-uncompensated response is retained as context but cannot produce calibrated
-pressure input for a future standard method. Earphone electrical sensitivity
-and transfer-function processing are not represented; an ordinary stereo file
-is not an earphone or binaural measurement.
+measurement-system frequency-response compensation declared by the caller. A
+compensated declaration is valid only with non-empty method/reference, version,
+and traceability fields. This provenance identifies upstream processing; it
+does not contain filter coefficients. An uncompensated response is retained as
+context but cannot produce calibrated pressure input for a future standard
+method. Earphone electrical sensitivity and transfer-function processing are
+not represented; an ordinary stereo file is not an earphone or binaural
+measurement.
 
 ## Implemented Stages and Provenance
 
@@ -97,7 +102,8 @@ Only these deterministic stages are implemented:
 2. Explicit channel mapping follows the declared presentation contract.
 3. Digital samples are multiplied by the caller-supplied linear calibration to
    obtain pressure in pascals.
-4. Finite, read-only `(frames, 2)` pressure arrays are retained at runtime.
+4. Finite, read-only `(frames, 2)` `presentation_pressure_pa` arrays are retained
+   at runtime.
 5. Stable RMS pressure in pascals is attached as objective evidence.
 6. Existing V1 integrated LUFS may be attached as a separate objective
    programme-loudness measurement.
@@ -122,20 +128,31 @@ sone or phon estimate.
 
 ## Monaural, Stereo and Binaural Semantics
 
-A single calibrated free-field or diffuse-field microphone is mapped to equal
-left/right pressure inputs (diotic), matching the declared single-microphone
-presentation. Separately measured eardrum pressure requires two distinct mapped
-channels. Stereo programme channels without calibration and measurement-path
-semantics are not treated as left-ear/right-ear signals. No binaural
-interaction or inhibition is implemented.
+A single calibrated free-field or diffuse-field microphone is duplicated into
+two equal presentation columns as a preparation convention for possible future
+diotic handling. These columns contain the same calibrated field/microphone
+pressure and are **not** measured left/right eardrum pressure. Separately
+measured eardrum pressure requires two distinct mapped channels; for that
+presentation only, the columns genuinely represent calibrated left and right
+eardrum measurements. Stereo programme channels without calibration and
+measurement-path semantics are not treated as left-ear/right-ear signals. No
+binaural interaction or inhibition is implemented.
+
+Presentation-specific transformations required by a future authoritative
+loudness method have not been implemented. In particular, this foundation does
+not implement free-field, diffuse-field, outer-ear, middle-ear, or ISO transfer
+functions. Frequency-response compensation is caller-supplied and applied
+upstream; the foundation records its identity and provenance but implements no
+filter or filter coefficients.
 
 ## Temporal Semantics and Runtime Data
 
 No instantaneous, short-term, long-term, percentile, or overall
 psychoacoustic-loudness quantity is implemented. The only new runtime array is
-the optional calibrated pressure array `(frames, 2)` in pascals. It is finite,
-read-only, and not part of JSON transport. Existing Sprint 2 arrays and behavior
-are unchanged.
+the optional calibrated `presentation_pressure_pa` array `(frames, 2)` in
+pascals. It is finite, read-only, and not part of JSON transport. Its columns
+follow the presentation semantics above and do not universally denote ears.
+Existing Sprint 2 arrays and behavior are unchanged.
 
 ## Validation
 
@@ -147,6 +164,9 @@ foundation invariants:
 - LUFS remains a separately labelled supporting measurement;
 - scalar pressure conversion and channel mapping use analytical exact values;
 - single-microphone mapping is diotic and eardrum mapping is two-channel;
+- free-field and diffuse-field presentation columns are not labelled as
+  eardrum pressure;
+- compensated declarations require structured, round-trippable provenance;
 - malformed mappings and calibrations are rejected;
 - non-finite input and pressure overflow are rejected without clipping;
 - pressure arrays are finite and read-only;
