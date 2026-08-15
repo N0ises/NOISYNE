@@ -367,6 +367,42 @@ registry.register(
 
 registry.register(
     Capability(
+        name="perceptual_reasoning_foundation",
+        description="Grounded explanations rendered from validated Sprint 10 facts",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "A valid MixIntelligenceResult and an available constrained provider. The "
+            "deterministic provider is offline; no live model is required."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="grounded_reasoning_validation",
+        description="Deterministic fact, issue, criterion, template, and cross-reference validation",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Provider output must select whitelisted fact IDs and approved templates; free-form "
+            "provider text is rejected."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="deterministic_reasoning",
+        description="Offline canonical explanation and neutral review-suggestion rendering",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements="Validated Sprint 10 triggered issues; no DSP, RAG, memory, or LLM.",
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,

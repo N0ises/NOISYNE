@@ -70,6 +70,9 @@ the start of V2. Machine availability must be evaluated separately.
 | Reference Embedding Contract | Implemented | Exact provider/model/checkpoint/preprocessing identity plus raw cosine math; no live model or percentage score |
 | Perceptual Mix Intelligence Foundation | Implemented | Structured issues from explicit policy criteria over precomputed Sprint 4/7/8/9 evidence; no quality score or recommendation |
 | Mix Policy Evaluation | Implemented | Deterministic source/dimension/unit-safe criteria with policy-declared priority and stable ordering; no DSP or LLM |
+| Perceptual Reasoning Foundation | Implemented | Grounded statements rendered from whitelisted Sprint 10 facts; no free-form provider text, quality score or causal diagnosis |
+| Grounded Reasoning Validation | Implemented | Exact fact/issue/criterion/template cross-reference validation after provider output; rejected content is not transported as accepted reasoning |
+| Deterministic Reasoning | Implemented | Offline canonical explanations and neutral review suggestions; no LLM, RAG, memory or DSP dependency |
 | Audio Context | Production | Deterministic rule-based context |
 | Engineering Analysis | Production | Deterministic rule engine |
 | CLAP Embedding | Verified | Local/downloaded model required; model not bundled |
