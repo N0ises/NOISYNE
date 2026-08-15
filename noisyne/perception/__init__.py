@@ -1,7 +1,7 @@
 """Lightweight V2 perceptual domain contracts.
 
-Numerical runtimes remain in their owning modules so this package import stays
-lightweight. No translation algorithm is implemented here.
+Numerical runtimes remain in their owning modules and are not imported here, so
+this package import stays lightweight.
 """
 
 from .auditory_contracts import (
@@ -89,6 +89,25 @@ from .transfer_contracts import (
     TransferPhaseBasis,
     TransferProvenance,
 )
+from .translation_contracts import (
+    POLICY_CONDITIONED_TRANSLATION_RISK_METHOD_ID,
+    POLICY_CONDITIONED_TRANSLATION_RISK_METHOD_VERSION,
+    TRANSLATION_EVIDENCE_METHOD_ID,
+    TRANSLATION_EVIDENCE_METHOD_VERSION,
+    TRANSLATION_EVIDENCE_SCHEMA_VERSION,
+    ErbPowerDistributionSummary,
+    NominalFullScaleEvidence,
+    PolicyConditionedTranslationRiskResult,
+    TranslationAnalysisSupport,
+    TranslationComparisonSummary,
+    TranslationEvidenceDimensionId,
+    TranslationEvidenceMeasurement,
+    TranslationEvidenceResult,
+    TranslationPolicyProvenance,
+    TranslationRiskComparison,
+    TranslationRiskCriterion,
+    TranslationRiskPolicy,
+)
 
 __all__ = [
     "AUDITORY_FRONTEND_METHOD_ID",
@@ -102,9 +121,14 @@ __all__ = [
     "PLAYBACK_TRANSFER_METHOD_ID",
     "PLAYBACK_TRANSFER_METHOD_VERSION",
     "PLAYBACK_TRANSFER_SCHEMA_VERSION",
+    "POLICY_CONDITIONED_TRANSLATION_RISK_METHOD_ID",
+    "POLICY_CONDITIONED_TRANSLATION_RISK_METHOD_VERSION",
     "SIMULTANEOUS_MASKING_METHOD_ID",
     "SIMULTANEOUS_MASKING_METHOD_VERSION",
     "SIMULTANEOUS_MASKING_SCHEMA_VERSION",
+    "TRANSLATION_EVIDENCE_METHOD_ID",
+    "TRANSLATION_EVIDENCE_METHOD_VERSION",
+    "TRANSLATION_EVIDENCE_SCHEMA_VERSION",
     "AcousticPresentation",
     "AnalysisMetadata",
     "AuditoryBand",
@@ -117,6 +141,7 @@ __all__ = [
     "DescriptorClass",
     "DescriptorDefinition",
     "DescriptorImplementationState",
+    "ErbPowerDistributionSummary",
     "EvidenceSource",
     "ExtrapolationPolicy",
     "FrequencyMaskingResult",
@@ -132,6 +157,7 @@ __all__ = [
     "Measurement",
     "MethodMetadata",
     "MonoCompatibility",
+    "NominalFullScaleEvidence",
     "ObservationCategory",
     "PerceivedLoudnessResult",
     "PerceptualAnalysisResult",
@@ -144,6 +170,7 @@ __all__ = [
     "PlaybackProfileReference",
     "PlaybackTransferApplicationSummary",
     "PlaybackTransferProfile",
+    "PolicyConditionedTranslationRiskResult",
     "RelativeMaskingPairContext",
     "ResultState",
     "ResultStatus",
@@ -155,8 +182,17 @@ __all__ = [
     "TransferKind",
     "TransferPhaseBasis",
     "TransferProvenance",
+    "TranslationAnalysisSupport",
+    "TranslationComparisonSummary",
+    "TranslationEvidenceDimensionId",
+    "TranslationEvidenceMeasurement",
+    "TranslationEvidenceResult",
+    "TranslationPolicyProvenance",
     "TranslationResult",
+    "TranslationRiskComparison",
+    "TranslationRiskCriterion",
     "TranslationRiskDimension",
+    "TranslationRiskPolicy",
     "UnitBasis",
     "descriptor_observation",
     "descriptor_taxonomy",

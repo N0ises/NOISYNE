@@ -247,6 +247,34 @@ registry.register(
 
 registry.register(
     Capability(
+        name="translation_evidence_foundation",
+        description="Deterministic objective evidence for an explicit playback FIR transfer",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Sprint 2/5 analysis and an explicit Sprint 6 impulse-response transfer. Reports "
+            "brightness-correlate, ERB-power, programme-energy, and sample-peak changes only."
+        ),
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="policy_conditioned_translation_risk",
+        description="Boolean evaluation of explicit provenance-backed translation criteria",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "A versioned caller/project/reference/validated-model policy with dimension- and "
+            "unit-matched thresholds. No universal thresholds, normalized score, or aggregation."
+        ),
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,

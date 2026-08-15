@@ -36,7 +36,7 @@ contracts.
 | `noisyne/reasoning/` and `noisyne/prompt/` | Structured reasoning, prompts, parsing and guards | Depend on contracts, not UI |
 | `noisyne/report/` | Report models, building, validation and export | Consumes domain results |
 | `noisyne/evaluation/` | Metrics, scoring, benchmarks and evaluation reports | Tests domain/application outputs |
-| `noisyne/perception/` | V2 perceptual contracts, auditory frontend, calibrated loudness, relative simultaneous masking, descriptors, and explicit playback transfer | Root contracts remain lightweight; numerical runtimes use existing audio/NumPy dependencies and have no providers, UI, API or DAW dependencies |
+| `noisyne/perception/` | V2 perceptual contracts, auditory frontend, calibrated loudness, relative simultaneous masking, descriptors, explicit playback transfer, and policy-conditioned translation evidence | Root contracts remain lightweight; numerical runtimes use existing audio/NumPy dependencies and have no providers, UI, API or DAW dependencies |
 | `noisyne/application/` | Canonical application facade and use-case orchestration | May compose domain modules; no Desktop imports |
 | `noisyne/orchestration/` and `noisyne/pipeline/` | Implemented alternate orchestration/stage infrastructure | Not the frozen V1 CLI production path |
 | `noisyne/integration/` | Deterministic DAW-named workflow export contracts | No live DAW communication or control |
@@ -97,6 +97,17 @@ at the exact audio sample rate and performs channel-preserving full linear
 convolution without resampling, clipping, normalization, downmix or nonlinear
 device simulation. No generic phone, laptop, speaker, headphone or room preset
 is claimed. Sprint 1-5 behavior is unchanged.
+
+Sprint 7 adds `noisyne/perception/translation_contracts.py` and
+`noisyne/perception/translation.py`. It compares an original signal with the
+complete output of an explicit Sprint 6 FIR, including its convolution tail.
+Objective evidence covers the Sprint 5 brightness correlate, Sprint 2
+channel-by-ERB power, summed digital programme energy, and sample-peak/full-
+scale state. Risk is emitted only when a versioned, provenance-backed policy
+provides dimension- and unit-matched criteria; each result is a boolean
+threshold outcome, never a probability, normalized score or aggregate risk.
+No PEAQ, loudness/LRA delta, full-mix masking attribution, source separation or
+device-category inference is implemented. Sprint 1-6 behavior is unchanged.
 
 The planned ownership boundaries are:
 
