@@ -275,6 +275,32 @@ registry.register(
 
 registry.register(
     Capability(
+        name="perceptual_context_foundation",
+        description="Provenance-backed literal context claims and deterministic conflict resolution",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Explicit caller/project/workflow/specification declarations or fully described "
+            "listening-SPL measurements. No classification, inference, profiling, or DSP."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="context_policy_binding",
+        description="Exact deterministic selection of supplied translation-risk policies",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "A resolved conflict-free context, explicit versioned binding, and exact supplied "
+            "Sprint 7 policy identity/version. No policy or threshold generation."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,

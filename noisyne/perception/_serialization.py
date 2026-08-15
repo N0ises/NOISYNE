@@ -49,6 +49,9 @@ def _encode(value: Any) -> JsonValue:
 def _decode_dataclass[ContractT: JsonContract](
     cls: type[ContractT], data: dict[str, Any]
 ) -> ContractT:
+    prepare = getattr(cls, "_prepare_dict", None)
+    if prepare is not None:
+        data = prepare(dict(data))
     if not all(isinstance(key, str) for key in data):
         raise TypeError(f"Serialized {cls.__name__} field names must be strings")
     field_names = {item.name for item in fields(cls)}

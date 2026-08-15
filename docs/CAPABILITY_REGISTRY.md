@@ -63,6 +63,8 @@ the start of V2. Machine availability must be evaluated separately.
 | Playback Linear Transfer | Implemented | Caller-supplied real FIR, exact-rate full linear convolution; no resampling, downmix, clipping, normalization or nonlinear reproduction model |
 | Translation Evidence Foundation | Implemented | Objective brightness-correlate, ERB-power, programme-energy and sample-peak changes for an explicit Sprint 6 FIR; no audibility or quality judgment |
 | Policy-Conditioned Translation Risk | Implemented | Boolean evaluation of explicit provenance-backed, dimension- and unit-matched criteria; no universal threshold, normalized score or aggregation |
+| Perceptual Context Foundation | Implemented | Provenance-backed literal declarations and deterministic conflicts; no classification, preference prediction or signal evidence |
+| Context Policy Binding | Implemented | Exact versioned binding to supplied Sprint 7 policies; no hidden precedence, fallback or policy generation |
 | Audio Context | Production | Deterministic rule-based context |
 | Engineering Analysis | Production | Deterministic rule engine |
 | CLAP Embedding | Verified | Local/downloaded model required; model not bundled |
