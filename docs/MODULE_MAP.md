@@ -36,7 +36,7 @@ contracts.
 | `noisyne/reasoning/` and `noisyne/prompt/` | Structured reasoning, prompts, parsing and guards | Depend on contracts, not UI |
 | `noisyne/report/` | Report models, building, validation and export | Consumes domain results |
 | `noisyne/evaluation/` | Metrics, scoring, benchmarks and evaluation reports | Tests domain/application outputs |
-| `noisyne/perception/` | V2 perceptual contracts, auditory frontend, calibrated loudness, relative simultaneous masking, and Sprint 5 descriptor foundation | Root contracts remain lightweight; numerical runtimes use existing audio/NumPy dependencies and have no providers, UI, API or DAW dependencies |
+| `noisyne/perception/` | V2 perceptual contracts, auditory frontend, calibrated loudness, relative simultaneous masking, descriptors, and explicit playback transfer | Root contracts remain lightweight; numerical runtimes use existing audio/NumPy dependencies and have no providers, UI, API or DAW dependencies |
 | `noisyne/application/` | Canonical application facade and use-case orchestration | May compose domain modules; no Desktop imports |
 | `noisyne/orchestration/` and `noisyne/pipeline/` | Implemented alternate orchestration/stage infrastructure | Not the frozen V1 CLI production path |
 | `noisyne/integration/` | Deterministic DAW-named workflow export contracts | No live DAW communication or control |
@@ -87,6 +87,16 @@ sharpness, roughness, fluctuation strength and tonality remain unavailable until
 their complete standard prerequisites and independent validation exist, while
 warmth, harshness, punch, density and width receive no invented scores. Runtime
 curves remain outside transport contracts. Sprint 1-4 behavior is unchanged.
+
+Sprint 6 adds `noisyne/perception/transfer_contracts.py` and
+`noisyne/perception/transfer.py`. It separates playback context from explicit,
+versioned transfer evidence. Tabulated magnitude evidence supports bounded
+log-frequency/linear-dB interpolation but cannot be transformed into audio or
+used to invent phase. Executable transfer requires a caller-supplied real FIR
+at the exact audio sample rate and performs channel-preserving full linear
+convolution without resampling, clipping, normalization, downmix or nonlinear
+device simulation. No generic phone, laptop, speaker, headphone or room preset
+is claimed. Sprint 1-5 behavior is unchanged.
 
 The planned ownership boundaries are:
 

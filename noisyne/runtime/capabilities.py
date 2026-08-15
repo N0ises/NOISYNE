@@ -220,6 +220,33 @@ registry.register(
 
 registry.register(
     Capability(
+        name="playback_profile_foundation",
+        description="Versioned playback transfer identity, provenance, and evidence contracts",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Caller-supplied, versioned measurement/reference/user evidence with explicit "
+            "acoustic scope and normalization. No generic device-category presets."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="playback_linear_transfer",
+        description="Deterministic channel-preserving transfer by explicit real FIR convolution",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Validated AudioData and caller-supplied float64 read-only FIR at the exact audio "
+            "sample rate. No clipping, normalization, resampling, downmix, or nonlinear model."
+        ),
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,

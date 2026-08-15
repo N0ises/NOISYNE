@@ -1,8 +1,7 @@
 """Lightweight V2 perceptual domain contracts.
 
-The NumPy auditory runtime remains in ``noisyne.perception.auditory`` so this
-package import stays lightweight. No loudness, masking, descriptor, playback,
-or translation algorithm is implemented here.
+Numerical runtimes remain in their owning modules so this package import stays
+lightweight. No translation algorithm is implemented here.
 """
 
 from .auditory_contracts import (
@@ -71,6 +70,25 @@ from .results import (
     TranslationRiskDimension,
     descriptor_observation,
 )
+from .transfer_contracts import (
+    PLAYBACK_TRANSFER_METHOD_ID,
+    PLAYBACK_TRANSFER_METHOD_VERSION,
+    PLAYBACK_TRANSFER_SCHEMA_VERSION,
+    ConvolutionBoundaryPolicy,
+    ExtrapolationPolicy,
+    ImpulseResponseSummary,
+    MagnitudeInterpolationPolicy,
+    MagnitudeResponseSummary,
+    MaximumLinearOutputEvidence,
+    PlaybackTransferApplicationSummary,
+    PlaybackTransferProfile,
+    TransferAcousticScope,
+    TransferChannelTopology,
+    TransferGainBasis,
+    TransferKind,
+    TransferPhaseBasis,
+    TransferProvenance,
+)
 
 __all__ = [
     "AUDITORY_FRONTEND_METHOD_ID",
@@ -81,6 +99,9 @@ __all__ = [
     "LOUDNESS_FOUNDATION_METHOD_ID",
     "LOUDNESS_FOUNDATION_METHOD_VERSION",
     "PERCEPTUAL_SCHEMA_VERSION",
+    "PLAYBACK_TRANSFER_METHOD_ID",
+    "PLAYBACK_TRANSFER_METHOD_VERSION",
+    "PLAYBACK_TRANSFER_SCHEMA_VERSION",
     "SIMULTANEOUS_MASKING_METHOD_ID",
     "SIMULTANEOUS_MASKING_METHOD_VERSION",
     "SIMULTANEOUS_MASKING_SCHEMA_VERSION",
@@ -92,16 +113,22 @@ __all__ = [
     "ComponentStatus",
     "Confidence",
     "ConfidenceBasis",
+    "ConvolutionBoundaryPolicy",
     "DescriptorClass",
     "DescriptorDefinition",
     "DescriptorImplementationState",
     "EvidenceSource",
+    "ExtrapolationPolicy",
     "FrequencyMaskingResult",
     "FrequencyRange",
     "FrequencyResponseCompensation",
+    "ImpulseResponseSummary",
     "ListeningLevel",
     "LoudnessCalibration",
+    "MagnitudeInterpolationPolicy",
+    "MagnitudeResponseSummary",
     "MaskingEvent",
+    "MaximumLinearOutputEvidence",
     "Measurement",
     "MethodMetadata",
     "MonoCompatibility",
@@ -115,11 +142,19 @@ __all__ = [
     "PlaybackConstraint",
     "PlaybackProfile",
     "PlaybackProfileReference",
+    "PlaybackTransferApplicationSummary",
+    "PlaybackTransferProfile",
     "RelativeMaskingPairContext",
     "ResultState",
     "ResultStatus",
     "ScalarValue",
     "TimeRange",
+    "TransferAcousticScope",
+    "TransferChannelTopology",
+    "TransferGainBasis",
+    "TransferKind",
+    "TransferPhaseBasis",
+    "TransferProvenance",
     "TranslationResult",
     "TranslationRiskDimension",
     "UnitBasis",

@@ -59,6 +59,8 @@ the start of V2. Machine availability must be evaluated separately.
 | Frequency Masking Foundation | Implemented | Pairwise common-gain relative excitation margin only; no threshold, events, full-mix attribution or temporal masking |
 | Perceptual Descriptors Foundation | Implemented | Ten-descriptor scientific taxonomy; unavailable descriptors carry explicit blockers and no substitute values |
 | Brightness Correlate | Implemented | Power-spectral centroid in Hz only; no normalized or universal perceived-brightness score |
+| Playback Profile Foundation | Implemented | Versioned provenance and bounded transfer-evidence contracts; no generic device presets or inferred room/headphone response |
+| Playback Linear Transfer | Implemented | Caller-supplied real FIR, exact-rate full linear convolution; no resampling, downmix, clipping, normalization or nonlinear reproduction model |
 | Audio Context | Production | Deterministic rule-based context |
 | Engineering Analysis | Production | Deterministic rule engine |
 | CLAP Embedding | Verified | Local/downloaded model required; model not bundled |
@@ -98,7 +100,7 @@ with a successful runtime availability probe.
 | Local API | Planned (Sprint 16) | No tracked API implementation at V2 baseline |
 | Desktop V1 | Frozen release candidate | Exists on isolated `desktop-ui`; not runtime-registered here |
 | Desktop V2 Integration | Planned (Sprint 17) | Through `V2ApplicationAdapter` after service/API contracts |
-| V2 Perceptual Core | Planned | Auditory, loudness-calibration, relative-masking and descriptor-taxonomy foundations plus a brightness correlate are Implemented; standardized descriptor engines, absolute masking and translation remain planned |
+| V2 Perceptual Core | Planned | Auditory, loudness-calibration, relative-masking, descriptor-taxonomy and playback-transfer foundations plus a brightness correlate are Implemented; standardized descriptor engines, absolute masking and translation remain planned |
 | ONNX | Benchmark spike (Sprint 14) | No adoption or runtime availability claim |
 | Voice / Agent Functionality | Future | Outside V2 |
 
