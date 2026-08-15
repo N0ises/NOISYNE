@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Protocol, runtime_checkable
@@ -17,12 +18,15 @@ from .common import (
 from .mix_intelligence_contracts import (
     MixCriterionOperator,
     MixEvidenceDimensionId,
+    MixIntelligenceResult,
     MixIssueType,
 )
 
 PERCEPTUAL_REASONING_METHOD_ID = "noisyne.grounded_perceptual_reasoning_foundation"
 PERCEPTUAL_REASONING_METHOD_VERSION = "1.0.0"
-PERCEPTUAL_REASONING_SCHEMA_VERSION = "1.0.0"
+PERCEPTUAL_REASONING_SCHEMA_VERSION = "2.0.0"
+SOURCE_RESULT_DIGEST_METHOD_ID = "noisyne.mix_intelligence_canonical_json_sha256"
+SOURCE_RESULT_DIGEST_METHOD_VERSION = "1.0.0"
 
 
 class ReasoningStatementKind(str, Enum):
@@ -87,6 +91,8 @@ class ReasoningErrorCode(str, Enum):
 @dataclass(frozen=True, slots=True)
 class GroundingFact(JsonContract):
     fact_id: str
+    semantic_id: str
+    source_result_digest: str
     fact_type: GroundingFactType
     value: ScalarValue
     source_contract: str
@@ -97,6 +103,7 @@ class GroundingFact(JsonContract):
     def __post_init__(self) -> None:
         for field_name in (
             "fact_id",
+            "semantic_id",
             "source_contract",
             "source_identity",
         ):
@@ -105,11 +112,24 @@ class GroundingFact(JsonContract):
             raise TypeError("fact_type must be a GroundingFactType")
         if not isinstance(self.value, ScalarValue):
             raise TypeError("fact value must be a ScalarValue")
+        _require_sha256_digest(self.source_result_digest, "source_result_digest")
         if (self.issue_id is None) is not (self.criterion_id is None):
             raise ValueError("fact issue_id and criterion_id must be supplied together")
         if self.issue_id is not None:
             _require_identifier(self.issue_id, "issue_id")
             _require_identifier(self.criterion_id, "criterion_id")
+        expected_id = grounding_fact_id(
+            self.semantic_id,
+            self.source_result_digest,
+            self.fact_type,
+            self.value,
+            self.source_contract,
+            self.source_identity,
+            self.issue_id,
+            self.criterion_id,
+        )
+        if self.fact_id != expected_id:
+            raise ValueError("fact_id must be derived from the complete bound fact content")
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,6 +192,8 @@ class ReasoningProviderIdentity(JsonContract):
 @dataclass(frozen=True, slots=True)
 class ReasoningRequest(JsonContract):
     request_id: str
+    source_result_digest: str
+    source_fact_set_digest: str
     source_policy_id: str
     source_policy_version: str
     issue_ids: list[str]
@@ -180,6 +202,8 @@ class ReasoningRequest(JsonContract):
     def __post_init__(self) -> None:
         for field_name in ("request_id", "source_policy_id", "source_policy_version"):
             _require_identifier(getattr(self, field_name), field_name)
+        _require_sha256_digest(self.source_result_digest, "source_result_digest")
+        _require_sha256_digest(self.source_fact_set_digest, "source_fact_set_digest")
         _validate_string_list(self.issue_ids, "issue_ids")
         if len(self.issue_ids) != len(set(self.issue_ids)):
             raise ValueError("reasoning request issue_ids must be unique")
@@ -190,11 +214,26 @@ class ReasoningRequest(JsonContract):
         fact_ids = [item.fact_id for item in self.allowed_facts]
         if len(fact_ids) != len(set(fact_ids)):
             raise ValueError("reasoning request facts must use unique fact IDs")
+        if len({item.semantic_id for item in self.allowed_facts}) != len(self.allowed_facts):
+            raise ValueError("reasoning request facts must use unique semantic IDs")
+        if any(
+            item.source_result_digest != self.source_result_digest for item in self.allowed_facts
+        ):
+            raise ValueError("reasoning request facts must bind to its source result digest")
+        if grounding_fact_set_digest(self.allowed_facts) != self.source_fact_set_digest:
+            raise ValueError("reasoning request facts must match its exact ordered fact-set digest")
         if any(
             item.issue_id is not None and item.issue_id not in self.issue_ids
             for item in self.allowed_facts
         ):
             raise ValueError("reasoning request facts must belong to declared issues")
+        if self.request_id != reasoning_request_id(self.source_result_digest, self.issue_ids):
+            raise ValueError("request_id must bind source truth, reasoning method, and issue IDs")
+        _validate_policy_identity_fact(
+            self.allowed_facts,
+            self.source_policy_id,
+            self.source_policy_version,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -336,6 +375,9 @@ class ReasoningError(JsonContract):
 @dataclass(frozen=True, slots=True)
 class PerceptualReasoningResult(JsonContract):
     request_id: str
+    source_result_digest: str
+    source_fact_set_digest: str
+    source_result: MixIntelligenceResult
     state: PerceptualReasoningState
     provider: ReasoningProviderIdentity
     source_policy_id: str
@@ -358,6 +400,12 @@ class PerceptualReasoningResult(JsonContract):
             "schema_version",
         ):
             _require_identifier(getattr(self, field_name), field_name)
+        _require_sha256_digest(self.source_result_digest, "source_result_digest")
+        _require_sha256_digest(self.source_fact_set_digest, "source_fact_set_digest")
+        if not isinstance(self.source_result, MixIntelligenceResult):
+            raise TypeError("source_result must be a MixIntelligenceResult")
+        if source_result_digest(self.source_result) != self.source_result_digest:
+            raise ValueError("source_result_digest must match the exact Sprint 10 source result")
         if not isinstance(self.state, PerceptualReasoningState):
             raise TypeError("state must be a PerceptualReasoningState")
         if not isinstance(self.provider, ReasoningProviderIdentity):
@@ -376,6 +424,33 @@ class PerceptualReasoningResult(JsonContract):
         fact_by_id = {item.fact_id: item for item in self.facts}
         if len(fact_by_id) != len(self.facts):
             raise ValueError("reasoning result facts must use unique fact IDs")
+        if len({item.semantic_id for item in self.facts}) != len(self.facts):
+            raise ValueError("reasoning result facts must use unique semantic IDs")
+        if any(item.source_result_digest != self.source_result_digest for item in self.facts):
+            raise ValueError("reasoning result facts must bind to its source result digest")
+        if grounding_fact_set_digest(self.facts) != self.source_fact_set_digest:
+            raise ValueError("reasoning result facts must match its exact ordered fact-set digest")
+        # Import lazily so the one canonical runtime extractor can remain the only fact
+        # construction path without creating an import-time contract/runtime cycle.
+        from .reasoning import extract_grounding_facts
+
+        if self.facts != extract_grounding_facts(self.source_result, self.source_result_digest):
+            raise ValueError(
+                "reasoning result facts must equal the canonical source fact whitelist"
+            )
+        issue_ids = [item.issue_id for item in self.source_result.issues]
+        if self.request_id != reasoning_request_id(self.source_result_digest, issue_ids):
+            raise ValueError("result request_id must bind source truth, method, and issue IDs")
+        if (
+            self.source_policy_id != self.source_result.policy.policy_id
+            or self.source_policy_version != self.source_result.policy.version
+        ):
+            raise ValueError("source policy identity must match the bound Sprint 10 source result")
+        _validate_policy_identity_fact(
+            self.facts,
+            self.source_policy_id,
+            self.source_policy_version,
+        )
         if not isinstance(self.statements, list) or any(
             not isinstance(item, ReasoningStatement) for item in self.statements
         ):
@@ -405,12 +480,35 @@ class PerceptualReasoningResult(JsonContract):
         ):
             raise TypeError("errors must contain ReasoningError values")
         if self.state is PerceptualReasoningState.COMPLETED:
-            if not self.statements or self.errors:
+            if not self.statements or self.errors or self.summary.provider_statement_count == 0:
                 raise ValueError("completed reasoning requires statements and no errors")
         elif self.statements:
             raise ValueError("non-completed reasoning must not contain accepted statements")
         elif not self.errors:
             raise ValueError("non-completed reasoning requires a structured error")
+        if self.state is not PerceptualReasoningState.COMPLETED:
+            expected_code = ReasoningErrorCode(self.state.value)
+            if len(self.errors) != 1 or self.errors[0].code is not expected_code:
+                raise ValueError("non-completed reasoning requires its exact fatal error")
+        if self.state is PerceptualReasoningState.GROUNDING_REJECTED:
+            if (
+                self.summary.rejected_statement_count == 0
+                or self.summary.provider_statement_count != self.summary.rejected_statement_count
+            ):
+                raise ValueError("grounding rejection requires one or more rejected statements")
+        elif self.state is PerceptualReasoningState.NO_GROUNDED_STATEMENTS:
+            if self.summary.provider_statement_count != 0:
+                raise ValueError("no-grounded-statements state requires zero provider statements")
+        elif (
+            self.state
+            in {
+                PerceptualReasoningState.PROVIDER_UNAVAILABLE,
+                PerceptualReasoningState.TIMEOUT,
+                PerceptualReasoningState.INVALID_PROVIDER_RESPONSE,
+            }
+            and self.summary.provider_statement_count != 0
+        ):
+            raise ValueError("provider failure states require zero provider statements")
         if not isinstance(self.confidence, Confidence):
             raise TypeError("confidence must be Confidence")
         if (
@@ -420,6 +518,105 @@ class PerceptualReasoningResult(JsonContract):
             raise ValueError("reasoning confidence must remain unscored with unknown basis")
         _validate_string_list(self.assumptions, "assumptions")
         _validate_string_list(self.limitations, "limitations")
+
+
+def source_result_digest(source: MixIntelligenceResult) -> str:
+    """Return the versioned SHA-256 content identity of a Sprint 10 result."""
+    if not isinstance(source, MixIntelligenceResult):
+        raise TypeError("source must be a MixIntelligenceResult")
+    return _sha256_digest(_canonical_json_bytes(source.to_dict()))
+
+
+def grounding_fact_id(
+    semantic_id: str,
+    source_digest: str,
+    fact_type: GroundingFactType,
+    value: ScalarValue,
+    source_contract: str,
+    source_identity: str,
+    issue_id: str | None,
+    criterion_id: str | None,
+) -> str:
+    """Derive a readable, content-bound fact identity."""
+    _require_identifier(semantic_id, "semantic_id")
+    _require_sha256_digest(source_digest, "source_digest")
+    material = {
+        "binding_method": SOURCE_RESULT_DIGEST_METHOD_ID,
+        "binding_version": SOURCE_RESULT_DIGEST_METHOD_VERSION,
+        "criterion_id": criterion_id,
+        "fact_type": fact_type.value,
+        "issue_id": issue_id,
+        "semantic_id": semantic_id,
+        "source_contract": source_contract,
+        "source_identity": source_identity,
+        "source_result_digest": source_digest,
+        "value": value.to_dict(),
+    }
+    return f"fact.{semantic_id}.{hashlib.sha256(_canonical_json_bytes(material)).hexdigest()}"
+
+
+def grounding_fact_set_digest(facts: list[GroundingFact]) -> str:
+    """Commit to the complete canonical ordered fact whitelist."""
+    if not isinstance(facts, list) or any(not isinstance(item, GroundingFact) for item in facts):
+        raise TypeError("facts must contain GroundingFact values")
+    material = {
+        "binding_method": SOURCE_RESULT_DIGEST_METHOD_ID,
+        "binding_version": SOURCE_RESULT_DIGEST_METHOD_VERSION,
+        "facts": [item.to_dict() for item in facts],
+    }
+    return _sha256_digest(_canonical_json_bytes(material))
+
+
+def reasoning_request_id(source_digest: str, issue_ids: list[str]) -> str:
+    _require_sha256_digest(source_digest, "source_digest")
+    _validate_string_list(issue_ids, "issue_ids")
+    material = {
+        "issue_ids": issue_ids,
+        "reasoning_method_id": PERCEPTUAL_REASONING_METHOD_ID,
+        "reasoning_method_version": PERCEPTUAL_REASONING_METHOD_VERSION,
+        "source_result_digest": source_digest,
+    }
+    return f"reasoning_request.{hashlib.sha256(_canonical_json_bytes(material)).hexdigest()}"
+
+
+def _canonical_json_bytes(payload: object) -> bytes:
+    return json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+
+
+def _sha256_digest(payload: bytes) -> str:
+    return f"sha256:{hashlib.sha256(payload).hexdigest()}"
+
+
+def _require_sha256_digest(value: str, field_name: str) -> None:
+    if (
+        not isinstance(value, str)
+        or not value.startswith("sha256:")
+        or len(value) != 71
+        or any(character not in "0123456789abcdef" for character in value[7:])
+    ):
+        raise ValueError(f"{field_name} must be a canonical SHA-256 digest")
+
+
+def _ordered_issue_ids(facts: list[GroundingFact]) -> list[str]:
+    issue_ids: list[str] = []
+    for fact in facts:
+        if fact.issue_id is not None and fact.issue_id not in issue_ids:
+            issue_ids.append(fact.issue_id)
+    return issue_ids
+
+
+def _validate_policy_identity_fact(
+    facts: list[GroundingFact], policy_id: str, policy_version: str
+) -> None:
+    matches = [item for item in facts if item.fact_type is GroundingFactType.POLICY_IDENTITY]
+    if len(matches) != 1 or matches[0].value.value != f"{policy_id}@{policy_version}":
+        raise ValueError("source policy identity must match its bound policy fact")
 
 
 def reasoning_statement_id(
@@ -607,6 +804,8 @@ __all__ = [
     "PERCEPTUAL_REASONING_METHOD_ID",
     "PERCEPTUAL_REASONING_METHOD_VERSION",
     "PERCEPTUAL_REASONING_SCHEMA_VERSION",
+    "SOURCE_RESULT_DIGEST_METHOD_ID",
+    "SOURCE_RESULT_DIGEST_METHOD_VERSION",
     "GroundingFact",
     "GroundingFactType",
     "PerceptualReasoningProvider",
@@ -625,5 +824,9 @@ __all__ = [
     "ReasoningRequest",
     "ReasoningStatement",
     "ReasoningStatementKind",
+    "grounding_fact_id",
+    "grounding_fact_set_digest",
+    "reasoning_request_id",
     "render_reasoning_statement",
+    "source_result_digest",
 ]

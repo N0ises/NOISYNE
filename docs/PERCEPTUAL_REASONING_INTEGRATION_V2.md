@@ -4,8 +4,8 @@
 
 Sprint 11 adds a grounded explanation layer inside the existing NOISYNE V2 backend:
 
-`MixIntelligenceResult -> fact extraction -> constrained provider selection -> grounding validator
--> canonical renderer -> PerceptualReasoningResult`
+`MixIntelligenceResult -> source digest -> fact extraction -> constrained provider selection ->
+grounding validator -> canonical renderer -> PerceptualReasoningResult`
 
 The Sprint 10 result, its exact policy and criteria, issue evidence, assumptions, limitations, and
 evidence references remain authoritative. A provider can select approved statement templates and
@@ -74,6 +74,29 @@ All public result statements have `GROUNDED` status. Rejected provider candidate
 to counts and a bounded result state; unsupported text is never serialized as an accepted
 statement.
 
+## Source-truth content identity
+
+Every request and result is bound to the exact authoritative `MixIntelligenceResult` by
+`source_result_digest`. Digest method
+`noisyne.mix_intelligence_canonical_json_sha256`, version `1.0.0`, serializes
+`MixIntelligenceResult.to_dict()` with Python `json.dumps` using `sort_keys=True`,
+`separators=(",", ":")`, `ensure_ascii=False`, and `allow_nan=False`, encodes the result as UTF-8,
+and applies SHA-256. The transport form is `sha256:<lowercase-hex>`.
+
+This covers the complete Sprint 10 transport: policy, criteria, evaluations, issues, exact scalar
+values and unit semantics, identities, confidence, assumptions, and limitations. Equivalent JSON
+round trips and mapping key order produce the same digest; any canonical source-content change
+produces a different content identity. A result carries its source result once so public contract
+validation can independently re-extract and compare the exact ordered fact whitelist. This is
+necessary to reject a forged-but-internally-consistent fact set rather than merely checking that
+its hashes agree with itself.
+
+SHA-256 here is a deterministic content identity and integrity commitment. It is not a signature,
+does not authenticate the producer, and does not provide trusted storage or remote attestation.
+The required source, digest, and fact-binding fields make the public transport incompatible with
+the initial Sprint 11 shape, so its schema version is `2.0.0`; the reasoning method remains
+`1.0.0` because statement selection and rendering semantics did not change.
+
 ## Deterministic fact whitelist
 
 Each triggered Sprint 10 issue produces identified facts for:
@@ -90,10 +113,17 @@ Result-level facts separately retain exact policy identity, all Sprint 10 summar
 source result's unscored/unknown confidence semantics. They are available to providers as data but
 are not authorized by any Sprint 11 statement template.
 
-Fact IDs use `fact.<issue_id>.<semantic-suffix>`. Assumption and limitation facts also include a
-short content hash. Every fact retains `source_contract`, `source_identity`, `issue_id`, and
-`criterion_id`. Provider-selected facts must exist exactly and must all belong to the selected
-issue and criterion. Another issue's evidence cannot be borrowed.
+Fact IDs use `fact.<readable-semantic-id>.<sha256-hex>`. Their canonical hash material includes the
+digest method/version, exact source-result digest, semantic ID, fact type, complete serialized
+`ScalarValue` (including value, unit basis, unit, scale, and normalized state), source contract,
+source identity, issue ID, and criterion ID. `GroundingFact` recomputes this identity during direct
+construction and `from_dict`, so copied IDs fail after any bound field changes. Every fact also
+carries its source-result digest.
+
+Requests and results commit to the complete ordered fact whitelist with a second canonical SHA-256
+digest. Results additionally retain the authoritative Sprint 10 source result and require their
+facts to equal the one canonical extraction exactly. Removal, reordering, injection, duplicate
+semantic facts, cross-source facts, and self-consistent forged statements are rejected.
 
 Policy titles, descriptions, sources, assumptions, and limitations are data. They do not become
 instructions and cannot authorize a template, fact, action, or final rendered phrase.
@@ -172,8 +202,8 @@ They do not diagnose causes or infer vocals, bass, drums, instruments, buses, or
 The source issue order from Sprint 10 is authoritative. Within each issue, statements sort by
 observation, policy interpretation, limitation, and review suggestion, then deterministic statement
 ID. Statement IDs are SHA-256-derived from provider ID, issue ID, statement kind, template ID, and
-sorted fact IDs. Request identity derives from exact policy/method identity and issue IDs. Random
-UUIDs are not used.
+sorted fact IDs. Request identity is SHA-256-derived from the exact source-result digest, reasoning
+method ID/version, and ordered issue IDs. Random UUIDs are not used.
 
 ## Confidence, errors, timeout, and cancellation
 

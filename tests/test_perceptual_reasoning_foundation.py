@@ -13,6 +13,7 @@ import pytest
 from noisyne.perception import (
     Confidence,
     ConfidenceBasis,
+    GroundingFact,
     GroundingFactType,
     MethodMetadata,
     MixCriterionEvaluation,
@@ -50,7 +51,14 @@ from noisyne.perception.reasoning import (
     DeterministicReasoningProvider,
     PerceptualReasoningEngine,
 )
-from noisyne.perception.reasoning_contracts import ReasoningRequest
+from noisyne.perception.reasoning_contracts import (
+    ReasoningRequest,
+    grounding_fact_id,
+    grounding_fact_set_digest,
+    reasoning_statement_id,
+    render_reasoning_statement,
+    source_result_digest,
+)
 from noisyne.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,6 +118,7 @@ def _mix_result(
     issue_type: MixIssueType = MixIssueType.REFERENCE_DEVIATION,
     triggered: bool = True,
     malicious_text: str | None = None,
+    actual_delta: float = 0.0,
 ) -> MixIntelligenceResult:
     criteria: list[MixIssueCriterion] = []
     evaluations: list[MixCriterionEvaluation] = []
@@ -117,6 +126,8 @@ def _mix_result(
     for index in range(count):
         criterion_id = f"criterion.{index:03d}"
         source_type, dimension, operator, threshold, actual = _criterion_values(issue_type)
+        if actual_delta and type(actual.value) in (int, float):
+            actual = replace(actual, value=float(actual.value) + actual_delta)
         if not triggered:
             actual = _non_triggering_value(threshold)
         criterion = MixIssueCriterion(
@@ -493,6 +504,7 @@ def test_exact_transport_values_are_preserved_while_text_is_canonically_rounded(
 def test_result_round_trip_is_json_safe_and_excludes_sensitive_payloads() -> None:
     result = PerceptualReasoningEngine().explain(_mix_result())
     payload = result.to_dict()
+    assert result.schema_version == "2.0.0"
     assert PerceptualReasoningResult.from_dict(payload) == result
     serialized = json.dumps(payload, allow_nan=False).lower()
     for forbidden in (
@@ -509,24 +521,174 @@ def test_result_round_trip_is_json_safe_and_excludes_sensitive_payloads() -> Non
 
 def test_forged_statement_fact_is_rejected_by_public_result_transport() -> None:
     result = PerceptualReasoningEngine().explain(_mix_result())
-    forged_fact = replace(result.statements[0].source_facts[0], source_identity="forged")
-    forged_facts = [forged_fact, *result.statements[0].source_facts[1:]]
-    with pytest.raises(ValueError, match="statement grounding"):
-        replace(result.statements[0], source_facts=forged_facts)
+    with pytest.raises(ValueError, match="fact_id"):
+        replace(result.statements[0].source_facts[0], source_identity="forged")
 
-    forged_reference = replace(
-        result.statements[0].evidence_references[0], source_identity="forged"
+
+def test_source_result_digest_is_canonical_stable_and_round_trips() -> None:
+    source = _mix_result()
+    payload = source.to_dict()
+    reordered = dict(reversed(list(payload.items())))
+
+    digest = source_result_digest(source)
+    assert digest.startswith("sha256:")
+    assert len(digest) == 71
+    assert source_result_digest(MixIntelligenceResult.from_dict(reordered)) == digest
+    assert source_result_digest(MixIntelligenceResult.from_dict(payload)) == digest
+
+
+def test_evidence_content_changes_source_digest_request_and_fact_ids() -> None:
+    first_source = _mix_result(actual_delta=0.0)
+    second_source = _mix_result(actual_delta=0.25)
+    first = PerceptualReasoningEngine().explain(first_source)
+    second = PerceptualReasoningEngine().explain(second_source)
+
+    assert first_source.policy == second_source.policy
+    assert first.source_result_digest != second.source_result_digest
+    assert first.request_id != second.request_id
+    assert {item.fact_id for item in first.facts} != {item.fact_id for item in second.facts}
+
+
+def test_request_and_result_carry_the_same_source_truth_commitments() -> None:
+    provider = FakeProvider(_deterministic_response)
+    source = _mix_result()
+    result = PerceptualReasoningEngine().explain(source, provider)
+
+    assert provider.last_request is not None
+    assert provider.last_request.source_result_digest == source_result_digest(source)
+    assert result.source_result_digest == provider.last_request.source_result_digest
+    assert result.source_fact_set_digest == provider.last_request.source_fact_set_digest
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "value",
+        "unit",
+        "normalized",
+        "scale",
+        "issue_id",
+        "criterion_id",
+        "fact_type",
+    ],
+)
+def test_fact_content_mutation_with_old_id_is_rejected(mutation: str) -> None:
+    result = PerceptualReasoningEngine().explain(_mix_result())
+    fact = next(item for item in result.facts if item.fact_type is GroundingFactType.EVIDENCE_VALUE)
+    payload = fact.to_dict()
+    if mutation == "value":
+        payload["value"]["value"] = float(payload["value"]["value"]) + 0.5
+    elif mutation == "unit":
+        payload["value"]["unit"] = "dBFS"
+    elif mutation == "normalized":
+        fact = next(
+            item for item in result.facts if item.fact_type is GroundingFactType.SUMMARY_COUNT
+        )
+        payload = fact.to_dict()
+        payload["value"]["value"] = 0.5
+        payload["value"]["normalized"] = True
+    elif mutation == "scale":
+        fact = next(
+            item for item in result.facts if item.fact_type is GroundingFactType.SUMMARY_COUNT
+        )
+        payload = fact.to_dict()
+        payload["value"]["scale"] = "forged_count_scale"
+    elif mutation == "issue_id":
+        payload["issue_id"] = "mix_issue.forged"
+    elif mutation == "criterion_id":
+        payload["criterion_id"] = "criterion.forged"
+    else:
+        payload["fact_type"] = GroundingFactType.THRESHOLD.value
+
+    with pytest.raises(ValueError, match="fact_id"):
+        GroundingFact.from_dict(payload)
+
+
+def test_self_consistent_forged_statement_is_rejected_by_source_fact_whitelist() -> None:
+    result = PerceptualReasoningEngine().explain(_mix_result())
+    statement = result.statements[0]
+    original = next(
+        item
+        for item in statement.source_facts
+        if item.fact_type is GroundingFactType.EVIDENCE_VALUE
     )
+    forged_value = replace(original.value, value=12.0)
+    forged_id = grounding_fact_id(
+        original.semantic_id,
+        original.source_result_digest,
+        original.fact_type,
+        forged_value,
+        original.source_contract,
+        original.source_identity,
+        original.issue_id,
+        original.criterion_id,
+    )
+    forged = replace(original, fact_id=forged_id, value=forged_value)
+    statement_facts = [
+        forged if item.fact_id == original.fact_id else item for item in statement.source_facts
+    ]
+    statement_references = [
+        replace(item, fact_id=forged_id) if item.fact_id == original.fact_id else item
+        for item in statement.evidence_references
+    ]
     forged_statement = replace(
-        result.statements[0],
-        source_facts=forged_facts,
-        evidence_references=[
-            forged_reference,
-            *result.statements[0].evidence_references[1:],
-        ],
+        statement,
+        statement_id=reasoning_statement_id(
+            result.provider.provider_id,
+            statement.issue_id,
+            statement.kind,
+            statement.template_id,
+            [item.fact_id for item in statement_facts],
+        ),
+        text=render_reasoning_statement(
+            statement.kind,
+            statement.template_id,
+            statement_facts,
+        ),
+        source_facts=statement_facts,
+        evidence_references=statement_references,
     )
-    with pytest.raises(ValueError, match="source fact"):
-        replace(result, statements=[forged_statement, *result.statements[1:]])
+    result_facts = [forged if item.fact_id == original.fact_id else item for item in result.facts]
+
+    with pytest.raises(ValueError, match="canonical source fact whitelist"):
+        replace(
+            result,
+            facts=result_facts,
+            statements=[forged_statement, *result.statements[1:]],
+            source_fact_set_digest=grounding_fact_set_digest(result_facts),
+        )
+
+
+def test_cross_source_fact_is_rejected_even_when_policy_and_issue_ids_match() -> None:
+    first = PerceptualReasoningEngine().explain(_mix_result())
+    second = PerceptualReasoningEngine().explain(_mix_result(actual_delta=0.25))
+    foreign = next(
+        item for item in second.facts if item.fact_type is GroundingFactType.EVIDENCE_VALUE
+    )
+    target = next(
+        item for item in first.facts if item.fact_type is GroundingFactType.EVIDENCE_VALUE
+    )
+    facts = [foreign if item.fact_id == target.fact_id else item for item in first.facts]
+
+    with pytest.raises(ValueError, match="source result digest"):
+        replace(first, facts=facts)
+
+
+@pytest.mark.parametrize("mutation", ["alter", "remove", "inject", "reorder"])
+def test_result_from_dict_rejects_fact_whitelist_mutation(mutation: str) -> None:
+    payload = PerceptualReasoningEngine().explain(_mix_result()).to_dict()
+    if mutation == "alter":
+        fact = next(item for item in payload["facts"] if item["fact_type"] == "evidence_value")
+        fact["value"]["value"] = float(fact["value"]["value"]) + 1.0
+    elif mutation == "remove":
+        payload["facts"].pop()
+    elif mutation == "inject":
+        payload["facts"].append(dict(payload["facts"][-1]))
+    else:
+        payload["facts"][0], payload["facts"][1] = payload["facts"][1], payload["facts"][0]
+
+    with pytest.raises(ValueError):
+        PerceptualReasoningResult.from_dict(payload)
 
 
 def test_forged_canonical_text_is_rejected_directly_and_from_dict() -> None:

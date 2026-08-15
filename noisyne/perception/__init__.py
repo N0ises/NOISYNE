@@ -97,6 +97,8 @@ from .reasoning_contracts import (
     PERCEPTUAL_REASONING_METHOD_ID,
     PERCEPTUAL_REASONING_METHOD_VERSION,
     PERCEPTUAL_REASONING_SCHEMA_VERSION,
+    SOURCE_RESULT_DIGEST_METHOD_ID,
+    SOURCE_RESULT_DIGEST_METHOD_VERSION,
     GroundingFact,
     GroundingFactType,
     PerceptualReasoningProvider,
@@ -115,6 +117,7 @@ from .reasoning_contracts import (
     ReasoningRequest,
     ReasoningStatement,
     ReasoningStatementKind,
+    source_result_digest,
 )
 from .reference_contracts import (
     REFERENCE_EMBEDDING_COSINE_METHOD_ID,
@@ -221,6 +224,8 @@ __all__ = [
     "SIMULTANEOUS_MASKING_METHOD_ID",
     "SIMULTANEOUS_MASKING_METHOD_VERSION",
     "SIMULTANEOUS_MASKING_SCHEMA_VERSION",
+    "SOURCE_RESULT_DIGEST_METHOD_ID",
+    "SOURCE_RESULT_DIGEST_METHOD_VERSION",
     "TRANSLATION_EVIDENCE_METHOD_ID",
     "TRANSLATION_EVIDENCE_METHOD_VERSION",
     "TRANSLATION_EVIDENCE_SCHEMA_VERSION",
@@ -346,4 +351,5 @@ __all__ = [
     "UnitBasis",
     "descriptor_observation",
     "descriptor_taxonomy",
+    "source_result_digest",
 ]

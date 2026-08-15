@@ -26,8 +26,12 @@ from .reasoning_contracts import (
     ReasoningRequest,
     ReasoningStatement,
     ReasoningStatementKind,
+    grounding_fact_id,
+    grounding_fact_set_digest,
+    reasoning_request_id,
     reasoning_statement_id,
     render_reasoning_statement,
+    source_result_digest,
 )
 
 _OBSERVATION_TEMPLATE = "observation.scalar"
@@ -220,9 +224,16 @@ class PerceptualReasoningEngine:
         identity = selected_provider.identity
         if not isinstance(identity, ReasoningProviderIdentity):
             raise TypeError("reasoning provider identity must be ReasoningProviderIdentity")
-        facts = extract_grounding_facts(source)
+        source_digest = source_result_digest(source)
+        facts = extract_grounding_facts(source, source_digest)
+        fact_set_digest = grounding_fact_set_digest(facts)
         request = ReasoningRequest(
-            request_id=_request_id(source),
+            request_id=reasoning_request_id(
+                source_digest,
+                [item.issue_id for item in source.issues],
+            ),
+            source_result_digest=source_digest,
+            source_fact_set_digest=fact_set_digest,
             source_policy_id=source.policy.policy_id,
             source_policy_version=source.policy.version,
             issue_ids=[item.issue_id for item in source.issues],
@@ -231,6 +242,7 @@ class PerceptualReasoningEngine:
         if identity.availability is ReasoningProviderAvailability.UNAVAILABLE:
             return _failed_result(
                 request,
+                source,
                 identity,
                 PerceptualReasoningState.PROVIDER_UNAVAILABLE,
                 ReasoningErrorCode.PROVIDER_UNAVAILABLE,
@@ -239,6 +251,7 @@ class PerceptualReasoningEngine:
         if not identity.structured_output_supported:
             return _failed_result(
                 request,
+                source,
                 identity,
                 PerceptualReasoningState.INVALID_PROVIDER_RESPONSE,
                 ReasoningErrorCode.INVALID_PROVIDER_RESPONSE,
@@ -249,6 +262,7 @@ class PerceptualReasoningEngine:
         except TimeoutError:
             return _failed_result(
                 request,
+                source,
                 identity,
                 PerceptualReasoningState.TIMEOUT,
                 ReasoningErrorCode.TIMEOUT,
@@ -257,6 +271,7 @@ class PerceptualReasoningEngine:
         except Exception:  # noqa: BLE001 - provider failures map to a safe public error
             return _failed_result(
                 request,
+                source,
                 identity,
                 PerceptualReasoningState.INVALID_PROVIDER_RESPONSE,
                 ReasoningErrorCode.INVALID_PROVIDER_RESPONSE,
@@ -265,6 +280,7 @@ class PerceptualReasoningEngine:
         if not isinstance(response, ProviderReasoningResponse):
             return _failed_result(
                 request,
+                source,
                 identity,
                 PerceptualReasoningState.INVALID_PROVIDER_RESPONSE,
                 ReasoningErrorCode.INVALID_PROVIDER_RESPONSE,
@@ -275,6 +291,9 @@ class PerceptualReasoningEngine:
         if validation.statements:
             return PerceptualReasoningResult(
                 request_id=request.request_id,
+                source_result_digest=request.source_result_digest,
+                source_fact_set_digest=request.source_fact_set_digest,
+                source_result=source,
                 state=PerceptualReasoningState.COMPLETED,
                 provider=identity,
                 source_policy_id=request.source_policy_id,
@@ -311,6 +330,7 @@ class PerceptualReasoningEngine:
         )
         return _failed_result(
             request,
+            source,
             identity,
             state,
             code,
@@ -320,7 +340,15 @@ class PerceptualReasoningEngine:
         )
 
 
-def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact]:
+def extract_grounding_facts(
+    source: MixIntelligenceResult,
+    source_digest: str | None = None,
+) -> list[GroundingFact]:
+    if not isinstance(source, MixIntelligenceResult):
+        raise TypeError("source must be a MixIntelligenceResult")
+    bound_digest = source_digest or source_result_digest(source)
+    if bound_digest != source_result_digest(source):
+        raise ValueError("supplied source digest does not match the Sprint 10 result")
     policy_identity = f"{source.policy.policy_id}@{source.policy.version}"
     facts: list[GroundingFact] = [
         _global_fact(
@@ -328,6 +356,7 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
             GroundingFactType.POLICY_IDENTITY,
             _named(policy_identity, "mix_policy_identity"),
             policy_identity,
+            bound_digest,
         ),
         _global_fact(
             "fact.summary.evaluated_criterion_count",
@@ -338,6 +367,7 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
                 scale="evaluated_criterion_count",
             ),
             policy_identity,
+            bound_digest,
         ),
         _global_fact(
             "fact.summary.triggered_issue_count",
@@ -348,6 +378,7 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
                 scale="triggered_issue_count",
             ),
             policy_identity,
+            bound_digest,
         ),
         _global_fact(
             "fact.summary.not_triggered_count",
@@ -358,6 +389,7 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
                 scale="not_triggered_count",
             ),
             policy_identity,
+            bound_digest,
         ),
         _global_fact(
             "fact.summary.insufficient_evidence_count",
@@ -368,6 +400,7 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
                 scale="insufficient_evidence_count",
             ),
             policy_identity,
+            bound_digest,
         ),
         _global_fact(
             "fact.summary.conflict_count",
@@ -378,12 +411,14 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
                 scale="conflict_count",
             ),
             policy_identity,
+            bound_digest,
         ),
         _global_fact(
             "fact.source.confidence_semantics",
             GroundingFactType.CONFIDENCE_SEMANTICS,
             _named("unscored_unknown", "confidence_semantics"),
             policy_identity,
+            bound_digest,
         ),
     ]
     for issue in source.issues:
@@ -423,7 +458,7 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
         if issue.exceedance is not None:
             values.append((GroundingFactType.EXCEEDANCE, issue.exceedance))
         for fact_type, value in values:
-            facts.append(_fact(issue, fact_type, value, fact_type.value))
+            facts.append(_fact(issue, fact_type, value, fact_type.value, bound_digest))
         for index, assumption in enumerate(issue.assumptions):
             facts.append(
                 _fact(
@@ -431,6 +466,7 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
                     GroundingFactType.ASSUMPTION,
                     _named(assumption, "policy_assumption"),
                     f"assumption.{index}.{_short_hash(assumption)}",
+                    bound_digest,
                 )
             )
         for index, limitation in enumerate(issue.limitations):
@@ -440,6 +476,7 @@ def extract_grounding_facts(source: MixIntelligenceResult) -> list[GroundingFact
                     GroundingFactType.LIMITATION,
                     _named(limitation, "policy_limitation"),
                     f"limitation.{index}.{_short_hash(limitation)}",
+                    bound_digest,
                 )
             )
     return facts
@@ -474,9 +511,22 @@ def _fact(
     fact_type: GroundingFactType,
     value: ScalarValue,
     suffix: str,
+    source_digest: str,
 ) -> GroundingFact:
+    semantic_id = f"{issue.issue_id}.{suffix}"
     return GroundingFact(
-        fact_id=f"fact.{issue.issue_id}.{suffix}",
+        fact_id=grounding_fact_id(
+            semantic_id,
+            source_digest,
+            fact_type,
+            value,
+            "MixIssue",
+            issue.evidence_identity,
+            issue.issue_id,
+            issue.criterion.criterion_id,
+        ),
+        semantic_id=semantic_id,
+        source_result_digest=source_digest,
         fact_type=fact_type,
         value=value,
         source_contract="MixIssue",
@@ -491,9 +541,22 @@ def _global_fact(
     fact_type: GroundingFactType,
     value: ScalarValue,
     source_identity: str,
+    source_digest: str,
 ) -> GroundingFact:
+    semantic_id = fact_id.removeprefix("fact.")
     return GroundingFact(
-        fact_id=fact_id,
+        fact_id=grounding_fact_id(
+            semantic_id,
+            source_digest,
+            fact_type,
+            value,
+            "MixIntelligenceResult",
+            source_identity,
+            None,
+            None,
+        ),
+        semantic_id=semantic_id,
+        source_result_digest=source_digest,
         fact_type=fact_type,
         value=value,
         source_contract="MixIntelligenceResult",
@@ -505,21 +568,9 @@ def _named(value: str | bool, scale: str) -> ScalarValue:
     return ScalarValue(value, UnitBasis.NAMED_SCALE, scale=scale)
 
 
-def _request_id(source: MixIntelligenceResult) -> str:
-    material = "\x1f".join(
-        (
-            source.policy.policy_id,
-            source.policy.version,
-            source.method.method_id,
-            source.method.version,
-            *(item.issue_id for item in source.issues),
-        )
-    ).encode()
-    return f"reasoning_request.{hashlib.sha256(material).hexdigest()[:24]}"
-
-
 def _failed_result(
     request: ReasoningRequest,
+    source: MixIntelligenceResult,
     provider: ReasoningProviderIdentity,
     state: PerceptualReasoningState,
     code: ReasoningErrorCode,
@@ -530,6 +581,9 @@ def _failed_result(
 ) -> PerceptualReasoningResult:
     return PerceptualReasoningResult(
         request_id=request.request_id,
+        source_result_digest=request.source_result_digest,
+        source_fact_set_digest=request.source_fact_set_digest,
+        source_result=source,
         state=state,
         provider=provider,
         source_policy_id=request.source_policy_id,
