@@ -305,6 +305,43 @@ class ReferenceEvidenceResult(JsonContract):
         for value, contract, field_name in expected:
             if not isinstance(value, contract):
                 raise TypeError(f"{field_name} must be a {contract.__name__}")
+
+        dimensions = (
+            (
+                self.brightness,
+                ReferenceEvidenceDimensionId.BRIGHTNESS_CENTROID_DELTA_HZ,
+                "brightness",
+            ),
+            (
+                self.programme_energy,
+                ReferenceEvidenceDimensionId.PROGRAMME_ENERGY_DELTA_DB,
+                "programme_energy",
+            ),
+            (
+                self.erb_power_distribution,
+                ReferenceEvidenceDimensionId.ERB_POWER_DISTRIBUTION_DELTA_DB,
+                "erb_power_distribution",
+            ),
+            (
+                self.sample_peak,
+                ReferenceEvidenceDimensionId.SAMPLE_PEAK_DELTA_ABSOLUTE,
+                "sample_peak",
+            ),
+        )
+        comparison_mode = self.comparison.config.mode
+        for component, dimension_id, field_name in dimensions:
+            if component.dimension_id is not dimension_id:
+                raise ValueError(f"{field_name} has the wrong reference evidence dimension")
+            if component.comparison_mode is not comparison_mode:
+                raise ValueError(f"{field_name} comparison_mode must match comparison config")
+
+        if comparison_mode is ReferenceComparisonMode.SHAPE_ONLY:
+            for component, field_name in (
+                (self.programme_energy, "programme_energy"),
+                (self.sample_peak, "sample_peak"),
+            ):
+                if component.state.status is not ResultStatus.SKIPPED:
+                    raise ValueError(f"shape-only {field_name} must be skipped")
         _require_identifier(self.schema_version, "schema_version")
 
 

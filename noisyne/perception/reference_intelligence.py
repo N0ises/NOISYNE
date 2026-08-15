@@ -81,6 +81,48 @@ class ReferenceRuntimeResult:
         if self.channel_erb_delta_db.shape != self.channel_erb_delta_defined.shape:
             raise ValueError("ERB delta and definition-mask shapes must match")
 
+        summary = self.evidence.erb_power_distribution
+        source_shape = (summary.source_channel_count, summary.source_band_count)
+        reference_shape = (summary.reference_channel_count, summary.reference_band_count)
+        if self.source_channel_erb_power.shape != source_shape:
+            raise ValueError("source ERB power shape must match transport summary")
+        if self.reference_channel_erb_power.shape != reference_shape:
+            raise ValueError("reference ERB power shape must match transport summary")
+
+        compatible = source_shape == reference_shape
+        if summary.state.status is ResultStatus.COMPUTED:
+            if not compatible:
+                raise ValueError("computed ERB summary requires compatible source/reference shapes")
+            delta_shape = source_shape
+        elif summary.state.status is ResultStatus.INSUFFICIENT_EVIDENCE:
+            delta_shape = source_shape if compatible else (0, 0)
+        else:
+            raise ValueError("runtime ERB summary must be computed or insufficient evidence")
+        if self.channel_erb_delta_db.shape != delta_shape:
+            raise ValueError("ERB delta shape must match transport summary semantics")
+        if self.channel_erb_delta_defined.shape != delta_shape:
+            raise ValueError("ERB definition-mask shape must match transport summary semantics")
+
+        defined_count = int(np.count_nonzero(self.channel_erb_delta_defined))
+        if defined_count != summary.defined_value_count:
+            raise ValueError("ERB definition-mask count must match transport summary")
+        if summary.state.status is ResultStatus.COMPUTED:
+            defined_delta = self.channel_erb_delta_db[self.channel_erb_delta_defined]
+            extrema = (
+                float(np.min(defined_delta)),
+                float(np.max(defined_delta)),
+                float(np.max(np.abs(defined_delta))),
+            )
+            expected_extrema = (
+                summary.minimum_delta_db,
+                summary.maximum_delta_db,
+                summary.maximum_absolute_delta_db,
+            )
+            if extrema != expected_extrema:
+                raise ValueError("ERB runtime delta extrema must match transport summary")
+        elif np.any(self.channel_erb_delta_db != 0.0):
+            raise ValueError("undefined ERB runtime deltas must retain zero placeholders")
+
 
 class ObjectiveReferenceComparator:
     """Whole-programme evidence only; no policy, alignment, quality score, or advice."""
@@ -180,7 +222,7 @@ class ObjectiveReferenceComparator:
 
 
 class EmbeddingCosineComparator:
-    """Raw cosine in one exactly identified representation space; no rescaling."""
+    """Raw cosine in one exact representation space with scale-stable numerics."""
 
     def compare(
         self,
@@ -207,18 +249,17 @@ class EmbeddingCosineComparator:
         if source.size != source_provider.embedding_dimension:
             raise ValueError("embedding vectors must match provider embedding_dimension")
 
-        source_norm = float(np.linalg.norm(source))
-        reference_norm = float(np.linalg.norm(reference))
         method = MethodMetadata(
             REFERENCE_EMBEDDING_COSINE_METHOD_ID,
             REFERENCE_EMBEDDING_COSINE_METHOD_VERSION,
-            "Raw cosine similarity in one exact provider/model/checkpoint/preprocessing space.",
+            "Raw cosine after independent max-absolute scaling for overflow-safe evaluation.",
         )
         limitations = [
             "Model-space similarity is not mix, mastering, tonal, or perceptual quality.",
             "No percentage conversion, ranking-quality claim, or causal interpretation is valid.",
         ]
-        if source_norm == 0.0 or reference_norm == 0.0:
+        similarity = _stable_cosine(source, reference)
+        if similarity is None:
             return ReferenceEmbeddingEvidence(
                 state=ResultState(
                     ResultStatus.INSUFFICIENT_EVIDENCE,
@@ -233,8 +274,6 @@ class EmbeddingCosineComparator:
                 method=method,
                 limitations=limitations,
             )
-        similarity = float(np.dot(source, reference) / (source_norm * reference_norm))
-        similarity = min(1.0, max(-1.0, similarity))
         return ReferenceEmbeddingEvidence(
             state=ResultState(ResultStatus.COMPUTED),
             provider=source_provider,
@@ -254,8 +293,12 @@ class EmbeddingCosineComparator:
 
 
 def _apply_declared_gain(audio: AudioData, gain_db: float) -> AudioData:
-    factor = float(np.power(10.0, gain_db / 20.0))
-    if not np.isfinite(factor):
+    try:
+        with np.errstate(over="raise", under="raise", invalid="raise"):
+            factor = float(np.power(10.0, gain_db / 20.0))
+    except FloatingPointError as exc:
+        raise ValueError("declared digital gain is not representable") from exc
+    if not np.isfinite(factor) or factor == 0.0:
         raise ValueError("declared digital gain is not representable")
     values = np.asarray(audio.samples, dtype=np.float64)
     try:
@@ -266,6 +309,48 @@ def _apply_declared_gain(audio: AudioData, gain_db: float) -> AudioData:
     if not np.all(np.isfinite(samples)):
         raise ValueError("gain-applied audio must remain finite")
     return AudioData(samples=samples, metadata=audio.metadata)
+
+
+def _stable_cosine(source: FloatArray, reference: FloatArray) -> float | None:
+    """Compute cosine after positive max-absolute scaling; return None for zero norm."""
+    source_scale = float(np.max(np.abs(source)))
+    reference_scale = float(np.max(np.abs(reference)))
+    if source_scale == 0.0 or reference_scale == 0.0:
+        return None
+
+    try:
+        with np.errstate(over="raise", invalid="raise", divide="raise", under="ignore"):
+            source_scaled = source / source_scale
+            reference_scaled = reference / reference_scale
+            source_norm = float(np.linalg.norm(source_scaled))
+            reference_norm = float(np.linalg.norm(reference_scaled))
+            if (
+                not np.isfinite(source_norm)
+                or not np.isfinite(reference_norm)
+                or source_norm <= 0.0
+                or reference_norm <= 0.0
+            ):
+                raise ValueError("cosine similarity requires finite positive norms")
+            denominator = source_norm * reference_norm
+            if not np.isfinite(denominator) or denominator <= 0.0:
+                raise ValueError("cosine similarity requires a finite positive denominator")
+            dot_product = float(np.dot(source_scaled, reference_scaled))
+            if not np.isfinite(dot_product):
+                raise ValueError("cosine similarity requires a finite dot product")
+            similarity = dot_product / denominator
+    except (FloatingPointError, OverflowError, ZeroDivisionError) as exc:
+        raise ValueError("cosine similarity intermediate is not representable") from exc
+
+    intermediates = (source_norm, reference_norm, denominator, dot_product, similarity)
+    if not all(np.isfinite(value) for value in intermediates):
+        raise ValueError("cosine similarity requires finite intermediates and positive norms")
+
+    roundoff_tolerance = 8.0 * np.finfo(np.float64).eps
+    if similarity < -1.0 or similarity > 1.0:
+        if similarity < -1.0 - roundoff_tolerance or similarity > 1.0 + roundoff_tolerance:
+            raise ValueError("cosine similarity lies outside its mathematical interval")
+        similarity = min(1.0, max(-1.0, similarity))
+    return similarity
 
 
 def _brightness_measurement(source, reference, mode) -> ReferenceEvidenceMeasurement:

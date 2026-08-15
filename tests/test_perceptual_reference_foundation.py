@@ -17,16 +17,19 @@ from noisyne.perception import (
     ReferenceComparisonMode,
     ReferenceEmbeddingEvidence,
     ReferenceEmbeddingProviderIdentity,
+    ReferenceEvidenceDimensionId,
     ReferenceEvidenceResult,
     ReferenceProvenance,
     ReferenceRole,
     ReferenceSet,
     ReferenceTrackIdentity,
     ResultStatus,
+    reference_intelligence,
 )
 from noisyne.perception.reference_intelligence import (
     EmbeddingCosineComparator,
     ObjectiveReferenceComparator,
+    ReferenceRuntimeResult,
 )
 from noisyne.runtime.capabilities import CapabilityStatus, registry
 
@@ -103,6 +106,12 @@ def _compare(source: AudioData, reference: AudioData, **kwargs: object):
     return ObjectiveReferenceComparator().compare(
         source, reference, _identity(reference), source_id="source-a", **kwargs
     )
+
+
+def _readonly(values: np.ndarray) -> np.ndarray:
+    result = np.array(values, copy=True)
+    result.setflags(write=False)
+    return result
 
 
 def test_identical_reference_has_zero_deltas_and_immutable_runtime_arrays() -> None:
@@ -263,6 +272,119 @@ def test_transport_round_trip_excludes_runtime_arrays_and_scores() -> None:
     assert payload["erb_power_distribution"]["arrays_serialized"] is False
 
 
+@pytest.mark.parametrize(
+    ("field_name", "wrong_dimension"),
+    [
+        ("brightness", ReferenceEvidenceDimensionId.PROGRAMME_ENERGY_DELTA_DB),
+        ("programme_energy", ReferenceEvidenceDimensionId.SAMPLE_PEAK_DELTA_ABSOLUTE),
+        ("sample_peak", ReferenceEvidenceDimensionId.BRIGHTNESS_CENTROID_DELTA_HZ),
+    ],
+)
+def test_reference_result_rejects_component_dimension_mismatch(
+    field_name: str, wrong_dimension: ReferenceEvidenceDimensionId
+) -> None:
+    audio = _audio(_tone(880.0))
+    evidence = _compare(audio, audio).evidence
+    forged_component = replace(getattr(evidence, field_name), dimension_id=wrong_dimension)
+
+    with pytest.raises(ValueError, match="wrong reference evidence dimension"):
+        replace(evidence, **{field_name: forged_component})
+
+
+def test_reference_result_rejects_component_comparison_mode_mismatch() -> None:
+    audio = _audio(_tone(880.0))
+    evidence = _compare(audio, audio).evidence
+    forged_brightness = replace(
+        evidence.brightness, comparison_mode=ReferenceComparisonMode.SHAPE_ONLY
+    )
+
+    with pytest.raises(ValueError, match="comparison_mode must match"):
+        replace(evidence, brightness=forged_brightness)
+
+
+@pytest.mark.parametrize("field_name", ["programme_energy", "sample_peak"])
+def test_shape_only_rejects_non_skipped_level_transport(field_name: str) -> None:
+    audio = _audio(_tone(880.0))
+    raw = _compare(audio, audio).evidence
+    shape = _compare(
+        audio,
+        audio,
+        config=ReferenceComparisonConfig(mode=ReferenceComparisonMode.SHAPE_ONLY),
+    ).evidence
+    forged_component = replace(
+        getattr(raw, field_name), comparison_mode=ReferenceComparisonMode.SHAPE_ONLY
+    )
+
+    with pytest.raises(ValueError, match=f"shape-only {field_name} must be skipped"):
+        replace(shape, **{field_name: forged_component})
+
+
+def test_forged_reference_result_from_dict_mismatch_is_rejected() -> None:
+    audio = _audio(_tone(880.0))
+    payload = _compare(audio, audio).evidence.to_dict()
+    payload["brightness"]["dimension_id"] = "programme_energy_delta_db"
+
+    with pytest.raises(ValueError, match="wrong reference evidence dimension"):
+        ReferenceEvidenceResult.from_dict(payload)
+
+
+def test_runtime_rejects_source_power_shape_inconsistent_with_summary() -> None:
+    audio = _audio(_tone(880.0))
+    result = _compare(audio, audio)
+    wrong = _readonly(np.zeros((2, result.source_channel_erb_power.shape[1])))
+
+    with pytest.raises(ValueError, match="source ERB power shape"):
+        replace(result, source_channel_erb_power=wrong)
+
+
+def test_runtime_rejects_reference_power_shape_inconsistent_with_summary() -> None:
+    audio = _audio(_tone(880.0))
+    result = _compare(audio, audio)
+    wrong = _readonly(np.zeros((2, result.reference_channel_erb_power.shape[1])))
+
+    with pytest.raises(ValueError, match="reference ERB power shape"):
+        replace(result, reference_channel_erb_power=wrong)
+
+
+@pytest.mark.parametrize("field_name", ["channel_erb_delta_db", "channel_erb_delta_defined"])
+def test_runtime_rejects_delta_or_mask_shape_inconsistent_with_summary(
+    field_name: str,
+) -> None:
+    audio = _audio(_tone(880.0))
+    result = _compare(audio, audio)
+    dtype = np.bool_ if field_name.endswith("defined") else np.float64
+    wrong = _readonly(np.zeros((1, 1), dtype=dtype))
+
+    with pytest.raises(ValueError, match="shape"):
+        replace(result, **{field_name: wrong})
+
+
+def test_runtime_rejects_defined_mask_count_inconsistent_with_summary() -> None:
+    audio = _audio(_tone(880.0))
+    result = _compare(audio, audio)
+    wrong = np.array(result.channel_erb_delta_defined, copy=True)
+    wrong.flat[0] = not wrong.flat[0]
+    wrong.setflags(write=False)
+
+    with pytest.raises(ValueError, match="definition-mask count"):
+        replace(result, channel_erb_delta_defined=wrong)
+
+
+def test_incompatible_channel_empty_delta_runtime_representation_still_validates() -> None:
+    mono = _tone(880.0)
+    result = _compare(_audio(np.column_stack((mono, mono))), _audio(mono))
+
+    reconstructed = ReferenceRuntimeResult(
+        evidence=result.evidence,
+        source_channel_erb_power=result.source_channel_erb_power,
+        reference_channel_erb_power=result.reference_channel_erb_power,
+        channel_erb_delta_db=result.channel_erb_delta_db,
+        channel_erb_delta_defined=result.channel_erb_delta_defined,
+    )
+    assert reconstructed.channel_erb_delta_db.shape == (0, 0)
+    assert reconstructed.channel_erb_delta_defined.shape == (0, 0)
+
+
 def test_objective_comparison_is_deterministic() -> None:
     source = _audio(_tone(1600.0))
     reference = _audio(_tone(900.0))
@@ -311,6 +433,75 @@ def test_embedding_zero_vector_is_insufficient_without_epsilon() -> None:
     )
     assert evidence.state.status is ResultStatus.INSUFFICIENT_EVIDENCE
     assert evidence.similarity is None
+
+
+def test_embedding_extreme_finite_vectors_use_stable_cosine() -> None:
+    maximum = np.finfo(np.float64).max
+    evidence = EmbeddingCosineComparator().compare(
+        np.array([maximum, maximum, 0.0]),
+        np.array([maximum, 0.0, 0.0]),
+        _provider(),
+        _provider(),
+        source_embedding_id="extreme-source",
+        reference_embedding_id="extreme-reference",
+    )
+
+    assert evidence.similarity.value == pytest.approx(1.0 / np.sqrt(2.0))
+
+
+def test_embedding_rejects_nonfinite_intermediate(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(reference_intelligence.np.linalg, "norm", lambda _: float("inf"))
+
+    with pytest.raises(ValueError, match="finite"):
+        EmbeddingCosineComparator().compare(
+            np.ones(3),
+            np.ones(3),
+            _provider(),
+            _provider(),
+            source_embedding_id="source",
+            reference_embedding_id="reference",
+        )
+
+
+def test_embedding_clamps_only_finite_roundoff_overshoot(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    overshoot = np.nextafter(1.0, np.inf)
+    monkeypatch.setattr(reference_intelligence.np, "dot", lambda _x, _y: overshoot)
+    evidence = EmbeddingCosineComparator().compare(
+        np.array([1.0, 0.0, 0.0]),
+        np.array([1.0, 0.0, 0.0]),
+        _provider(),
+        _provider(),
+        source_embedding_id="source",
+        reference_embedding_id="reference",
+    )
+    assert evidence.similarity.value == 1.0
+
+    monkeypatch.setattr(reference_intelligence.np, "dot", lambda _x, _y: 1.001)
+    with pytest.raises(ValueError, match="outside its mathematical interval"):
+        EmbeddingCosineComparator().compare(
+            np.array([1.0, 0.0, 0.0]),
+            np.array([1.0, 0.0, 0.0]),
+            _provider(),
+            _provider(),
+            source_embedding_id="source",
+            reference_embedding_id="reference",
+        )
+
+
+def test_extreme_finite_negative_gain_that_underflows_is_rejected() -> None:
+    audio = _audio(_tone(880.0))
+    config = ReferenceComparisonConfig(
+        mode=ReferenceComparisonMode.EXPLICIT_DIGITAL_GAIN,
+        source_gain_db=-1.0e308,
+        gain_method=MethodMetadata(
+            "test.extreme_gain", "1", "Exercise finite-to-zero gain underflow."
+        ),
+    )
+
+    with pytest.raises(ValueError, match="gain is not representable"):
+        _compare(audio, audio, config=config)
 
 
 @pytest.mark.parametrize("bad", [np.array([1.0, np.nan, 2.0]), np.array([1.0, np.inf, 2.0])])
