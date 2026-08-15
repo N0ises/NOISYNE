@@ -36,7 +36,7 @@ contracts.
 | `noisyne/reasoning/` and `noisyne/prompt/` | Structured reasoning, prompts, parsing and guards | Depend on contracts, not UI |
 | `noisyne/report/` | Report models, building, validation and export | Consumes domain results |
 | `noisyne/evaluation/` | Metrics, scoring, benchmarks and evaluation reports | Tests domain/application outputs |
-| `noisyne/perception/` | V2 perceptual contracts, Sprint 2 auditory frontend and Sprint 3 calibrated loudness foundation | Root contracts remain lightweight; numerical runtimes use existing audio/NumPy dependencies and have no providers, UI, API or DAW dependencies |
+| `noisyne/perception/` | V2 perceptual contracts, Sprint 2 auditory frontend, Sprint 3 calibrated loudness foundation and Sprint 4 relative simultaneous-masking foundation | Root contracts remain lightweight; numerical runtimes use existing audio/NumPy dependencies and have no providers, UI, API or DAW dependencies |
 | `noisyne/application/` | Canonical application facade and use-case orchestration | May compose domain modules; no Desktop imports |
 | `noisyne/orchestration/` and `noisyne/pipeline/` | Implemented alternate orchestration/stage infrastructure | Not the frozen V1 CLI production path |
 | `noisyne/integration/` | Deterministic DAW-named workflow export contracts | No live DAW communication or control |
@@ -70,6 +70,14 @@ ISO 532-3:2023 algorithm, companion source and verification fixtures are not
 available in the development environment, so the runtime returns
 `INSUFFICIENT_EVIDENCE` and produces no sones, phons or psychoacoustic loudness.
 The frozen Sprint 1 schema and Sprint 2 frontend behavior remain unchanged.
+
+Sprint 4 adds `noisyne/perception/masking_contracts.py` and
+`noisyne/perception/masking.py`. It computes pairwise, common-gain relative
+excitation-margin evidence using a fixed Moore-Glasberg 1983 moderate-level
+roex(p) reference over Sprint 2's linear-Hz spectra. It produces no absolute
+masking threshold or `MaskingEvent`; full mixes return `INSUFFICIENT_EVIDENCE`
+because source decomposition is unavailable. Sprint 1 transport, Sprint 2
+frontend and Sprint 3 calibration behavior remain unchanged.
 
 The planned ownership boundaries are:
 

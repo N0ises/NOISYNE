@@ -177,6 +177,22 @@ registry.register(
 
 registry.register(
     Capability(
+        name="frequency_masking_foundation",
+        description=(
+            "Deterministic pairwise common-gain relative simultaneous-excitation evidence"
+        ),
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Existing NumPy auditory frontend; caller-declared sample alignment and common "
+            "digital gain relationship. No absolute threshold or full-mix source attribution."
+        ),
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,

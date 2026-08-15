@@ -45,6 +45,12 @@ from .loudness_contracts import (
     FrequencyResponseCompensation,
     LoudnessCalibration,
 )
+from .masking_contracts import (
+    SIMULTANEOUS_MASKING_METHOD_ID,
+    SIMULTANEOUS_MASKING_METHOD_VERSION,
+    SIMULTANEOUS_MASKING_SCHEMA_VERSION,
+    RelativeMaskingPairContext,
+)
 from .results import (
     PERCEPTUAL_SCHEMA_VERSION,
     AnalysisMetadata,
@@ -65,6 +71,9 @@ __all__ = [
     "LOUDNESS_FOUNDATION_METHOD_ID",
     "LOUDNESS_FOUNDATION_METHOD_VERSION",
     "PERCEPTUAL_SCHEMA_VERSION",
+    "SIMULTANEOUS_MASKING_METHOD_ID",
+    "SIMULTANEOUS_MASKING_METHOD_VERSION",
+    "SIMULTANEOUS_MASKING_SCHEMA_VERSION",
     "AcousticPresentation",
     "AnalysisMetadata",
     "AuditoryBand",
@@ -93,6 +102,7 @@ __all__ = [
     "PlaybackConstraint",
     "PlaybackProfile",
     "PlaybackProfileReference",
+    "RelativeMaskingPairContext",
     "ResultState",
     "ResultStatus",
     "ScalarValue",
