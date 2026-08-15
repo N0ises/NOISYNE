@@ -57,29 +57,69 @@ class PerceptualDescriptorFoundationResult:
     def __post_init__(self) -> None:
         channels = self.auditory_frontend_summary.channel_count
         frames = self.auditory_frontend_summary.frame_count
-        if len(self.descriptors) != len(descriptor_taxonomy()):
-            raise ValueError("descriptors must cover the complete Sprint 5 taxonomy")
-        if self.frame_times_seconds.shape != (frames,):
-            raise ValueError("frame_times_seconds shape does not match frontend summary")
-        if self.channel_frame_centroid_hz.shape != (channels, frames):
-            raise ValueError("channel_frame_centroid_hz shape does not match frontend summary")
-        if self.channel_frame_centroid_defined.shape != (channels, frames):
-            raise ValueError("channel_frame_centroid_defined shape does not match frontend summary")
-        if self.channel_programme_centroid_hz.shape != (channels,):
-            raise ValueError("channel_programme_centroid_hz shape does not match frontend summary")
-        if self.channel_programme_centroid_defined.shape != (channels,):
+        expected_descriptor_ids = tuple(
+            definition.descriptor_id for definition in descriptor_taxonomy()
+        )
+        actual_descriptor_ids = tuple(descriptor.descriptor_id for descriptor in self.descriptors)
+        if actual_descriptor_ids != expected_descriptor_ids:
             raise ValueError(
-                "channel_programme_centroid_defined shape does not match frontend summary"
+                "descriptors must match the complete Sprint 5 taxonomy in stable order"
             )
-        for array in (
+        _validate_runtime_array(
             self.frame_times_seconds,
+            "frame_times_seconds",
+            shape=(frames,),
+            dtype=np.dtype(np.float64),
+            require_finite=True,
+        )
+        _validate_runtime_array(
             self.channel_frame_centroid_hz,
+            "channel_frame_centroid_hz",
+            shape=(channels, frames),
+            dtype=np.dtype(np.float64),
+            require_finite=True,
+        )
+        _validate_runtime_array(
             self.channel_frame_centroid_defined,
+            "channel_frame_centroid_defined",
+            shape=(channels, frames),
+            dtype=np.dtype(np.bool_),
+            require_finite=False,
+        )
+        _validate_runtime_array(
             self.channel_programme_centroid_hz,
+            "channel_programme_centroid_hz",
+            shape=(channels,),
+            dtype=np.dtype(np.float64),
+            require_finite=True,
+        )
+        _validate_runtime_array(
             self.channel_programme_centroid_defined,
-        ):
-            if not np.all(np.isfinite(array)):
-                raise ValueError("descriptor runtime arrays must contain only finite values")
+            "channel_programme_centroid_defined",
+            shape=(channels,),
+            dtype=np.dtype(np.bool_),
+            require_finite=False,
+        )
+
+
+def _validate_runtime_array(
+    array: np.ndarray,
+    name: str,
+    *,
+    shape: tuple[int, ...],
+    dtype: np.dtype,
+    require_finite: bool,
+) -> None:
+    if not isinstance(array, np.ndarray):
+        raise TypeError(f"{name} must be a NumPy array")
+    if array.shape != shape:
+        raise ValueError(f"{name} shape does not match frontend summary")
+    if array.dtype != dtype:
+        raise ValueError(f"{name} must use {dtype} dtype")
+    if require_finite and not np.all(np.isfinite(array)):
+        raise ValueError(f"{name} must contain only finite values")
+    if array.flags.writeable:
+        raise ValueError(f"{name} must be read-only")
 
 
 class PerceptualDescriptorFoundation:

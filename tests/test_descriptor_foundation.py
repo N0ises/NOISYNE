@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +18,10 @@ from noisyne.perception import (
     ResultStatus,
     descriptor_taxonomy,
 )
-from noisyne.perception.descriptors import PerceptualDescriptorFoundation
+from noisyne.perception.descriptors import (
+    PerceptualDescriptorFoundation,
+    PerceptualDescriptorFoundationResult,
+)
 from noisyne.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +60,20 @@ def _tone(
 
 def _descriptor(output, descriptor_id: str) -> PerceptualDescriptorResult:
     return next(item for item in output.descriptors if item.descriptor_id == descriptor_id)
+
+
+def _reconstruct_result(output, **changes) -> PerceptualDescriptorFoundationResult:
+    values = {
+        "descriptors": output.descriptors,
+        "auditory_frontend_summary": output.auditory_frontend_summary,
+        "frame_times_seconds": output.frame_times_seconds,
+        "channel_frame_centroid_hz": output.channel_frame_centroid_hz,
+        "channel_frame_centroid_defined": output.channel_frame_centroid_defined,
+        "channel_programme_centroid_hz": output.channel_programme_centroid_hz,
+        "channel_programme_centroid_defined": output.channel_programme_centroid_defined,
+    }
+    values.update(changes)
+    return PerceptualDescriptorFoundationResult(**values)
 
 
 def test_taxonomy_covers_exact_required_descriptors_in_stable_order() -> None:
@@ -297,6 +315,86 @@ def test_runtime_arrays_are_finite_and_read_only() -> None:
     ):
         assert np.all(np.isfinite(array))
         assert array.flags.writeable is False
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    [
+        "frame_times_seconds",
+        "channel_frame_centroid_hz",
+        "channel_frame_centroid_defined",
+        "channel_programme_centroid_hz",
+        "channel_programme_centroid_defined",
+    ],
+)
+def test_direct_construction_rejects_each_writable_runtime_array(field_name: str) -> None:
+    output = PerceptualDescriptorFoundation().analyze(_audio(_tone(1125.0)))
+    writable = np.array(getattr(output, field_name), copy=True)
+
+    with pytest.raises(ValueError, match=f"{field_name} must be read-only"):
+        _reconstruct_result(output, **{field_name: writable})
+
+
+@pytest.mark.parametrize(
+    ("field_name", "wrong_dtype"),
+    [
+        ("frame_times_seconds", np.float32),
+        ("channel_frame_centroid_hz", np.float32),
+        ("channel_frame_centroid_defined", np.uint8),
+        ("channel_programme_centroid_hz", np.float32),
+        ("channel_programme_centroid_defined", np.uint8),
+    ],
+)
+def test_direct_construction_rejects_wrong_runtime_array_dtype(
+    field_name: str, wrong_dtype
+) -> None:
+    output = PerceptualDescriptorFoundation().analyze(_audio(_tone(1125.0)))
+    array = np.array(getattr(output, field_name), dtype=wrong_dtype)
+    array.setflags(write=False)
+
+    with pytest.raises(ValueError, match="dtype"):
+        _reconstruct_result(output, **{field_name: array})
+
+
+def test_direct_construction_with_exact_taxonomy_and_read_only_arrays_succeeds() -> None:
+    output = PerceptualDescriptorFoundation().analyze(_audio(_tone(1125.0)))
+
+    reconstructed = _reconstruct_result(output)
+
+    assert tuple(item.descriptor_id for item in reconstructed.descriptors) == tuple(
+        item.descriptor_id for item in descriptor_taxonomy()
+    )
+
+
+def test_direct_construction_rejects_duplicate_descriptor_ids() -> None:
+    output = PerceptualDescriptorFoundation().analyze(_audio(_tone(1125.0)))
+    descriptors = output.descriptors[:-1] + (output.descriptors[0],)
+
+    with pytest.raises(ValueError, match="stable order"):
+        _reconstruct_result(output, descriptors=descriptors)
+
+
+def test_direct_construction_rejects_missing_descriptor() -> None:
+    output = PerceptualDescriptorFoundation().analyze(_audio(_tone(1125.0)))
+
+    with pytest.raises(ValueError, match="stable order"):
+        _reconstruct_result(output, descriptors=output.descriptors[:-1])
+
+
+def test_direct_construction_rejects_wrong_descriptor_id() -> None:
+    output = PerceptualDescriptorFoundation().analyze(_audio(_tone(1125.0)))
+    wrong = replace(output.descriptors[0], descriptor_id="not_sharpness")
+
+    with pytest.raises(ValueError, match="stable order"):
+        _reconstruct_result(output, descriptors=(wrong,) + output.descriptors[1:])
+
+
+def test_direct_construction_rejects_reordered_descriptors() -> None:
+    output = PerceptualDescriptorFoundation().analyze(_audio(_tone(1125.0)))
+    reordered = (output.descriptors[1], output.descriptors[0]) + output.descriptors[2:]
+
+    with pytest.raises(ValueError, match="stable order"):
+        _reconstruct_result(output, descriptors=reordered)
 
 
 def test_transport_results_are_json_safe_and_exclude_runtime_arrays() -> None:
