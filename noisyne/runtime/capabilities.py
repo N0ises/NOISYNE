@@ -342,6 +342,31 @@ registry.register(
 
 registry.register(
     Capability(
+        name="perceptual_mix_intelligence_foundation",
+        description="Structured issues from explicit policy criteria and precomputed evidence",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Caller-supplied versioned policy, declared priorities, and supported Sprint 4/7/8/9 "
+            "evidence. No universal thresholds, quality score, recommendations, DSP, or LLM."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="mix_policy_evaluation",
+        description="Deterministic unit-safe evaluation of declared mix issue criteria",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements=(
+            "Exact evidence source/dimension and unit or scale match; priority is policy-declared."
+        ),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
         name="audio_context",
         description="Rule-based audio context and source classification (full mix vs stem, delivery target)",
         status=CapabilityStatus.PRODUCTION,

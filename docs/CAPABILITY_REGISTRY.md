@@ -68,6 +68,8 @@ the start of V2. Machine availability must be evaluated separately.
 | Perceptual Reference Foundation | Implemented | Stable logical reference identity/provenance and compact evidence contracts; a reference is not ground truth |
 | Reference Objective Comparison | Implemented | Whole-programme brightness-correlate, ERB-power, sum-square energy and sample-peak deltas; no temporal alignment, policy or quality score |
 | Reference Embedding Contract | Implemented | Exact provider/model/checkpoint/preprocessing identity plus raw cosine math; no live model or percentage score |
+| Perceptual Mix Intelligence Foundation | Implemented | Structured issues from explicit policy criteria over precomputed Sprint 4/7/8/9 evidence; no quality score or recommendation |
+| Mix Policy Evaluation | Implemented | Deterministic source/dimension/unit-safe criteria with policy-declared priority and stable ordering; no DSP or LLM |
 | Audio Context | Production | Deterministic rule-based context |
 | Engineering Analysis | Production | Deterministic rule engine |
 | CLAP Embedding | Verified | Local/downloaded model required; model not bundled |
