@@ -246,8 +246,29 @@ class MixCriterionEvaluation(JsonContract):
                 or not isinstance(self.evidence_method, MethodMetadata)
             ):
                 raise ValueError("computed criterion evaluation requires identified evidence")
-        elif self.evidence_value is not None:
-            raise ValueError("non-computed criterion evaluation must not carry an evidence value")
+        else:
+            if self.evidence_value is not None:
+                raise ValueError(
+                    "non-computed criterion evaluation must not carry an evidence value"
+                )
+            provenance = (
+                self.evidence_identity,
+                self.evidence_state,
+                self.evidence_method,
+            )
+            if any(item is not None for item in provenance) and not (
+                self.evidence_identity is not None
+                and isinstance(self.evidence_state, ResultStatus)
+                and isinstance(self.evidence_method, MethodMetadata)
+            ):
+                raise ValueError(
+                    "non-computed criterion evidence provenance must be complete when present"
+                )
+            if (
+                self.state is MixEvaluationState.INSUFFICIENT_EVIDENCE
+                and self.evidence_state is ResultStatus.COMPUTED
+            ):
+                raise ValueError("insufficient evidence cannot identify computed evidence")
 
 
 @dataclass(frozen=True, slots=True)
@@ -396,6 +417,27 @@ class MixIntelligenceResult(JsonContract):
                 or evaluation.evidence_dimension is not criterion.evidence_dimension
             ):
                 raise ValueError("evaluation evidence target must match its policy criterion")
+            if (
+                criterion.evidence_identity is not None
+                and evaluation.evidence_identity is not None
+                and evaluation.evidence_identity != criterion.evidence_identity
+            ):
+                raise ValueError("evaluation evidence identity must match its policy criterion")
+            if evaluation.state in (
+                MixEvaluationState.TRIGGERED,
+                MixEvaluationState.NOT_TRIGGERED,
+            ):
+                if not _same_unit(evaluation.evidence_value, criterion.threshold):
+                    raise ValueError(
+                        "computed evaluation evidence unit/scale must match criterion threshold"
+                    )
+                expected_triggered = _criterion_triggered(
+                    evaluation.evidence_value,
+                    criterion.operator,
+                    criterion.threshold,
+                )
+                if (evaluation.state is MixEvaluationState.TRIGGERED) is not expected_triggered:
+                    raise ValueError("computed evaluation state must match criterion arithmetic")
         issue_ids = [item.issue_id for item in self.issues]
         if len(issue_ids) != len(set(issue_ids)):
             raise ValueError("issues must use unique issue_id values")

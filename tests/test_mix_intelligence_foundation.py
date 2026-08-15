@@ -35,6 +35,7 @@ from noisyne.perception import (
     ReferenceTrackIdentity,
     RelativeMaskingPairContext,
     ResolvedContextDimension,
+    ResultStatus,
     ScalarValue,
     TransferAcousticScope,
     TransferChannelTopology,
@@ -471,6 +472,228 @@ def test_multiple_unspecified_evidence_identities_record_conflict() -> None:
     assert result.summary.conflict_count == 1
 
 
+def test_declared_evidence_identity_accepts_only_the_exact_computed_identity() -> None:
+    evidence = _reference_result(reference_id="reference-a")
+    unresolved = PerceptualMixIntelligenceEngine().evaluate(_policy(_criterion()), [evidence])
+    identity = unresolved.evaluations[0].evidence_identity
+    criterion = _criterion(evidence_identity=identity)
+    result = PerceptualMixIntelligenceEngine().evaluate(_policy(criterion), [evidence])
+
+    assert result.evaluations[0].evidence_identity == identity
+    forged = replace(result.evaluations[0], evidence_identity="reference.B")
+    with pytest.raises(ValueError, match="evidence identity"):
+        replace(result, evaluations=[forged])
+
+
+def test_declared_evidence_identity_rejects_different_conflict_provenance() -> None:
+    evidence = _reference_result(reference_id="reference-a")
+    computed = PerceptualMixIntelligenceEngine().evaluate(_policy(_criterion()), [evidence])
+    identity = computed.evaluations[0].evidence_identity
+    criterion = _criterion(evidence_identity=identity)
+    conflict = replace(
+        computed.evaluations[0],
+        state=MixEvaluationState.CONFLICT,
+        evidence_identity="reference.B",
+        evidence_value=None,
+    )
+    with pytest.raises(ValueError, match="evidence identity"):
+        replace(
+            computed,
+            policy=_policy(criterion),
+            evaluations=[conflict],
+            issues=[],
+            summary=MixIntelligenceSummary(1, 0, 0, 0, 1),
+        )
+
+
+def test_non_computed_evidence_provenance_must_be_complete_when_present() -> None:
+    result = PerceptualMixIntelligenceEngine().evaluate(_policy(_criterion()), [])
+    with pytest.raises(ValueError, match="provenance must be complete"):
+        replace(result.evaluations[0], evidence_identity="reference.A")
+
+
+@pytest.mark.parametrize("evidence_state", [ResultStatus.SKIPPED, ResultStatus.UNAVAILABLE])
+def test_identified_non_computed_evidence_remains_insufficient_for_exact_identity(
+    evidence_state: ResultStatus,
+) -> None:
+    evidence = _reference_result(mode=ReferenceComparisonMode.SHAPE_ONLY)
+    unresolved = PerceptualMixIntelligenceEngine().evaluate(_policy(_criterion()), [evidence])
+    identity = unresolved.evaluations[0].evidence_identity
+    result = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(_criterion(evidence_identity=identity)), [evidence]
+    )
+    evaluation = replace(result.evaluations[0], evidence_state=evidence_state)
+    result = replace(result, evaluations=[evaluation])
+
+    evaluation = result.evaluations[0]
+    assert evaluation.state is MixEvaluationState.INSUFFICIENT_EVIDENCE
+    assert evaluation.evidence_identity == identity
+    assert evaluation.evidence_state is evidence_state
+    assert evaluation.evidence_value is None
+
+
+def test_computed_not_triggered_state_must_match_numeric_criterion_math() -> None:
+    result = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(_criterion()), [_reference_result()]
+    )
+    forged = replace(result.evaluations[0], state=MixEvaluationState.NOT_TRIGGERED)
+    with pytest.raises(ValueError, match="criterion arithmetic"):
+        replace(
+            result,
+            evaluations=[forged],
+            issues=[],
+            summary=MixIntelligenceSummary(1, 0, 1, 0, 0),
+        )
+
+
+def test_computed_triggered_state_must_match_numeric_criterion_math() -> None:
+    criterion = _criterion(
+        operator=MixCriterionOperator.GREATER_THAN,
+        threshold=ScalarValue(10.0, UnitBasis.DECLARED_UNIT, unit="dB"),
+    )
+    result = PerceptualMixIntelligenceEngine().evaluate(_policy(criterion), [_reference_result()])
+    forged = replace(result.evaluations[0], state=MixEvaluationState.TRIGGERED)
+    with pytest.raises(ValueError, match="criterion arithmetic"):
+        replace(
+            result,
+            evaluations=[forged],
+            summary=MixIntelligenceSummary(1, 1, 0, 0, 0),
+        )
+
+
+def test_correct_computed_numeric_states_remain_valid() -> None:
+    triggered = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(_criterion()), [_reference_result()]
+    )
+    not_triggered = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(
+            _criterion(
+                operator=MixCriterionOperator.GREATER_THAN,
+                threshold=ScalarValue(10.0, UnitBasis.DECLARED_UNIT, unit="dB"),
+            )
+        ),
+        [_reference_result()],
+    )
+
+    assert triggered.evaluations[0].state is MixEvaluationState.TRIGGERED
+    assert len(triggered.issues) == 1
+    with pytest.raises(ValueError, match="triggered evaluations"):
+        replace(triggered, issues=[])
+    assert not_triggered.evaluations[0].state is MixEvaluationState.NOT_TRIGGERED
+    assert not_triggered.issues == []
+
+
+def test_not_triggered_computed_evidence_unit_mismatch_is_rejected() -> None:
+    criterion = _criterion(
+        operator=MixCriterionOperator.GREATER_THAN,
+        threshold=ScalarValue(10.0, UnitBasis.DECLARED_UNIT, unit="dB"),
+    )
+    result = PerceptualMixIntelligenceEngine().evaluate(_policy(criterion), [_reference_result()])
+    forged = replace(
+        result.evaluations[0],
+        evidence_value=ScalarValue(1.0, UnitBasis.DECLARED_UNIT, unit="Hz"),
+    )
+    with pytest.raises(ValueError, match="unit/scale"):
+        replace(result, evaluations=[forged])
+
+
+@pytest.mark.parametrize(
+    ("threshold", "evidence_value"),
+    [
+        (
+            ScalarValue(0.8, UnitBasis.NAMED_SCALE, scale="declared-scale"),
+            ScalarValue(0.5, UnitBasis.NAMED_SCALE, scale="different-scale"),
+        ),
+        (
+            ScalarValue(
+                0.8,
+                UnitBasis.NAMED_SCALE,
+                scale="declared-scale",
+                normalized=True,
+            ),
+            ScalarValue(0.5, UnitBasis.NAMED_SCALE, scale="declared-scale"),
+        ),
+    ],
+)
+def test_computed_named_scale_and_normalized_mismatches_are_rejected(
+    threshold: ScalarValue, evidence_value: ScalarValue
+) -> None:
+    base = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(
+            _criterion(
+                operator=MixCriterionOperator.GREATER_THAN,
+                threshold=ScalarValue(10.0, UnitBasis.DECLARED_UNIT, unit="dB"),
+            )
+        ),
+        [_reference_result()],
+    )
+    criterion = _criterion(
+        operator=MixCriterionOperator.GREATER_THAN,
+        threshold=threshold,
+    )
+    evaluation = replace(base.evaluations[0], evidence_value=evidence_value)
+    with pytest.raises(ValueError, match="unit/scale"):
+        replace(base, policy=_policy(criterion), evaluations=[evaluation])
+
+
+def test_boolean_criterion_rejects_numeric_computed_evidence() -> None:
+    criterion = _criterion(
+        "context-ambiguous",
+        source_type=MixEvidenceSourceType.CONTEXT_POLICY_SELECTION,
+        dimension=MixEvidenceDimensionId.CONTEXT_POLICY_SELECTION_AMBIGUOUS,
+        operator=MixCriterionOperator.BOOLEAN_IS_TRUE,
+        threshold=_boolean_threshold(True, "context_policy_selection_ambiguous"),
+        issue_type=MixIssueType.CONTEXT_POLICY_CONFLICT,
+    )
+    result = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(criterion), [_ambiguous_selection()]
+    )
+    forged = replace(
+        result.evaluations[0],
+        evidence_value=ScalarValue(
+            1,
+            UnitBasis.NAMED_SCALE,
+            scale="context_policy_selection_ambiguous",
+        ),
+    )
+    with pytest.raises(TypeError, match="boolean mix criterion"):
+        replace(result, evaluations=[forged])
+
+
+def test_numeric_criterion_rejects_boolean_computed_evidence() -> None:
+    result = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(_criterion()), [_reference_result()]
+    )
+    forged = replace(
+        result.evaluations[0],
+        evidence_value=ScalarValue(True, UnitBasis.DECLARED_UNIT, unit="dB"),
+    )
+    with pytest.raises(TypeError, match="numeric mix criterion"):
+        replace(result, evaluations=[forged])
+
+
+def test_boolean_not_triggered_state_must_match_boolean_criterion_math() -> None:
+    criterion = _criterion(
+        "context-selection-conflict",
+        source_type=MixEvidenceSourceType.CONTEXT_POLICY_SELECTION,
+        dimension=MixEvidenceDimensionId.CONTEXT_POLICY_SELECTION_CONFLICT,
+        operator=MixCriterionOperator.BOOLEAN_IS_TRUE,
+        threshold=_boolean_threshold(True, "context_policy_selection_conflict"),
+        issue_type=MixIssueType.CONTEXT_POLICY_CONFLICT,
+    )
+    result = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(criterion), [_ambiguous_selection()]
+    )
+    assert result.evaluations[0].state is MixEvaluationState.NOT_TRIGGERED
+
+    forged = replace(
+        result.evaluations[0],
+        evidence_value=_boolean_threshold(True, "context_policy_selection_conflict"),
+    )
+    with pytest.raises(ValueError, match="criterion arithmetic"):
+        replace(result, evaluations=[forged])
+
+
 def test_same_canonical_evidence_identity_with_different_values_is_rejected() -> None:
     with pytest.raises(ValueError, match="conflicting supplied evidence"):
         PerceptualMixIntelligenceEngine().evaluate(
@@ -514,6 +737,42 @@ def test_json_round_trip_and_forged_from_dict_validation() -> None:
     payload["summary"]["not_triggered_count"] = 1
     with pytest.raises(ValueError, match="summary counts"):
         MixIntelligenceResult.from_dict(payload)
+
+
+def test_from_dict_rejects_forged_not_triggered_arithmetic() -> None:
+    result = PerceptualMixIntelligenceEngine().evaluate(
+        _policy(_criterion()), [_reference_result()]
+    )
+    payload = result.to_dict()
+    payload["evaluations"][0]["state"] = MixEvaluationState.NOT_TRIGGERED.value
+    payload["issues"] = []
+    payload["summary"] = MixIntelligenceSummary(1, 0, 1, 0, 0).to_dict()
+
+    with pytest.raises(ValueError, match="criterion arithmetic"):
+        MixIntelligenceResult.from_dict(payload)
+
+
+def test_from_dict_rejects_forged_declared_evidence_identity() -> None:
+    evidence = _reference_result(reference_id="reference-a")
+    unresolved = PerceptualMixIntelligenceEngine().evaluate(_policy(_criterion()), [evidence])
+    criterion = _criterion(evidence_identity=unresolved.evaluations[0].evidence_identity)
+    result = PerceptualMixIntelligenceEngine().evaluate(_policy(criterion), [evidence])
+    payload = result.to_dict()
+    payload["evaluations"][0]["evidence_identity"] = "reference.B"
+
+    with pytest.raises(ValueError, match="evidence identity"):
+        MixIntelligenceResult.from_dict(payload)
+
+
+def test_zero_issue_result_still_round_trips() -> None:
+    criterion = _criterion(
+        operator=MixCriterionOperator.GREATER_THAN,
+        threshold=ScalarValue(10.0, UnitBasis.DECLARED_UNIT, unit="dB"),
+    )
+    result = PerceptualMixIntelligenceEngine().evaluate(_policy(criterion), [_reference_result()])
+
+    assert result.issues == []
+    assert MixIntelligenceResult.from_dict(result.to_dict()) == result
 
 
 def test_repeated_evaluation_is_deterministic() -> None:
