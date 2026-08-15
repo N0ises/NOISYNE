@@ -26,6 +26,7 @@ from noisyne.perception import (
     MonoCompatibility,
     PerceptualContext,
     PlaybackProfileReference,
+    ResolvedContextDimension,
     ScalarValue,
     TranslationEvidenceDimensionId,
     TranslationPolicyProvenance,
@@ -144,6 +145,77 @@ def test_conflicting_genre_is_reported_without_a_winner() -> None:
     )
     assert result.status is ContextResolutionStatus.CONFLICT
     assert result.dimension(ContextDimension.GENRE).values == ["techno", "ambient"]
+
+
+def test_resolved_dimension_rejects_values_not_derived_from_claims() -> None:
+    claim = _claim("genre.techno", ContextDimension.GENRE, "techno")
+    with pytest.raises(ValueError, match="distinct claim values"):
+        ResolvedContextDimension(
+            context_dimension=ContextDimension.GENRE,
+            status=ContextResolutionStatus.RESOLVED,
+            values=["ambient"],
+            claims=[claim],
+        )
+    payload = {
+        "context_dimension": "genre",
+        "status": "resolved",
+        "values": ["ambient"],
+        "claims": [claim.to_dict()],
+    }
+    with pytest.raises(ValueError, match="distinct claim values"):
+        ResolvedContextDimension.from_dict(payload)
+
+
+def test_resolved_dimension_rejects_missing_duplicate_and_reordered_values() -> None:
+    claims = [
+        _claim("genre.techno", ContextDimension.GENRE, "techno"),
+        _claim("genre.ambient", ContextDimension.GENRE, "ambient"),
+    ]
+    for values in (["techno"], ["techno", "ambient", "ambient"], ["ambient", "techno"]):
+        with pytest.raises(ValueError, match="distinct claim values"):
+            ResolvedContextDimension(
+                context_dimension=ContextDimension.GENRE,
+                status=ContextResolutionStatus.CONFLICT,
+                values=values,
+                claims=claims,
+            )
+
+
+def test_resolved_dimension_accepts_same_value_from_multiple_sources() -> None:
+    claims = [
+        _claim("genre.user", ContextDimension.GENRE, "techno"),
+        _claim(
+            "genre.project",
+            ContextDimension.GENRE,
+            "techno",
+            provenance=ContextProvenance.PROJECT_DECLARED,
+        ),
+    ]
+    dimension = ResolvedContextDimension(
+        context_dimension=ContextDimension.GENRE,
+        status=ContextResolutionStatus.RESOLVED,
+        values=["techno"],
+        claims=claims,
+    )
+    assert len(dimension.claims) == 2
+
+
+def test_listener_preference_values_are_canonical_distinct_claim_values() -> None:
+    claims = [
+        _claim("preference.a.1", ContextDimension.LISTENER_PREFERENCE, "A"),
+        _claim("preference.b", ContextDimension.LISTENER_PREFERENCE, "B"),
+        _claim("preference.a.2", ContextDimension.LISTENER_PREFERENCE, "A"),
+    ]
+    dimension = ResolvedContextDimension(
+        context_dimension=ContextDimension.LISTENER_PREFERENCE,
+        status=ContextResolutionStatus.RESOLVED,
+        values=["A", "B"],
+        claims=claims,
+    )
+    assert dimension.values == ["A", "B"]
+    assert len(dimension.claims) == 3
+    with pytest.raises(ValueError, match="distinct claim values"):
+        replace(dimension, values=["A"])
 
 
 def test_delivery_target_exact_binding_selects_exact_policy_identity() -> None:
@@ -333,6 +405,103 @@ def test_conflicting_delivery_context_prevents_policy_selection() -> None:
     )
     assert result.status is ContextPolicySelectionStatus.CONFLICT
     assert result.selected_policy is None
+
+
+def test_selected_status_requires_resolved_context_and_exactly_one_match() -> None:
+    selector = ContextPolicySelector()
+    selected = selector.select(
+        PerceptualContextResolver().resolve(PerceptualContext(delivery_target="fixture.delivery")),
+        [_binding()],
+        [_policy()],
+    )
+    conflict = PerceptualContextResolver().resolve(
+        claims=[
+            _claim("genre.a", ContextDimension.GENRE, "A"),
+            _claim("genre.b", ContextDimension.GENRE, "B"),
+        ]
+    )
+    with pytest.raises(ValueError, match="resolved context"):
+        replace(selected, resolution=conflict)
+    for matched_ids in ([], ["fixture.binding", "other.binding"]):
+        with pytest.raises(ValueError, match="exactly its selected binding"):
+            replace(selected, matched_binding_ids=matched_ids)
+
+
+def test_nonselected_statuses_enforce_resolution_and_match_cardinality() -> None:
+    resolver = PerceptualContextResolver()
+    selector = ContextPolicySelector()
+    resolved = resolver.resolve(PerceptualContext(delivery_target="fixture.delivery"))
+    conflict_resolution = resolver.resolve(
+        claims=[
+            _claim("delivery.a", ContextDimension.DELIVERY_TARGET, "A"),
+            _claim("delivery.b", ContextDimension.DELIVERY_TARGET, "B"),
+        ]
+    )
+    no_match = selector.select(resolved, [], [_policy()])
+    conflict = selector.select(conflict_resolution, [_binding("A")], [_policy()])
+    ambiguous = selector.select(
+        resolved,
+        [_binding(binding_id="binding.a"), _binding(binding_id="binding.b")],
+        [_policy()],
+    )
+    unresolved = selector.select(resolved, [_binding()], [_policy(version="2.0.0")])
+
+    with pytest.raises(ValueError, match="no-match.*matched bindings"):
+        replace(no_match, matched_binding_ids=["binding.a"])
+    forged_payload = no_match.to_dict()
+    forged_payload["matched_binding_ids"] = ["binding.a"]
+    with pytest.raises(ValueError, match="no-match.*matched bindings"):
+        ContextPolicySelectionResult.from_dict(forged_payload)
+    with pytest.raises(ValueError, match="no-match.*conflicting context"):
+        replace(no_match, resolution=conflict_resolution)
+    with pytest.raises(ValueError, match="conflict.*matched bindings"):
+        replace(conflict, matched_binding_ids=["binding.a"])
+    with pytest.raises(ValueError, match="conflict.*conflicting context"):
+        replace(conflict, resolution=resolved)
+    with pytest.raises(ValueError, match="at least two"):
+        replace(ambiguous, matched_binding_ids=["binding.a"])
+    with pytest.raises(ValueError, match="unique"):
+        replace(ambiguous, matched_binding_ids=["binding.a", "binding.a"])
+    with pytest.raises(ValueError, match="ambiguous.*resolved context"):
+        replace(ambiguous, resolution=conflict_resolution)
+    for matched_ids in ([], ["binding.a", "binding.b"]):
+        with pytest.raises(ValueError, match="exactly one"):
+            replace(unresolved, matched_binding_ids=matched_ids)
+    with pytest.raises(ValueError, match="unresolved.*resolved context"):
+        replace(unresolved, resolution=conflict_resolution)
+
+
+def test_selector_generated_statuses_all_satisfy_transport_invariants() -> None:
+    resolver = PerceptualContextResolver()
+    selector = ContextPolicySelector()
+    resolved = resolver.resolve(PerceptualContext(delivery_target="fixture.delivery"))
+    conflict_resolution = resolver.resolve(
+        claims=[
+            _claim("delivery.a", ContextDimension.DELIVERY_TARGET, "A"),
+            _claim("delivery.b", ContextDimension.DELIVERY_TARGET, "B"),
+        ]
+    )
+    results = [
+        selector.select(resolved, [_binding()], [_policy()]),
+        selector.select(conflict_resolution, [_binding("A")], [_policy()]),
+        selector.select(
+            resolved,
+            [_binding(binding_id="binding.a"), _binding(binding_id="binding.b")],
+            [_policy()],
+        ),
+        selector.select(resolved, [], [_policy()]),
+        selector.select(resolved, [_binding()], [_policy(version="2.0.0")]),
+    ]
+    assert [result.status for result in results] == [
+        ContextPolicySelectionStatus.SELECTED,
+        ContextPolicySelectionStatus.CONFLICT,
+        ContextPolicySelectionStatus.AMBIGUOUS,
+        ContextPolicySelectionStatus.NO_MATCH,
+        ContextPolicySelectionStatus.UNRESOLVED,
+    ]
+    assert [
+        ContextPolicySelectionResult.from_dict(result.to_dict()) for result in results
+    ] == results
 
 
 def test_json_round_trip_preserves_typed_values_and_selection() -> None:

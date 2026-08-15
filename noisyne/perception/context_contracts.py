@@ -212,11 +212,27 @@ class ResolvedContextDimension(JsonContract):
             raise ValueError("resolved context dimension requires values")
         if not isinstance(self.claims, list) or not self.claims:
             raise ValueError("resolved context dimension requires claims")
+        if any(not isinstance(claim, ContextClaim) for claim in self.claims):
+            raise TypeError("claims must contain ContextClaim values")
         if any(claim.context_dimension is not self.context_dimension for claim in self.claims):
             raise ValueError("all claims must match the resolved context dimension")
+
+        expected_values: list[ContextValue] = []
+        expected_keys: list[JsonValue] = []
+        for claim in self.claims:
+            key = context_value_key(claim.value)
+            if key not in expected_keys:
+                expected_keys.append(key)
+                expected_values.append(claim.value)
+        actual_keys = [context_value_key(value) for value in self.values]
+        if actual_keys != expected_keys:
+            raise ValueError(
+                "values must exactly match distinct claim values in first-occurrence order"
+            )
+
         expected = (
             ContextResolutionStatus.RESOLVED
-            if len(self.values) == 1
+            if len(expected_values) == 1
             or self.context_dimension is ContextDimension.LISTENER_PREFERENCE
             else ContextResolutionStatus.CONFLICT
         )
@@ -340,12 +356,16 @@ class ContextPolicySelectionResult(JsonContract):
         if not isinstance(self.resolution, ContextResolutionResult):
             raise TypeError("resolution must be a ContextResolutionResult")
         _validate_strings(self.matched_binding_ids, "matched_binding_ids")
+        if len(self.matched_binding_ids) != len(set(self.matched_binding_ids)):
+            raise ValueError("matched_binding_ids must be unique")
         if self.reason is not None:
             _require_identifier(self.reason, "reason")
         for field_name in ("method_id", "method_version"):
             _require_identifier(getattr(self, field_name), field_name)
         selected = self.status is ContextPolicySelectionStatus.SELECTED
         if selected:
+            if self.resolution.status is not ContextResolutionStatus.RESOLVED:
+                raise ValueError("selected result requires resolved context")
             if not isinstance(self.selected_binding, ContextPolicyBinding) or not isinstance(
                 self.selected_policy, TranslationRiskPolicy
             ):
@@ -357,8 +377,30 @@ class ContextPolicySelectionResult(JsonContract):
                 or self.selected_policy.version != self.selected_binding.policy_version
             ):
                 raise ValueError("selected policy identity must exactly match the binding")
-        elif self.selected_binding is not None or self.selected_policy is not None:
+            return
+
+        if self.selected_binding is not None or self.selected_policy is not None:
             raise ValueError("non-selected result must not carry a selected binding or policy")
+        if self.status is ContextPolicySelectionStatus.CONFLICT:
+            if self.resolution.status is not ContextResolutionStatus.CONFLICT:
+                raise ValueError("conflict selection requires conflicting context")
+            if self.matched_binding_ids:
+                raise ValueError("conflict selection must not identify matched bindings")
+        elif self.status is ContextPolicySelectionStatus.NO_MATCH:
+            if self.resolution.status is ContextResolutionStatus.CONFLICT:
+                raise ValueError("no-match selection must not carry conflicting context")
+            if self.matched_binding_ids:
+                raise ValueError("no-match selection must not identify matched bindings")
+        elif self.status is ContextPolicySelectionStatus.AMBIGUOUS:
+            if self.resolution.status is not ContextResolutionStatus.RESOLVED:
+                raise ValueError("ambiguous selection requires resolved context")
+            if len(self.matched_binding_ids) < 2:
+                raise ValueError("ambiguous selection requires at least two matched bindings")
+        elif self.status is ContextPolicySelectionStatus.UNRESOLVED:
+            if self.resolution.status is not ContextResolutionStatus.RESOLVED:
+                raise ValueError("unresolved selection requires resolved context")
+            if len(self.matched_binding_ids) != 1:
+                raise ValueError("unresolved selection requires exactly one matched binding")
 
 
 def context_value_key(value: ContextValue) -> JsonValue:
