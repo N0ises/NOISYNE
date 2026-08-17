@@ -613,6 +613,17 @@ class TestScientificStandardsBoundaries:
         # Brightness is a research correlate, not a standardized metric
         assert any("correlate" in claim.lower() for claim in record.supported_claims)
 
+    def test_iso_532_3_not_described_as_ecma_418_2(self) -> None:
+        # ISO 532-3 (Moore-Glasberg-Schlittenlacher) and ECMA-418-2 (Sottek)
+        # are separate standard/model families and must not be conflated.
+        matrix = PerceptualValidationMatrix.build()
+        for record in matrix.records:
+            for basis in record.scientific_basis:
+                if "ISO 532-3" in basis:
+                    assert (
+                        "ECMA-418-2" not in basis
+                    ), f"{record.capability_id} conflates ISO 532-3 with ECMA-418-2: {basis}"
+
 
 # =============================================================================
 # 8. Validation Contracts / API

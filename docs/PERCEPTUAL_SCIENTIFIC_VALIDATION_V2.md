@@ -61,28 +61,28 @@ The machine-readable claim matrix (`noisyne/perception/validation_matrix.py`) co
 ### Sprint 2 — Auditory Frontend
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.auditory_frontend` v1.0.0
-- **Validated:** Frame/window/FFT/power/ERB aggregation, contiguity, determinism
+- **Verified against:** Frame/window/FFT/power/ERB aggregation, contiguity, determinism
 - **Fixtures:** silence, zero-energy, single sine, two-tone, ERB energy
 - **Tolerance:** 1e-12 (FP numerical), 1e-9 (DSP ERB boundaries)
 
 ### Sprint 3 — Loudness Foundation
 - **Status:** IMPLEMENTED / FOUNDATION_ONLY
 - **Method:** `noisyne.calibrated_loudness_foundation` v1.1.0
-- **Validated:** Calibration contract structure only
+- **Foundation only:** Calibration contract structure only
 - **Blocked:** No local ISO 532-1 / ITU-R BS.1770-5 / EBU R128 validation fixtures
 - **Explicit Non-Claim:** `LUFS != COMPLETE PERCEIVED LOUDNESS`
 
 ### Sprint 4 — Simultaneous Masking
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.relative_simultaneous_masking_foundation` v1.0.0
-- **Validated:** Pairwise common-gain relative excitation-margin evidence
+- **Verified against:** Pairwise common-gain relative excitation-margin evidence
 - **Fixtures:** identical source/reference, known digital gain, policy boundaries
 - **Explicit Non-Claim:** `RELATIVE MASKING EVIDENCE != AUDIBILITY THRESHOLD`
 
 ### Sprint 5 — Brightness Correlate
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.brightness_power_spectral_centroid_correlate` v1.0.0
-- **Validated:** Power-spectral-centroid computation against known sine inputs
+- **Verified against:** Power-spectral-centroid computation against known sine inputs
 - **Fixtures:** single sine, known amplitude, spectral shift, identical reference
 - **Explicit Non-Claim:** `BRIGHTNESS CORRELATE != UNIVERSAL PERCEIVED BRIGHTNESS`
 
@@ -97,55 +97,55 @@ The machine-readable claim matrix (`noisyne/perception/validation_matrix.py`) co
 ### Sprint 6 — Playback Transfer
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.explicit_linear_playback_transfer` v1.0.0
-- **Validated:** FIR convolution against delta impulse and known gain
+- **Verified against:** FIR convolution against delta impulse and known gain
 - **Fixtures:** exact playback transfer, known digital gain
 - **Tolerance:** 1e-12 (FP numerical), exact identity for delta impulse
 
 ### Sprint 7 — Translation Evidence
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.translation_evidence_foundation` v1.0.0
-- **Validated:** Before/after/delta evidence for brightness, ERB, energy, peak
+- **Verified against:** Before/after/delta evidence for brightness, ERB, energy, peak
 - **Explicit Non-Claim:** `POLICY EVALUATION != OBJECTIVE MIX QUALITY`
 
 ### Sprint 7 — Policy-Conditioned Translation Risk
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.policy_conditioned_translation_risk` v1.0.0
-- **Validated:** Boolean threshold evaluation determinism
+- **Verified against:** Boolean threshold evaluation determinism
 - **Explicit Non-Claim:** No universal thresholds or normalized scores
 
 ### Sprint 8 — Context Resolution
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.perceptual_context_foundation` v1.0.0
-- **Validated:** Deterministic conflict resolution, round-trip stability
+- **Verified against:** Deterministic conflict resolution, round-trip stability
 - **Explicit Non-Claim:** No classification, inference, profiling, or DSP
 
 ### Sprint 8 — Context Policy Binding
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.context_policy_binding` v1.0.0
-- **Validated:** Exact deterministic policy selection
+- **Verified against:** Exact deterministic policy selection
 
 ### Sprint 9 — Reference Comparison
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.perceptual_reference_foundation` v1.0.0
-- **Validated:** Whole-programme objective deltas for brightness, energy, ERB, peak
+- **Verified against:** Whole-programme objective deltas for brightness, energy, ERB, peak
 - **Fixtures:** identical source/reference, known spectral shift
 
 ### Sprint 9 — Reference Embedding (Contract Only)
 - **Status:** IMPLEMENTED / FOUNDATION_ONLY
 - **Method:** `noisyne.reference_embedding_cosine` v1.0.0
-- **Validated:** Transport contract only; no live CLAP model bundled
+- **Foundation only:** Transport contract only; no live CLAP model bundled
 - **Blocked:** Model asset not available locally
 
 ### Sprint 10 — Mix Intelligence
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.perceptual_mix_intelligence_foundation` v1.0.0
-- **Validated:** Policy-criteria evaluation, issue derivation, count balancing
+- **Verified against:** Policy-criteria evaluation, issue derivation, count balancing
 - **Explicit Non-Claim:** `POLICY EVALUATION != OBJECTIVE MIX QUALITY`
 
 ### Sprint 11 — Grounded Reasoning
 - **Status:** IMPLEMENTED / VERIFIED
 - **Method:** `noisyne.grounded_perceptual_reasoning_foundation` v1.0.0
-- **Validated:** Fact extraction, canonical rendering, deterministic statement generation
+- **Verified against:** Fact extraction, canonical rendering, deterministic statement generation
 - **Explicit Non-Claim:** `STRUCTURED REASONING != SCIENTIFIC TRUTH`
 
 ---
@@ -206,7 +206,7 @@ The following standards are referenced in the V2 perceptual pipeline.  **No stan
 | ISO 226:2023 | Equal-loudness contours (context only) | Referenced, not validated |
 | ISO 532-1:2017 | Loudness (Zwicker) | Not implemented |
 | ISO 532-2:2017 | Loudness (Moore-Glasberg) | Not implemented |
-| ISO 532-3:2023 | Loudness (ECMA-418-2 model) | Not implemented |
+| ISO 532-3:2023 | Moore-Glasberg-Schlittenlacher loudness method | Not implemented |
 | ITU-R BS.1770-5 | Programme loudness | Not implemented |
 | EBU R128 v5 | Loudness normalisation | Not implemented |
 | EBU Tech 3341–3344 | Loudness measurement | Not implemented |
@@ -275,7 +275,7 @@ Future sprints **must not**:
 | `POLICY EVALUATION != OBJECTIVE MIX QUALITY` | Threshold triggers are not quality judgments. |
 | `BRIGHTNESS CORRELATE != UNIVERSAL PERCEIVED BRIGHTNESS` | Spectral centroid is a correlate only. |
 | `RELATIVE MASKING EVIDENCE != AUDIBILITY THRESHOLD` | Margin evidence is not audibility. |
-| `LUFS != COMPLETE PERCEIVED LOUDNESS` | Loudness standards cover only programme loudness. |
+| `LUFS != COMPLETE PERCEIVED LOUDNESS` | Programme loudness / LUFS is not a complete model of perceived loudness. |
 | `STRUCTURED REASONING != SCIENTIFIC TRUTH` | Templates render facts; they do not discover truth. |
 
 ---
