@@ -574,27 +574,25 @@ class TestBoundaryInvalidInputs:
 
 
 class TestScientificStandardsBoundaries:
-    def test_standards_referenced_in_matrix(self) -> None:
+    def test_loudness_standards_are_context_only(self) -> None:
+        # Loudness-related standards must only appear as scientific boundaries,
+        # never as implementation provenance, conformance, or validation.
         matrix = PerceptualValidationMatrix.build()
-        all_basis = []
+        loudness_standards = ("ISO 532-1", "ISO 532-2", "ISO 532-3", "ITU-R BS.1770", "EBU R128")
         for record in matrix.records:
-            all_basis.extend(record.scientific_basis)
-
-        # Key standards should be referenced somewhere
-        standards = [
-            "ISO 226",
-            "ISO 532-1",
-            "ISO 532-3",
-            "ITU-R BS.1770",
-            "EBU R128",
-            "DIN 45692",
-            "DIN 38455",
-            "ECMA-418-2",
-        ]
-        for standard in standards:
-            assert any(
-                standard in basis for basis in all_basis
-            ), f"Standard {standard} not referenced in matrix"
+            for basis in record.scientific_basis:
+                if any(std in basis for std in loudness_standards):
+                    assert record.validation_status in (
+                        ValidationStatus.FOUNDATION_ONLY,
+                        ValidationStatus.UNAVAILABLE,
+                    ), f"{record.capability_id} cites loudness standard but is not foundation/unavailable"
+                    assert (
+                        "(context only" in basis
+                    ), f"{record.capability_id} loudness standard basis must be context-only: {basis}"
+                    for claim in record.supported_claims:
+                        assert "conformance" not in claim.lower()
+                        assert "compliance" not in claim.lower()
+                        assert "validated loudness method" not in claim.lower()
 
     def test_no_unvalidated_standards_claim(self) -> None:
         # Methods marked FOUNDATION_ONLY or UNAVAILABLE must not claim standards conformance
