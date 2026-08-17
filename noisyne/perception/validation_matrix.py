@@ -3,6 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Self
 
+from .knowledge_contracts import (
+    KNOWLEDGE_FOUNDATION_METHOD_ID,
+    KNOWLEDGE_FOUNDATION_METHOD_VERSION,
+)
 from .validation_contracts import (
     VALIDATION_SCHEMA_VERSION,
     FixtureKind,
@@ -577,6 +581,107 @@ _SPRINT11_GROUNDED_REASONING = MethodValidationRecord(
 
 
 # -----------------------------------------------------------------------------
+# Sprint 13 — Knowledge / Memory / Personalization
+# -----------------------------------------------------------------------------
+
+_SPRINT13_KNOWLEDGE_MEMORY = MethodValidationRecord(
+    capability_id="knowledge_memory_foundation",
+    method_id=KNOWLEDGE_FOUNDATION_METHOD_ID,
+    method_version=KNOWLEDGE_FOUNDATION_METHOD_VERSION,
+    implementation_status=ValidationStatus.IMPLEMENTED,
+    validation_status=ValidationStatus.FOUNDATION_ONLY,
+    scientific_basis=[
+        "Deterministic provenance-preserving memory taxonomy and contracts",
+    ],
+    validation_fixture=[
+        "In-memory deterministic backend for contract and storage tests",
+    ],
+    tolerance_policy=[
+        "exact_identity: serialization round-trip and stable IDs",
+        "serialization_identity: JSON-safe contract transport",
+    ],
+    supported_claims=[
+        "Deterministic memory item contract with identity, type, provenance, scope, and trust basis",
+        "Backend-neutral storage protocol with in-memory test backend",
+        "Explicit separation of scientific truth, retrieved knowledge, project history, and user preference",
+    ],
+    prohibited_claims=[
+        "MEMORY != SCIENTIFIC TRUTH",
+        "USER PREFERENCE != OBJECTIVE QUALITY",
+        "RETRIEVAL SCORE != CONFIDENCE",
+        "MODEL OUTPUT != VERIFIED KNOWLEDGE",
+        "PROJECT HISTORY != CURRENT EVIDENCE",
+    ],
+    known_limitations=[
+        "Sprint 13 backend is in-memory only; persistent backend integration is deferred",
+        "No live model integration; model-generated content remains unverified",
+    ],
+)
+
+_SPRINT13_PERSONALIZATION = MethodValidationRecord(
+    capability_id="personalization_foundation",
+    method_id="noisyne.personalization_foundation",
+    method_version="1.0.0",
+    implementation_status=ValidationStatus.IMPLEMENTED,
+    validation_status=ValidationStatus.FOUNDATION_ONLY,
+    scientific_basis=[
+        "Explicit bounded personalization policy with allowed/prohibited effect categories",
+    ],
+    validation_fixture=[
+        "Policy contract validation and rejection of scientific-evidence effects",
+    ],
+    tolerance_policy=[
+        "exact_identity: allowed/prohibited effect sets must be deterministic",
+    ],
+    supported_claims=[
+        "Personalization may influence presentation, defaults, and workflow focus",
+        "Personalization requires explicit user consent by policy default",
+    ],
+    prohibited_claims=[
+        "PERSONALIZATION != SCIENTIFIC VALIDATION",
+        "Personalization must not modify scientific evidence, validation status, or source-bound facts",
+        "Personalization must not alter criterion arithmetic or hide contradictory evidence",
+    ],
+    known_limitations=[
+        "No runtime personalization engine; policy contract only",
+        "No user psychological profiling or sensitive-attribute inference",
+    ],
+)
+
+_SPRINT13_KNOWLEDGE_RETRIEVAL = MethodValidationRecord(
+    capability_id="knowledge_retrieval_contract",
+    method_id="noisyne.knowledge_retrieval_contract",
+    method_version="1.0.0",
+    implementation_status=ValidationStatus.IMPLEMENTED,
+    validation_status=ValidationStatus.FOUNDATION_ONLY,
+    scientific_basis=[
+        "Backend-neutral deterministic retrieval contract with explicit provider identity and score semantics",
+    ],
+    validation_fixture=[
+        "In-memory deterministic filter/sort retrieval against MemoryItem records",
+    ],
+    tolerance_policy=[
+        "exact_identity: deterministic ordering by created_at and memory_id",
+        "floating_point_numerical: retrieval_score if present is normalized [0, 1] with explicit semantics",
+    ],
+    supported_claims=[
+        "KnowledgeQuery with explicit provider_identity and deterministic filters",
+        "RetrievedKnowledgeItem carries source MemoryItem and declared score semantics",
+        "RAG context must be separately labeled from verified facts",
+    ],
+    prohibited_claims=[
+        "RAG CONTEXT != VERIFIED FACT",
+        "RETRIEVAL SCORE != CONFIDENCE",
+        "Retrieval score must not be converted to a percentage or confidence claim",
+    ],
+    known_limitations=[
+        "No vector similarity search in Sprint 13; only deterministic filtering and sorting",
+        "No live LLM/RAG provider integration; contract boundary only",
+    ],
+)
+
+
+# -----------------------------------------------------------------------------
 # Aggregate matrix
 # -----------------------------------------------------------------------------
 
@@ -596,6 +701,9 @@ _ALL_RECORDS: tuple[MethodValidationRecord, ...] = (
     _SPRINT9_REFERENCE_EMBEDDING,
     _SPRINT10_MIX_INTELLIGENCE,
     _SPRINT11_GROUNDED_REASONING,
+    _SPRINT13_KNOWLEDGE_MEMORY,
+    _SPRINT13_PERSONALIZATION,
+    _SPRINT13_KNOWLEDGE_RETRIEVAL,
 )
 
 

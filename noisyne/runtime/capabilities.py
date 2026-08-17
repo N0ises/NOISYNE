@@ -560,6 +560,39 @@ registry.register(
     )
 )
 
+registry.register(
+    Capability(
+        name="knowledge_memory_foundation",
+        description="Sprint 13 deterministic provenance-preserving memory/knowledge taxonomy and contracts",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements="Sprint 13 contracts and backend-neutral storage protocol",
+        dependencies=(),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="personalization_foundation",
+        description="Sprint 13 bounded personalization policy with explicit allowed/prohibited effects",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements="Sprint 13 PersonalizationPolicy contract",
+        dependencies=(),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="knowledge_retrieval_contract",
+        description="Sprint 13 backend-neutral knowledge retrieval contract with explicit score semantics",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements="Sprint 13 KnowledgeQuery/KnowledgeRetrievalResult contracts",
+        dependencies=(),
+        tested_in_freeze=False,
+    )
+)
+
 __all__ = [
     "Capability",
     "CapabilityRegistry",
