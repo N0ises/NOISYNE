@@ -163,11 +163,16 @@ class TestStableIdentity:
 
 class TestProvenancePreservation:
     def test_memory_item_preserves_provenance(self) -> None:
-        item = _memory_item(provenance=ProvenanceKind.IMPORTED, source_identity="imported_yaml")
-        assert item.provenance is ProvenanceKind.IMPORTED
-        assert item.source_identity == "imported_yaml"
+        item = _memory_item(
+            memory_type=KnowledgeMemoryType.VERIFIED_PROJECT_KNOWLEDGE,
+            provenance=ProvenanceKind.DERIVED,
+            source_identity="derived_from_analysis",
+            trust_basis=TrustBasis.VERIFIED,
+        )
+        assert item.provenance is ProvenanceKind.DERIVED
+        assert item.source_identity == "derived_from_analysis"
         restored = MemoryItem.from_dict(item.to_dict())
-        assert restored.provenance is ProvenanceKind.IMPORTED
+        assert restored.provenance is ProvenanceKind.DERIVED
 
     def test_model_generated_requires_unverified(self) -> None:
         with pytest.raises(ValueError):
@@ -217,6 +222,9 @@ class TestScopeIsolation:
                 memory_id="ref_1",
                 scope=MemoryScope.REFERENCE_LIBRARY,
                 memory_type=KnowledgeMemoryType.RETRIEVED_KNOWLEDGE,
+                provenance=ProvenanceKind.RETRIEVED,
+                source_identity="reference_retrieval",
+                trust_basis=TrustBasis.RETRIEVED,
             )
         )
         ref_items = store.list(scope=MemoryScope.REFERENCE_LIBRARY)
@@ -239,7 +247,9 @@ class TestNoSilentScopePromotion:
         store = InMemoryMemoryStore()
         store.put(_memory_item(memory_id="global_1", scope=MemoryScope.GLOBAL_USER, user_id="u1"))
         store.put(_memory_item(memory_id="project_1", scope=MemoryScope.PROJECT, project_id="p1"))
-        deleted = store.clear_scope(MemoryScope.SESSION)
+        # SESSION requires explicit project_id or all_projects=True to avoid
+        # accidental broad deletion.
+        deleted = store.clear_scope(MemoryScope.SESSION, all_projects=True)
         assert deleted == 0
         assert store.count() == 2
 
@@ -645,3 +655,383 @@ class TestMemoryStoreProtocol:
         result = store.search(query)
         assert result.provider_identity == "noisyne.in_memory_memory_store"
         assert result.retrieval_policy == "deterministic_filter_sort"
+
+
+# =============================================================================
+# 20. Consent semantics
+# =============================================================================
+
+
+class TestConsentSemantics:
+    def test_default_policy_requires_consent_but_does_not_grant_it(self) -> None:
+        policy = PersonalizationPolicy(
+            policy_id="default",
+            allowed_effects=[PersonalizationEffect.PRESENTATION],
+        )
+        assert policy.requires_explicit_user_consent is True
+        assert policy.consent_granted is False
+
+    def test_explicit_consent_can_be_recorded(self) -> None:
+        policy = PersonalizationPolicy(
+            policy_id="explicit",
+            allowed_effects=[PersonalizationEffect.PRESENTATION],
+            requires_explicit_user_consent=True,
+            consent_granted=True,
+        )
+        assert policy.consent_granted is True
+
+    def test_policy_without_consent_requirement_remains_ungranted(self) -> None:
+        policy = PersonalizationPolicy(
+            policy_id="optional",
+            allowed_effects=[PersonalizationEffect.PRESENTATION],
+            requires_explicit_user_consent=False,
+            consent_granted=False,
+        )
+        assert policy.requires_explicit_user_consent is False
+        assert policy.consent_granted is False
+
+
+# =============================================================================
+# 21. Type / provenance / trust invariants
+# =============================================================================
+
+
+class TestTypeProvenanceTrustInvariants:
+    @pytest.mark.parametrize(
+        ("memory_type", "provenance", "trust_basis", "validation_link"),
+        [
+            (
+                KnowledgeMemoryType.MODEL_GENERATED_CONTENT,
+                ProvenanceKind.USER_ENTERED,
+                TrustBasis.UNVERIFIED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.MODEL_GENERATED_CONTENT,
+                ProvenanceKind.MODEL_GENERATED,
+                TrustBasis.DECLARED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.RETRIEVED_KNOWLEDGE,
+                ProvenanceKind.DERIVED,
+                TrustBasis.RETRIEVED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.RETRIEVED_KNOWLEDGE,
+                ProvenanceKind.RETRIEVED,
+                TrustBasis.VALIDATED,
+                "validation:retrieved",
+            ),
+            (
+                KnowledgeMemoryType.USER_PREFERENCE,
+                ProvenanceKind.SYSTEM_OBSERVED,
+                TrustBasis.DECLARED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.USER_PREFERENCE,
+                ProvenanceKind.USER_ENTERED,
+                TrustBasis.VERIFIED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.USER_DECLARATION,
+                ProvenanceKind.USER_ENTERED,
+                TrustBasis.VALIDATED,
+                "validation:declared",
+            ),
+            (
+                KnowledgeMemoryType.PROJECT_HISTORY,
+                ProvenanceKind.IMPORTED,
+                TrustBasis.DECLARED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.PROJECT_HISTORY,
+                ProvenanceKind.SYSTEM_OBSERVED,
+                TrustBasis.VERIFIED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.VERIFIED_PROJECT_KNOWLEDGE,
+                ProvenanceKind.USER_ENTERED,
+                TrustBasis.VERIFIED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.VERIFIED_PROJECT_KNOWLEDGE,
+                ProvenanceKind.DERIVED,
+                TrustBasis.DECLARED,
+                None,
+            ),
+            (
+                KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+                ProvenanceKind.IMPORTED,
+                TrustBasis.UNVERIFIED,
+                None,
+            ),
+        ],
+    )
+    def test_invalid_combinations_rejected(
+        self,
+        memory_type: KnowledgeMemoryType,
+        provenance: ProvenanceKind,
+        trust_basis: TrustBasis,
+        validation_link: str | None,
+    ) -> None:
+        with pytest.raises(ValueError):
+            _memory_item(
+                memory_type=memory_type,
+                provenance=provenance,
+                trust_basis=trust_basis,
+                validation_link=validation_link,
+            )
+
+    def test_model_generated_requires_model_generated_provenance(self) -> None:
+        with pytest.raises(ValueError):
+            _memory_item(
+                memory_id="mg_bad",
+                memory_type=KnowledgeMemoryType.MODEL_GENERATED_CONTENT,
+                provenance=ProvenanceKind.USER_ENTERED,
+                trust_basis=TrustBasis.UNVERIFIED,
+            )
+
+    def test_retrieved_knowledge_cannot_claim_validated(self) -> None:
+        with pytest.raises(ValueError):
+            _memory_item(
+                memory_id="rk_bad",
+                memory_type=KnowledgeMemoryType.RETRIEVED_KNOWLEDGE,
+                provenance=ProvenanceKind.RETRIEVED,
+                source_identity="retrieval",
+                trust_basis=TrustBasis.VALIDATED,
+                validation_link="validation:retrieval",
+            )
+
+
+# =============================================================================
+# 22. Store overwrite and deletion safety
+# =============================================================================
+
+
+class TestStoreOverwriteAndDeleteSafety:
+    def test_cross_scope_overwrite_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(_memory_item(memory_id="x", scope=MemoryScope.GLOBAL_USER))
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="x",
+                    scope=MemoryScope.PROJECT,
+                    project_id="p1",
+                )
+            )
+        assert store.get("x").scope is MemoryScope.GLOBAL_USER
+
+    def test_project_id_change_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="x",
+                scope=MemoryScope.PROJECT,
+                project_id="p1",
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="x",
+                    scope=MemoryScope.PROJECT,
+                    project_id="p2",
+                )
+            )
+
+    def test_user_id_change_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="x",
+                scope=MemoryScope.GLOBAL_USER,
+                user_id="u1",
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="x",
+                    scope=MemoryScope.GLOBAL_USER,
+                    user_id="u2",
+                )
+            )
+
+    def test_immutable_item_overwrite_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(_memory_item(memory_id="x", mutable=False))
+        with pytest.raises(ValueError):
+            store.put(_memory_item(memory_id="x", mutable=True))
+        assert store.get("x").mutable is False
+
+    def test_clear_project_requires_project_id_or_all_projects(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="p1",
+                scope=MemoryScope.PROJECT,
+                project_id="p1",
+            )
+        )
+        with pytest.raises(ValueError):
+            store.clear_scope(MemoryScope.PROJECT)
+        with pytest.raises(ValueError):
+            store.clear_scope(MemoryScope.SESSION)
+        assert store.clear_scope(MemoryScope.PROJECT, project_id="p1") == 1
+
+    def test_clear_global_user_requires_user_id_or_all_users(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="g1",
+                scope=MemoryScope.GLOBAL_USER,
+                user_id="u1",
+            )
+        )
+        with pytest.raises(ValueError):
+            store.clear_scope(MemoryScope.GLOBAL_USER)
+        store.put(
+            _memory_item(
+                memory_id="g2",
+                scope=MemoryScope.GLOBAL_USER,
+                user_id="u2",
+            )
+        )
+        assert store.clear_scope(MemoryScope.GLOBAL_USER, user_id="u1") == 1
+        assert store.get("g1") is None
+        assert store.get("g2") is not None
+
+    def test_clear_scope_does_not_affect_other_scopes(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="g1",
+                scope=MemoryScope.GLOBAL_USER,
+                user_id="u1",
+            )
+        )
+        store.put(
+            _memory_item(
+                memory_id="p1",
+                scope=MemoryScope.PROJECT,
+                project_id="p1",
+            )
+        )
+        store.put(
+            _memory_item(
+                memory_id="p2",
+                scope=MemoryScope.PROJECT,
+                project_id="p2",
+            )
+        )
+        store.put(
+            _memory_item(
+                memory_id="r1",
+                scope=MemoryScope.REFERENCE_LIBRARY,
+                memory_type=KnowledgeMemoryType.RETRIEVED_KNOWLEDGE,
+                provenance=ProvenanceKind.RETRIEVED,
+                source_identity="retrieval",
+                trust_basis=TrustBasis.RETRIEVED,
+            )
+        )
+        deleted = store.clear_scope(MemoryScope.PROJECT, project_id="p1")
+        assert deleted == 1
+        assert store.get("g1") is not None
+        assert store.get("p1") is None
+        assert store.get("p2") is not None
+        assert store.get("r1") is not None
+
+
+# =============================================================================
+# 23. Deterministic tie ordering
+# =============================================================================
+
+
+class TestDeterministicTieOrdering:
+    def test_same_created_at_ordered_by_memory_id(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="b",
+                scope=MemoryScope.PROJECT,
+                project_id="p1",
+                created_at="2026-08-17T10:00:00Z",
+            )
+        )
+        store.put(
+            _memory_item(
+                memory_id="a",
+                scope=MemoryScope.PROJECT,
+                project_id="p1",
+                created_at="2026-08-17T10:00:00Z",
+            )
+        )
+        query = KnowledgeQuery(
+            query_id="q_tie",
+            provider_identity="noisyne.test",
+            filters=KnowledgeFilter(scopes=[MemoryScope.PROJECT], project_id="p1"),
+        )
+        result = store.search(query)
+        assert [r.memory_item.memory_id for r in result.results] == ["a", "b"]
+
+
+# =============================================================================
+# 24. Retrieval score semantics across providers
+# =============================================================================
+
+
+class TestCrossProviderScoreSemantics:
+    def test_provider_semantics_are_preserved_not_normalized(self) -> None:
+        item = _memory_item(memory_id="m1")
+        result_a = RetrievedKnowledgeItem(
+            result_id="r_a",
+            query_id="q1",
+            memory_item=item,
+            rank=0,
+            retrieval_score=0.9,
+            score_semantics="provider_a_cosine_similarity",
+        )
+        result_b = RetrievedKnowledgeItem(
+            result_id="r_b",
+            query_id="q1",
+            memory_item=item,
+            rank=1,
+            retrieval_score=0.9,
+            score_semantics="provider_b_inner_product",
+        )
+        assert result_a.score_semantics != result_b.score_semantics
+        assert result_a.retrieval_score == pytest.approx(0.9, abs=1e-12)
+        assert result_b.retrieval_score == pytest.approx(0.9, abs=1e-12)
+        # Scores must not be converted to percentages or merged into one scale.
+        assert "%" not in result_a.score_semantics
+        assert "%" not in result_b.score_semantics
+
+
+# =============================================================================
+# 25. Source truth cannot be mutated through memory objects
+# =============================================================================
+
+
+class TestSourceTruthImmutabilityViaMemory:
+    def test_memory_item_has_no_grounding_fact_conversion(self) -> None:
+        # Sprint 13 memory/retrieval must not silently manufacture Sprint 10/11
+        # source-bound GroundingFacts.
+        assert not hasattr(MemoryItem, "to_grounding_fact")
+        assert not hasattr(RetrievedKnowledgeItem, "to_grounding_fact")
+
+    def test_arbitrary_object_payload_rejected_including_complex_artifacts(self) -> None:
+        class FakeSourceResult:
+            value: str = "sprint10_source"
+
+        with pytest.raises(TypeError):
+            MemoryPayload(
+                payload_type="source_result", value=FakeSourceResult()  # type: ignore[arg-type]
+            )

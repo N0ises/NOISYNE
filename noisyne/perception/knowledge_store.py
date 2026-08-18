@@ -55,8 +55,14 @@ class MemoryStore(Protocol):
         *,
         project_id: str | None = None,
         user_id: str | None = None,
+        all_projects: bool = False,
+        all_users: bool = False,
     ) -> int:
-        """Delete all items in the given scope, returning deletion count."""
+        """Delete all items in the given scope, returning deletion count.
+
+        Broad deletion across projects or users requires explicit flags to avoid
+        accidental data loss.
+        """
         ...
 
 
@@ -74,6 +80,22 @@ class InMemoryMemoryStore:
     schema_version: str = KNOWLEDGE_FOUNDATION_SCHEMA_VERSION
 
     def put(self, item: MemoryItem) -> MemoryItem:
+        existing = self._items.get(item.memory_id)
+        if existing is not None:
+            if not existing.mutable:
+                raise ValueError(f"cannot overwrite immutable memory item {item.memory_id}")
+            if existing.scope is not item.scope:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different scope"
+                )
+            if existing.project_id != item.project_id:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different project_id"
+                )
+            if existing.user_id != item.user_id:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different user_id"
+                )
         self._items[item.memory_id] = item
         return item
 
@@ -126,7 +148,19 @@ class InMemoryMemoryStore:
         *,
         project_id: str | None = None,
         user_id: str | None = None,
+        all_projects: bool = False,
+        all_users: bool = False,
     ) -> int:
+        if (
+            scope in (MemoryScope.PROJECT, MemoryScope.SESSION)
+            and project_id is None
+            and not all_projects
+        ):
+            raise ValueError(
+                f"clear_scope for {scope.value} requires project_id or all_projects=True"
+            )
+        if scope is MemoryScope.GLOBAL_USER and user_id is None and not all_users:
+            raise ValueError("clear_scope for global_user requires user_id or all_users=True")
         to_delete = [
             memory_id
             for memory_id, item in self._items.items()

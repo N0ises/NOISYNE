@@ -174,21 +174,55 @@ class MemoryItem(JsonContract):
                 raise ValueError("validated trust basis requires a validation_link")
             if self.memory_type is not KnowledgeMemoryType.SCIENTIFIC_REFERENCE:
                 raise ValueError("validated trust basis is reserved for scientific_reference")
+
+        # Conservative type/provenance/trust invariants: callers cannot relabel
+        # unsafe information as trusted merely by choosing enum values.
         if (
             self.memory_type is KnowledgeMemoryType.SCIENTIFIC_REFERENCE
-            and self.trust_basis not in (TrustBasis.VALIDATED, TrustBasis.VERIFIED)
+            and self.trust_basis
+            not in (
+                TrustBasis.VALIDATED,
+                TrustBasis.VERIFIED,
+            )
         ):
             raise ValueError("scientific_reference requires validated or verified trust basis")
-        if (
-            self.memory_type is KnowledgeMemoryType.VERIFIED_PROJECT_KNOWLEDGE
-            and self.trust_basis is not TrustBasis.VERIFIED
-        ):
-            raise ValueError("verified_project_knowledge requires verified trust basis")
-        if (
-            self.memory_type is KnowledgeMemoryType.MODEL_GENERATED_CONTENT
-            and self.trust_basis is not TrustBasis.UNVERIFIED
-        ):
-            raise ValueError("model_generated_content must remain unverified")
+        if self.memory_type is KnowledgeMemoryType.VERIFIED_PROJECT_KNOWLEDGE:
+            if self.trust_basis is not TrustBasis.VERIFIED:
+                raise ValueError("verified_project_knowledge requires verified trust basis")
+            if self.provenance not in (ProvenanceKind.DERIVED, ProvenanceKind.SYSTEM_OBSERVED):
+                raise ValueError(
+                    "verified_project_knowledge requires derived or system_observed provenance"
+                )
+        if self.memory_type is KnowledgeMemoryType.RETRIEVED_KNOWLEDGE:
+            if self.provenance is not ProvenanceKind.RETRIEVED:
+                raise ValueError("retrieved_knowledge requires retrieved provenance")
+            if self.trust_basis is not TrustBasis.RETRIEVED:
+                raise ValueError("retrieved_knowledge requires retrieved trust basis")
+        if self.memory_type is KnowledgeMemoryType.USER_PREFERENCE:
+            if self.provenance is not ProvenanceKind.USER_ENTERED:
+                raise ValueError("user_preference requires user_entered provenance")
+            if self.trust_basis is not TrustBasis.DECLARED:
+                raise ValueError("user_preference requires declared trust basis")
+        if self.memory_type is KnowledgeMemoryType.USER_DECLARATION:
+            if self.provenance is not ProvenanceKind.USER_ENTERED:
+                raise ValueError("user_declaration requires user_entered provenance")
+            if self.trust_basis is not TrustBasis.DECLARED:
+                raise ValueError("user_declaration requires declared trust basis")
+        if self.memory_type is KnowledgeMemoryType.PROJECT_HISTORY:
+            if self.provenance not in (
+                ProvenanceKind.USER_ENTERED,
+                ProvenanceKind.SYSTEM_OBSERVED,
+            ):
+                raise ValueError(
+                    "project_history requires user_entered or system_observed provenance"
+                )
+            if self.trust_basis not in (TrustBasis.DECLARED, TrustBasis.UNVERIFIED):
+                raise ValueError("project_history requires declared or unverified trust basis")
+        if self.memory_type is KnowledgeMemoryType.MODEL_GENERATED_CONTENT:
+            if self.provenance is not ProvenanceKind.MODEL_GENERATED:
+                raise ValueError("model_generated_content requires model_generated provenance")
+            if self.trust_basis is not TrustBasis.UNVERIFIED:
+                raise ValueError("model_generated_content must remain unverified")
         for limitation in self.limitations:
             _require_identifier(limitation, "limitations")
 
@@ -409,11 +443,16 @@ class PersonalizationPolicy(JsonContract):
     Personalization may influence presentation, defaults, and workflow focus.
     It must never modify scientific evidence, validation status, source-bound
     facts, criterion arithmetic, or contradictory evidence.
+
+    `requires_explicit_user_consent` records whether the policy requires consent
+    before personalization may be applied.  `consent_granted` records whether the
+    user has actually granted that consent.  These are deliberately separate.
     """
 
     policy_id: str
     allowed_effects: list[PersonalizationEffect]
     requires_explicit_user_consent: bool = True
+    consent_granted: bool = False
     prohibited_effects: list[str] = field(default_factory=lambda: ["scientific_evidence"])
 
     def __post_init__(self) -> None:
@@ -430,6 +469,8 @@ class PersonalizationPolicy(JsonContract):
             raise ValueError("prohibited_effects must include 'scientific_evidence'")
         if type(self.requires_explicit_user_consent) is not bool:
             raise TypeError("requires_explicit_user_consent must be a bool")
+        if type(self.consent_granted) is not bool:
+            raise TypeError("consent_granted must be a bool")
 
 
 __all__ = [
