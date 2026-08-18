@@ -116,6 +116,10 @@ class InMemoryMemoryStore:
                 raise ValueError(
                     f"cannot overwrite memory item {item.memory_id} with a different validation_link"
                 )
+            if existing.created_at != item.created_at:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different created_at"
+                )
         self._items[item.memory_id] = item
         return item
 

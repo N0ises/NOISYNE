@@ -238,6 +238,15 @@ class MemoryItem(JsonContract):
                 raise ValueError("system_observation requires system_observed provenance")
             if self.trust_basis is not TrustBasis.UNVERIFIED:
                 raise ValueError("system_observation must remain unverified")
+        if (
+            self.memory_type
+            in (
+                KnowledgeMemoryType.PROJECT_HISTORY,
+                KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+            )
+            and self.mutable
+        ):
+            raise ValueError(f"{self.memory_type.value} records must be immutable")
         for limitation in self.limitations:
             _require_identifier(limitation, "limitations")
 

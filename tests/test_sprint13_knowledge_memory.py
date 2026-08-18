@@ -37,10 +37,17 @@ def _memory_item(
     payload_type: str = "user_preference",
     project_id: str | None = "project_a",
     user_id: str | None = "user_1",
-    mutable: bool = True,
+    mutable: bool | None = None,
     trust_basis: TrustBasis = TrustBasis.DECLARED,
     **kwargs: object,
 ) -> MemoryItem:
+    if mutable is None:
+        # Historical/scientific records are append-oriented by design and must be
+        # immutable once stored.  Callers may still explicitly override for tests.
+        mutable = memory_type not in (
+            KnowledgeMemoryType.PROJECT_HISTORY,
+            KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+        )
     return MemoryItem(
         memory_id=memory_id,
         memory_type=memory_type,
@@ -295,8 +302,17 @@ class TestDeterministicOrdering:
 class TestDuplicateSemantics:
     def test_same_id_upserts(self) -> None:
         store = InMemoryMemoryStore()
-        first = _memory_item(memory_id="m1", created_at="2026-08-17T10:00:00Z")
-        second = _memory_item(memory_id="m1", created_at="2026-08-17T11:00:00Z")
+        first = _memory_item(
+            memory_id="m1",
+            payload_value={"target_lufs": -9.0},
+            created_at="2026-08-17T10:00:00Z",
+        )
+        second = _memory_item(
+            memory_id="m1",
+            payload_value={"target_lufs": -10.0},
+            created_at="2026-08-17T10:00:00Z",
+            updated_at="2026-08-17T11:00:00Z",
+        )
         store.put(first)
         store.put(second)
         assert store.count() == 1
@@ -336,6 +352,87 @@ class TestExplicitDelete:
         assert store.get("p1") is None
         assert store.get("p2") is not None
         assert store.get("g1") is not None
+
+
+# =============================================================================
+# 8b. Append-oriented project history / scientific immutability
+# =============================================================================
+
+
+class TestAppendOrientedImmutability:
+    def test_project_history_must_be_immutable(self) -> None:
+        with pytest.raises(ValueError):
+            _memory_item(
+                memory_id="h1",
+                memory_type=KnowledgeMemoryType.PROJECT_HISTORY,
+                provenance=ProvenanceKind.SYSTEM_OBSERVED,
+                trust_basis=TrustBasis.UNVERIFIED,
+                mutable=True,
+            )
+
+    def test_project_history_payload_cannot_be_rewritten(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="h1",
+                memory_type=KnowledgeMemoryType.PROJECT_HISTORY,
+                provenance=ProvenanceKind.SYSTEM_OBSERVED,
+                trust_basis=TrustBasis.UNVERIFIED,
+                payload_value={"event": "analysis_performed"},
+                created_at="2026-08-17T10:00:00Z",
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="h1",
+                    memory_type=KnowledgeMemoryType.PROJECT_HISTORY,
+                    provenance=ProvenanceKind.SYSTEM_OBSERVED,
+                    trust_basis=TrustBasis.UNVERIFIED,
+                    payload_value={"event": "analysis_never_happened"},
+                    created_at="2026-08-17T10:00:00Z",
+                )
+            )
+        assert store.get("h1").payload.value == {"event": "analysis_performed"}
+
+    def test_scientific_reference_must_be_immutable(self) -> None:
+        with pytest.raises(ValueError):
+            _memory_item(
+                memory_id="ref1",
+                memory_type=KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+                provenance=ProvenanceKind.IMPORTED,
+                trust_basis=TrustBasis.VERIFIED,
+                mutable=True,
+            )
+
+    def test_scientific_reference_payload_cannot_change_claim(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="ref1",
+                memory_type=KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+                provenance=ProvenanceKind.IMPORTED,
+                source_identity="iso_226_2023",
+                trust_basis=TrustBasis.VALIDATED,
+                validation_link="validation:sprint12:loudness_foundation",
+                payload_value={"claim": "equal_loudness_contours"},
+                created_at="2026-08-17T10:00:00Z",
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="ref1",
+                    memory_type=KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+                    provenance=ProvenanceKind.IMPORTED,
+                    source_identity="iso_226_2023",
+                    trust_basis=TrustBasis.VALIDATED,
+                    validation_link="validation:sprint12:loudness_foundation",
+                    payload_value={"claim": "different_claim"},
+                    created_at="2026-08-17T10:00:00Z",
+                )
+            )
+        assert store.get("ref1").payload.value == {"claim": "equal_loudness_contours"}
 
 
 # =============================================================================
@@ -1122,6 +1219,53 @@ class TestStoreOverwriteAndDeleteSafety:
         assert store.get("p1") is None
         assert store.get("p2") is not None
         assert store.get("r1") is not None
+
+    def test_created_at_cannot_change_under_same_id(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="m1",
+                created_at="2026-08-17T10:00:00Z",
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="m1",
+                    created_at="2026-08-17T11:00:00Z",
+                )
+            )
+        assert store.get("m1").created_at == "2026-08-17T10:00:00Z"
+
+
+class TestPreferenceMutableUpdate:
+    def test_user_preference_payload_and_updated_at_may_change(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="pref_1",
+                memory_type=KnowledgeMemoryType.USER_PREFERENCE,
+                provenance=ProvenanceKind.USER_ENTERED,
+                trust_basis=TrustBasis.DECLARED,
+                payload_value={"target_lufs": -9.0},
+                created_at="2026-08-17T10:00:00Z",
+            )
+        )
+        store.put(
+            _memory_item(
+                memory_id="pref_1",
+                memory_type=KnowledgeMemoryType.USER_PREFERENCE,
+                provenance=ProvenanceKind.USER_ENTERED,
+                trust_basis=TrustBasis.DECLARED,
+                payload_value={"target_lufs": -10.0},
+                created_at="2026-08-17T10:00:00Z",
+                updated_at="2026-08-17T11:00:00Z",
+            )
+        )
+        item = store.get("pref_1")
+        assert item.payload.value == {"target_lufs": -10.0}
+        assert item.updated_at == "2026-08-17T11:00:00Z"
+        assert item.created_at == "2026-08-17T10:00:00Z"
 
 
 # =============================================================================
