@@ -96,6 +96,18 @@ class InMemoryMemoryStore:
                 raise ValueError(
                     f"cannot overwrite memory item {item.memory_id} with a different user_id"
                 )
+            if existing.memory_type is not item.memory_type:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different memory_type"
+                )
+            if existing.provenance is not item.provenance:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different provenance"
+                )
+            if existing.trust_basis is not item.trust_basis:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different trust_basis"
+                )
         self._items[item.memory_id] = item
         return item
 

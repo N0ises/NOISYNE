@@ -223,6 +223,11 @@ class MemoryItem(JsonContract):
                 raise ValueError("model_generated_content requires model_generated provenance")
             if self.trust_basis is not TrustBasis.UNVERIFIED:
                 raise ValueError("model_generated_content must remain unverified")
+        if self.memory_type is KnowledgeMemoryType.SYSTEM_OBSERVATION:
+            if self.provenance is not ProvenanceKind.SYSTEM_OBSERVED:
+                raise ValueError("system_observation requires system_observed provenance")
+            if self.trust_basis is not TrustBasis.UNVERIFIED:
+                raise ValueError("system_observation must remain unverified")
         for limitation in self.limitations:
             _require_identifier(limitation, "limitations")
 

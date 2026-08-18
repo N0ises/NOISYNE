@@ -809,6 +809,22 @@ class TestTypeProvenanceTrustInvariants:
                 validation_link="validation:retrieval",
             )
 
+    def test_system_observation_requires_system_observed_and_unverified(self) -> None:
+        with pytest.raises(ValueError):
+            _memory_item(
+                memory_id="so_bad",
+                memory_type=KnowledgeMemoryType.SYSTEM_OBSERVATION,
+                provenance=ProvenanceKind.USER_ENTERED,
+                trust_basis=TrustBasis.UNVERIFIED,
+            )
+        with pytest.raises(ValueError):
+            _memory_item(
+                memory_id="so_bad2",
+                memory_type=KnowledgeMemoryType.SYSTEM_OBSERVATION,
+                provenance=ProvenanceKind.SYSTEM_OBSERVED,
+                trust_basis=TrustBasis.VERIFIED,
+            )
+
 
 # =============================================================================
 # 22. Store overwrite and deletion safety
@@ -871,6 +887,69 @@ class TestStoreOverwriteAndDeleteSafety:
         with pytest.raises(ValueError):
             store.put(_memory_item(memory_id="x", mutable=True))
         assert store.get("x").mutable is False
+
+    def test_memory_type_change_on_overwrite_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="x",
+                memory_type=KnowledgeMemoryType.USER_PREFERENCE,
+                provenance=ProvenanceKind.USER_ENTERED,
+                trust_basis=TrustBasis.DECLARED,
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="x",
+                    memory_type=KnowledgeMemoryType.MODEL_GENERATED_CONTENT,
+                    provenance=ProvenanceKind.MODEL_GENERATED,
+                    trust_basis=TrustBasis.UNVERIFIED,
+                )
+            )
+        assert store.get("x").memory_type is KnowledgeMemoryType.USER_PREFERENCE
+
+    def test_provenance_change_on_overwrite_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="x",
+                memory_type=KnowledgeMemoryType.PROJECT_HISTORY,
+                provenance=ProvenanceKind.SYSTEM_OBSERVED,
+                trust_basis=TrustBasis.UNVERIFIED,
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="x",
+                    memory_type=KnowledgeMemoryType.PROJECT_HISTORY,
+                    provenance=ProvenanceKind.USER_ENTERED,
+                    trust_basis=TrustBasis.UNVERIFIED,
+                )
+            )
+        assert store.get("x").provenance is ProvenanceKind.SYSTEM_OBSERVED
+
+    def test_trust_basis_change_on_overwrite_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="x",
+                memory_type=KnowledgeMemoryType.PROJECT_HISTORY,
+                provenance=ProvenanceKind.SYSTEM_OBSERVED,
+                trust_basis=TrustBasis.UNVERIFIED,
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="x",
+                    memory_type=KnowledgeMemoryType.PROJECT_HISTORY,
+                    provenance=ProvenanceKind.SYSTEM_OBSERVED,
+                    trust_basis=TrustBasis.DECLARED,
+                )
+            )
+        assert store.get("x").trust_basis is TrustBasis.UNVERIFIED
 
     def test_clear_project_requires_project_id_or_all_projects(self) -> None:
         store = InMemoryMemoryStore()
