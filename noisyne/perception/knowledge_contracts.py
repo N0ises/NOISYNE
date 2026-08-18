@@ -58,6 +58,12 @@ class TrustBasis(str, Enum):
 
     This is not a hidden confidence score.  It is an explicit categorization
     that preserves the Sprint 12 validation boundary.
+
+    VALIDATED is reserved for scientific_reference and records an *asserted*
+    external validation reference.  The presence of a validation_link is a
+    syntactic reference, not proof of validation; consumers must resolve it
+    against authoritative Sprint 12 validation truth and must not treat the
+    value as automatically authoritative.
     """
 
     VALIDATED = "validated"
@@ -125,6 +131,10 @@ class MemoryItem(JsonContract):
 
     Preserves identity, type, provenance, scope, and trust basis.  Never stores
     arbitrary objects, chain-of-thought, hidden prompts, or credentials.
+
+    `validation_link` is a syntactic reference to external validation material.
+    It does not by itself prove scientific validation; consumers must resolve
+    it against authoritative Sprint 12 validation truth.
     """
 
     memory_id: str
@@ -297,7 +307,10 @@ class KnowledgeQuery(JsonContract):
 class RetrievedKnowledgeItem(JsonContract):
     """One retrieved result with explicit score semantics.
 
-    Retrieval score must not be treated as confidence or truth.
+    `retrieval_score` is provider-specific and has no universal scale.  It must
+    not be treated as confidence, truth, or probability.  Scores from different
+    providers must not be compared unless their `score_semantics` are explicitly
+    compatible.
     """
 
     result_id: str
@@ -316,8 +329,6 @@ class RetrievedKnowledgeItem(JsonContract):
             raise ValueError("rank must be a non-negative integer")
         if self.retrieval_score is not None:
             _require_finite_number(self.retrieval_score, "retrieval_score")
-            if not 0.0 <= self.retrieval_score <= 1.0:
-                raise ValueError("retrieval_score must be within [0, 1]")
             _require_identifier(self.score_semantics, "score_semantics")
         elif self.score_semantics is not None:
             raise ValueError("score_semantics requires a retrieval_score")

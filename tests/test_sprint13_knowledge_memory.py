@@ -379,16 +379,38 @@ class TestRetrievalScoreSemantics:
                 score_semantics="cosine",
             )
 
-    def test_score_is_normalized_finite(self) -> None:
+    def test_score_is_finite(self) -> None:
         with pytest.raises(ValueError):
             RetrievedKnowledgeItem(
                 result_id="r1",
                 query_id="q1",
                 memory_item=_memory_item(),
                 rank=0,
-                retrieval_score=1.5,
+                retrieval_score=float("inf"),
                 score_semantics="cosine",
             )
+        with pytest.raises(ValueError):
+            RetrievedKnowledgeItem(
+                result_id="r1",
+                query_id="q1",
+                memory_item=_memory_item(),
+                rank=0,
+                retrieval_score=float("nan"),
+                score_semantics="cosine",
+            )
+
+    def test_unbounded_finite_score_is_allowed(self) -> None:
+        # The contract does not impose a universal [0, 1] scale; provider-specific
+        # semantics (e.g., distance, inner product) may legitimately lie outside it.
+        result = RetrievedKnowledgeItem(
+            result_id="r1",
+            query_id="q1",
+            memory_item=_memory_item(),
+            rank=0,
+            retrieval_score=-0.5,
+            score_semantics="euclidean_distance_negative_example",
+        )
+        assert result.retrieval_score == pytest.approx(-0.5, abs=1e-12)
 
     def test_retrieval_score_not_percentage(self) -> None:
         result = RetrievedKnowledgeItem(
@@ -563,6 +585,31 @@ class TestPersonalizationPolicy:
 # =============================================================================
 # 18. Capability / validation truth integration
 # =============================================================================
+
+
+class TestValidatedTrustSemantics:
+    def test_validated_scientific_reference_is_asserted_reference_not_proof(self) -> None:
+        # A caller can supply a validation_link, but the contract treats it as an
+        # asserted external reference, not as authoritative scientific validation.
+        item = _memory_item(
+            memory_id="ref_1",
+            memory_type=KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+            provenance=ProvenanceKind.IMPORTED,
+            source_identity="iso_226_2023",
+            trust_basis=TrustBasis.VALIDATED,
+            validation_link="validation:external:iso_226_2023",
+        )
+        assert item.trust_basis is TrustBasis.VALIDATED
+        assert item.validation_link == "validation:external:iso_226_2023"
+        # The memory object does not convert itself into a Sprint 10/11 GroundingFact
+        # and does not mutate the Sprint 12 validation matrix.
+        assert not hasattr(MemoryItem, "to_grounding_fact")
+
+    def test_validation_link_alone_does_not_upgrade_foundation_status(self) -> None:
+        matrix = PerceptualValidationMatrix.build()
+        record = matrix.by_capability("loudness_foundation")
+        assert record is not None
+        assert record.validation_status is ValidationStatus.FOUNDATION_ONLY
 
 
 class TestCapabilityAndValidationTruth:
@@ -950,6 +997,54 @@ class TestStoreOverwriteAndDeleteSafety:
                 )
             )
         assert store.get("x").trust_basis is TrustBasis.UNVERIFIED
+
+    def test_source_identity_change_on_overwrite_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="x",
+                memory_type=KnowledgeMemoryType.USER_PREFERENCE,
+                provenance=ProvenanceKind.USER_ENTERED,
+                source_identity="dialog_a",
+                trust_basis=TrustBasis.DECLARED,
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="x",
+                    memory_type=KnowledgeMemoryType.USER_PREFERENCE,
+                    provenance=ProvenanceKind.USER_ENTERED,
+                    source_identity="dialog_b",
+                    trust_basis=TrustBasis.DECLARED,
+                )
+            )
+        assert store.get("x").source_identity == "dialog_a"
+
+    def test_validation_link_change_on_overwrite_rejected(self) -> None:
+        store = InMemoryMemoryStore()
+        store.put(
+            _memory_item(
+                memory_id="x",
+                memory_type=KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+                provenance=ProvenanceKind.IMPORTED,
+                source_identity="standard_doc",
+                trust_basis=TrustBasis.VALIDATED,
+                validation_link="validation:sprint12:brightness_correlate",
+            )
+        )
+        with pytest.raises(ValueError):
+            store.put(
+                _memory_item(
+                    memory_id="x",
+                    memory_type=KnowledgeMemoryType.SCIENTIFIC_REFERENCE,
+                    provenance=ProvenanceKind.IMPORTED,
+                    source_identity="standard_doc",
+                    trust_basis=TrustBasis.VALIDATED,
+                    validation_link="validation:arbitrary_other",
+                )
+            )
+        assert store.get("x").validation_link == "validation:sprint12:brightness_correlate"
 
     def test_clear_project_requires_project_id_or_all_projects(self) -> None:
         store = InMemoryMemoryStore()

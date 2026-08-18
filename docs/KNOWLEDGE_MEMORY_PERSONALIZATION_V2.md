@@ -150,8 +150,9 @@ Future persistent backends can implement `MemoryStore` without changing consumer
 - `KnowledgeQuery` carries explicit `provider_identity`, `query_id`, and deterministic filters.
 - `RetrievedKnowledgeItem` carries the source `MemoryItem`, rank, and an optional `retrieval_score`.
 - If `retrieval_score` is present, `score_semantics` is **required** and must describe what the score means.
-- Retrieval scores are normalized to `[0, 1]` when present.
-- Retrieval score is **not** confidence, truth, or a percentage.
+- `retrieval_score` is provider-specific; Sprint 13 does **not** impose a universal normalized scale such as `[0, 1]`.
+- Retrieval score is **not** confidence, truth, probability, or a percentage.
+- Scores from different providers must not be compared unless their `score_semantics` are explicitly compatible.
 
 Sprint 13 retrieval is deterministic filtering/sorting only.  Vector similarity search is deferred.
 

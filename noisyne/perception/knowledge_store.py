@@ -108,6 +108,14 @@ class InMemoryMemoryStore:
                 raise ValueError(
                     f"cannot overwrite memory item {item.memory_id} with a different trust_basis"
                 )
+            if existing.source_identity != item.source_identity:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different source_identity"
+                )
+            if existing.validation_link != item.validation_link:
+                raise ValueError(
+                    f"cannot overwrite memory item {item.memory_id} with a different validation_link"
+                )
         self._items[item.memory_id] = item
         return item
 
