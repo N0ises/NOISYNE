@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from .benchmark import BenchmarkMethod, benchmark_callable
 from .contracts import (
     DeviceType,
@@ -66,12 +68,13 @@ def _build_fixture_candidates(environment, workload, cache_dir: Path) -> list[Ru
         )
 
     canonical_fn = pytorch_fn if pytorch_fn is not None else onnx_fn
+    canonical_identity = "pytorch_cpu_fp32" if pytorch_fn is not None else "onnxruntime_cpu_fp32"
     if onnx_compat.state.value == "available" and canonical_fn is not None and onnx_fn is not None:
         equivalence = evaluate_equivalence(
-            canonical_callable=lambda: canonical_fn(fixture_input),
-            candidate_callable=lambda: onnx_fn(fixture_input),
+            canonical_callable=canonical_fn,
+            candidate_callable=onnx_fn,
             fixture_input=fixture_input,
-            canonical_identity="pytorch_cpu_fp32",
+            canonical_identity=canonical_identity,
             candidate_identity="onnxruntime_cpu_fp32",
             policy=EquivalenceKind.ABSOLUTE_TOLERANCE,
             tolerance_value=1e-4,
@@ -199,6 +202,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    import numpy as np
-
     raise SystemExit(main())

@@ -556,8 +556,8 @@ def test_fixture_model_pytorch_onnx_equivalence() -> None:
         pytest.skip("PyTorch or ONNX Runtime not available for fixture model")
     fixture_input = np.random.randn(1, 64).astype(np.float32)
     result = evaluate_equivalence(
-        canonical_callable=lambda: pytorch_fn(fixture_input),
-        candidate_callable=lambda: onnx_fn(fixture_input),
+        canonical_callable=pytorch_fn,
+        candidate_callable=onnx_fn,
         fixture_input=fixture_input,
         canonical_identity="pytorch_cpu_fp32",
         candidate_identity="onnxruntime_cpu_fp32",
