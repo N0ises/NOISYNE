@@ -100,9 +100,12 @@ def _sample_mix_policy() -> dict[str, Any]:
 def test_import_noisyne_application_is_lightweight() -> None:
     """Importing noisyne.application must not initialize torch, ONNX, LLM, network, Qt."""
     code = (
+        "import sys; "
         "import noisyne.application; "
-        "print('ok'); "
-        "assert noisyne.application.NoisyneV2Service is not None"
+        "assert noisyne.application.NoisyneV2Service is not None; "
+        "assert 'torch' not in sys.modules, 'torch loaded on import'; "
+        "assert 'onnxruntime' not in sys.modules, 'onnxruntime loaded on import'; "
+        "print('ok')"
     )
     result = subprocess.run(
         [sys.executable, "-c", code],

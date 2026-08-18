@@ -24,7 +24,6 @@ from noisyne.application.contracts import (
     StageOutcome,
     StageState,
 )
-from noisyne.runtime.capabilities import registry
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +50,14 @@ def _check_dependency_availability(dependency: str) -> MachineAvailability:
 
 
 def _capability_snapshot() -> CapabilitySnapshotResult:
-    """Build a capability snapshot with truthful machine-level dependency states."""
+    """Build a capability snapshot with truthful machine-level dependency states.
+
+    Import the capability registry lazily here; it transitively imports runtime
+    modules that load torch, and importing it at module level would make
+    `import noisyne.application` heavy.
+    """
+    from noisyne.runtime.capabilities import registry
+
     entries: list[CapabilitySnapshotEntry] = []
     counts = {
         MachineAvailability.AVAILABLE: 0,
