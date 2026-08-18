@@ -396,6 +396,7 @@ def test_select_runtime_prefers_validated_fastest() -> None:
     assert selection.selected_candidate is not None
     assert selection.selected_candidate.runtime_identity == "slow_valid"
     assert any(r.runtime_identity == "fast_invalid" for r in selection.rejected_candidates)
+    assert selection.evidence_ids == ["slow_valid", "slow_valid"]
 
 
 def test_select_runtime_falls_back_to_canonical() -> None:

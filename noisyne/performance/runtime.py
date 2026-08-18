@@ -361,7 +361,7 @@ def select_runtime(
             reason=(f"{selected.runtime_identity} selected as fastest validated candidate"),
             evidence_ids=[
                 selected.compatibility.runtime_identity,
-                *(selected.equivalence.runtime_identity if selected.equivalence else ""),
+                *((selected.equivalence.runtime_identity,) if selected.equivalence else ()),
             ],
         )
 
