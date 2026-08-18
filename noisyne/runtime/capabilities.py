@@ -593,6 +593,40 @@ registry.register(
     )
 )
 
+registry.register(
+    Capability(
+        name="performance_benchmark_foundation",
+        description="Sprint 14 truthful performance baseline and benchmark contract foundation",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements="Sprint 14 performance contracts, environment snapshot, and benchmark methodology",
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="runtime_selection_foundation",
+        description="Sprint 14 deterministic runtime selection with equivalence-gated optimization",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements="Sprint 14 RuntimeSelectionPolicy/RuntimeSelectionResult and equivalence validation",
+        dependencies=("numpy",),
+        tested_in_freeze=False,
+    )
+)
+
+registry.register(
+    Capability(
+        name="onnx_runtime_optimization",
+        description="Sprint 14 ONNX Runtime evaluation boundary for PyTorch model optimization candidates",
+        status=CapabilityStatus.IMPLEMENTED,
+        requirements="Optional onnxruntime; tiny fixture model export and equivalence comparison only",
+        dependencies=("onnxruntime",),
+        reason_unavailable="Production ONNX export not attempted; only framework-level fixture evaluation exists",
+        tested_in_freeze=False,
+    )
+)
+
 __all__ = [
     "Capability",
     "CapabilityRegistry",

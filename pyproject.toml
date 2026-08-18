@@ -64,6 +64,12 @@ pdf = [
     "marker-pdf",
     "paddleocr",
 ]
+# Performance/ONNX benchmarking extras are optional; core V2 remains independent of ONNX.
+performance = [
+    "onnxruntime",
+    "onnx",
+    "psutil",
+]
 
 [tool.setuptools]
 include-package-data = true
