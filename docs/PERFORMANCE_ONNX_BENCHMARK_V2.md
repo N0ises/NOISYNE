@@ -383,6 +383,16 @@ environment.  After installing it:
 
 This demonstrates that **advertised provider ≠ executable provider**.
 
+Even with the matching ORT GPU wheel, a bare `import onnxruntime` subprocess
+failed to load `CUDAExecutionProvider` because the CUDA/cuDNN/cuBLAS runtime
+DLLs were not on the Windows DLL search path.  PyTorch bundles those DLLs in
+`site-packages/torch/lib`, which is why importing `torch` first made CUDA work.
+Sprint 15.5 fixed this by adding `_ensure_cuda_dll_paths()`, which registers
+`site-packages/torch/lib` (and any `site-packages/nvidia/<pkg>/bin` wheels)
+with `os.add_dll_directory` before ORT creates a CUDA session.  Runtime
+availability is now proven by actual session creation + inference, not only by
+`ort.get_available_providers()`.
+
 ### 21.3 Fixture GPU benchmark results
 
 Measured with the Sprint 14 tiny fixture model on this machine only:
@@ -435,17 +445,26 @@ A future production-model optimization sprint would need to:
 3. Benchmark on target hardware.
 4. Only then consider changing capability validation status.
 
-### 21.7 Installing the GPU extra
+### 21.7 Installing the GPU extra and runtime DLLs
 
-The project still keeps ONNX Runtime optional.  The default `performance` extra
-uses the CPU wheel.  For GPU validation on a CUDA 12.x machine, install a
-matching `onnxruntime-gpu` version manually and verify that the session's active
-provider is actually `CUDAExecutionProvider`:
+The project keeps ONNX Runtime optional.  The default `performance` extra uses
+the CPU wheel.  For GPU validation on a CUDA 12.x machine install a matching
+`onnxruntime-gpu` version.
+
+ONNX Runtime's CUDA provider also needs the CUDA, cuDNN and cuBLAS runtime
+DLLs.  On this machine they are already present inside the installed PyTorch
+distribution (`site-packages/torch/lib`), so no extra NVIDIA wheel download is
+required.  The Sprint 15.5 runtime helper discovers and registers those
+directories automatically.
+
+Verify the *active* provider, not only the advertised list:
 
 ```bash
 # Example for the CUDA 12.6 environment validated in Sprint 15.5
 pip install onnxruntime-gpu==1.19.2
-python -c "import onnxruntime as ort; print(ort.get_available_providers()); \
+python -c "from noisyne.performance.fixture_model import _ensure_cuda_dll_paths; \
+           _ensure_cuda_dll_paths(); \
+           import onnxruntime as ort; \
            s = ort.InferenceSession('model.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider']); \
            print(s.get_providers())"
 ```

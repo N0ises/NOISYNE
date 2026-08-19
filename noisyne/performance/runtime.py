@@ -20,6 +20,10 @@ from .contracts import (
     RuntimeSelectionResult,
     SelectionStatus,
 )
+from .fixture_model import (
+    _ensure_cuda_dll_paths,
+    _onnxruntime_cuda_executable,
+)
 
 
 def _torch_available() -> bool:
@@ -45,15 +49,6 @@ def _torch_cuda_available() -> bool:
         import torch
 
         return torch.cuda.is_available()
-    except Exception:  # noqa: BLE001
-        return False
-
-
-def _onnxruntime_cuda_available() -> bool:
-    try:
-        import onnxruntime
-
-        return "CUDAExecutionProvider" in onnxruntime.get_available_providers()
     except Exception:  # noqa: BLE001
         return False
 
@@ -117,15 +112,20 @@ def check_runtime_availability(
                 state=RuntimeAvailabilityState.UNAVAILABLE,
                 reason="ONNX Runtime is not installed",
             )
-        if device is DeviceType.CUDA and not _onnxruntime_cuda_available():
-            return CompatibilityResult(
-                runtime_identity=runtime_identity,
-                backend=backend,
-                device=device,
-                precision=precision,
-                state=RuntimeAvailabilityState.UNAVAILABLE,
-                reason="CUDAExecutionProvider is not available to ONNX Runtime",
-            )
+        if device is DeviceType.CUDA:
+            _ensure_cuda_dll_paths()
+            if not _onnxruntime_cuda_executable():
+                return CompatibilityResult(
+                    runtime_identity=runtime_identity,
+                    backend=backend,
+                    device=device,
+                    precision=precision,
+                    state=RuntimeAvailabilityState.UNAVAILABLE,
+                    reason=(
+                        "CUDAExecutionProvider is advertised but cannot create "
+                        "an executable CUDA session on this environment"
+                    ),
+                )
     else:
         return CompatibilityResult(
             runtime_identity=runtime_identity,

@@ -189,6 +189,117 @@ def _onnxruntime_cuda_available() -> bool:
         return False
 
 
+def _ensure_cuda_dll_paths() -> None:
+    """Register CUDA/cuDNN/cuBLAS runtime DLL directories on Windows.
+
+    ONNX Runtime's CUDA execution provider needs CUDA, cuDNN and cuBLAS runtime
+    DLLs.  Two common sources are:
+
+    1. PyPI ``nvidia-*-cu12`` wheels, which place DLLs under
+       ``site-packages/nvidia/<package>/bin``.
+    2. The PyTorch distribution, which bundles the same runtime DLLs under
+       ``site-packages/torch/lib``.
+
+    This function discovers those directories and registers them with
+    ``os.add_dll_directory`` (and PATH) so ORT can load its provider without
+    relying on a prior ``import torch``.
+    """
+    import os
+    import sys
+    import sysconfig
+
+    if sys.platform != "win32":
+        return
+    marker = "_noisyne_cuda_dll_paths_added"
+    if getattr(_ensure_cuda_dll_paths, marker, False):
+        return
+    site_packages = sysconfig.get_path("purelib")
+    if not site_packages or not os.path.isdir(site_packages):
+        return
+
+    candidate_dirs: list[str] = []
+
+    nvidia_root = os.path.join(site_packages, "nvidia")
+    if os.path.isdir(nvidia_root):
+        for pkg in os.listdir(nvidia_root):
+            bin_dir = os.path.join(nvidia_root, pkg, "bin")
+            if os.path.isdir(bin_dir):
+                candidate_dirs.append(bin_dir)
+
+    torch_lib = os.path.join(site_packages, "torch", "lib")
+    if os.path.isdir(torch_lib):
+        candidate_dirs.append(torch_lib)
+
+    for bin_dir in candidate_dirs:
+        try:
+            os.add_dll_directory(bin_dir)
+        except Exception:  # noqa: BLE001, S110
+            pass
+        current_path = os.environ.get("PATH", "")
+        if bin_dir not in current_path:
+            os.environ["PATH"] = bin_dir + os.pathsep + current_path
+    setattr(_ensure_cuda_dll_paths, marker, True)
+
+
+def _export_tiny_onnx_if_missing(path: str, opset_version: int = 17) -> bool:
+    """Ensure a tiny ONNX model exists at *path* for executable provider tests."""
+    import os
+
+    if os.path.exists(path):
+        return True
+    if _torch_available() and _onnx_package_available():
+        export_fixture_onnx(path, opset_version=opset_version)
+        return os.path.exists(path)
+    # Fallback: build a trivial Identity model using only the onnx package.
+    try:
+        import numpy as np
+        import onnx
+        import onnxruntime as ort
+        from onnx import helper
+
+        input_info = helper.make_tensor_value_info("input", onnx.TensorProto.FLOAT, [1, 64])
+        output_info = helper.make_tensor_value_info("output", onnx.TensorProto.FLOAT, [1, 64])
+        node = helper.make_node("Identity", ["input"], ["output"])
+        graph = helper.make_graph([node], "tiny_identity", [input_info], [output_info])
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", opset_version)])
+        onnx.save(model, path)
+        # Sanity check: the model must be loadable and produce finite output.
+        session = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
+        sample = np.random.randn(1, 64).astype(np.float32)
+        session.run(None, {session.get_inputs()[0].name: sample})
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _onnxruntime_cuda_executable(
+    cache_dir: str = ".noisyne_performance_test_cache",
+) -> bool:
+    """Return True iff ONNX Runtime can actually run inference on CUDA."""
+    import os
+
+    if not _onnxruntime_available():
+        return False
+    _ensure_cuda_dll_paths()
+    import numpy as np
+    import onnxruntime as ort
+
+    os.makedirs(cache_dir, exist_ok=True)
+    onnx_path = os.path.join(cache_dir, "fixture_model.onnx")
+    if not _export_tiny_onnx_if_missing(onnx_path):
+        return False
+    try:
+        session = ort.InferenceSession(
+            onnx_path,
+            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+        )
+        sample = np.random.randn(1, 64).astype(np.float32)
+        output = session.run(None, {session.get_inputs()[0].name: sample})[0]
+        return "CUDAExecutionProvider" in session.get_providers() and np.all(np.isfinite(output))
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def _onnx_cuda_session_loaded(session: Any) -> bool:
     """Return True iff the session's active provider list contains CUDAExecutionProvider."""
     try:
@@ -211,10 +322,9 @@ def build_fixture_runtimes_by_device(
 
     Returns a mapping ``device -> (pytorch_fn, onnx_fn, onnx_session)`` where
     ``device`` is ``"cpu"`` or ``"cuda"``.  A device entry is omitted if neither
-    a PyTorch nor an ONNX runtime can be constructed for it.  The CUDA ONNX
-    session is created with ``[CUDAExecutionProvider, CPUExecutionProvider]``;
-    if CUDA fails to load, the active provider list will report CPU only and
-    the caller can treat the session as a CPU fallback.
+    a PyTorch nor an ONNX runtime can be constructed for it.  ONNX Runtime CUDA
+    inclusion is decided by an *executable* check (real session creation +
+    inference), not merely by ``get_available_providers()``.
     """
     result: dict[
         str,
@@ -227,6 +337,7 @@ def build_fixture_runtimes_by_device(
     if not _torch_available() or not _onnxruntime_available():
         return result
 
+    _ensure_cuda_dll_paths()
     os.makedirs(cache_dir, exist_ok=True)
     onnx_path = os.path.join(cache_dir, "fixture_model.onnx")
     export_fixture_onnx(onnx_path)
@@ -252,7 +363,7 @@ def build_fixture_runtimes_by_device(
 
     cuda_onnx_fn: Callable[[np.ndarray], np.ndarray] | None = None
     cuda_session: Any | None = None
-    if _onnxruntime_cuda_available():
+    if _onnxruntime_cuda_executable(cache_dir):
         import onnxruntime
 
         cuda_session = onnxruntime.InferenceSession(
@@ -261,15 +372,6 @@ def build_fixture_runtimes_by_device(
         )
         if _onnx_cuda_session_loaded(cuda_session):
             cuda_onnx_fn = _build_onnx_cuda_inference_fn(cuda_session)
-        else:
-            # CUDA provider is advertised but did not actually load; record
-            # the session as a CPU fallback under a distinct key so tests can
-            # distinguish advertised vs active CUDA.
-            result["cuda_advertised_cpu_fallback"] = (
-                None,
-                _build_onnx_inference_fn(cuda_session),
-                cuda_session,
-            )
 
     if cuda_pytorch_fn is not None or cuda_onnx_fn is not None:
         result["cuda"] = (cuda_pytorch_fn, cuda_onnx_fn, cuda_session)
