@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -18,32 +19,32 @@ from .contracts import (
     RuntimeCandidate,
 )
 from .environment import capture_environment
-from .fixture_model import build_fixture_runtimes
+from .fixture_model import build_fixture_runtimes_by_device
 from .runtime import check_runtime_availability, evaluate_equivalence, select_runtime
 from .workloads import build_workload_callables
 
 
 def _build_fixture_candidates(environment, workload, cache_dir: Path) -> list[RuntimeCandidate]:
-    pytorch_fn, onnx_fn, _ = build_fixture_runtimes(str(cache_dir))
+    runtimes = build_fixture_runtimes_by_device(str(cache_dir))
     candidates: list[RuntimeCandidate] = []
 
-    pytorch_compat = check_runtime_availability(
+    fixture_input = np.random.randn(1, 64).astype(np.float32)
+    canonical_fn: Callable[[], np.ndarray] | None = None
+    canonical_identity: str | None = None
+
+    cpu_compat = check_runtime_availability(
         "pytorch_cpu_fp32",
         RuntimeBackend.PYTORCH,
         DeviceType.CPU,
         Precision.FP32,
     )
-    onnx_compat = check_runtime_availability(
-        "onnxruntime_cpu_fp32",
-        RuntimeBackend.ONNX_RUNTIME,
-        DeviceType.CPU,
-        Precision.FP32,
-    )
+    cpu_runtime = runtimes.get("cpu")
+    pytorch_cpu_fn = cpu_runtime[0] if cpu_runtime else None
+    onnx_cpu_fn = cpu_runtime[1] if cpu_runtime else None
 
-    fixture_input = np.random.randn(1, 64).astype(np.float32)
-
-    if pytorch_compat.state.value == "available":
-        assert pytorch_fn is not None
+    if cpu_compat.state.value == "available" and pytorch_cpu_fn is not None:
+        canonical_fn = pytorch_cpu_fn
+        canonical_identity = "pytorch_cpu_fp32"
         benchmark = benchmark_callable(
             benchmark_id=f"fixture_{workload.workload_id}_pytorch_cpu_fp32",
             workload=workload,
@@ -52,7 +53,7 @@ def _build_fixture_candidates(environment, workload, cache_dir: Path) -> list[Ru
             precision=Precision.FP32,
             environment=environment,
             method=BenchmarkMethod(warmup_iterations=2, timed_iterations=5),
-            callable=lambda: pytorch_fn(fixture_input),
+            callable=lambda: pytorch_cpu_fn(fixture_input),
         )
         candidates.append(
             RuntimeCandidate(
@@ -60,19 +61,27 @@ def _build_fixture_candidates(environment, workload, cache_dir: Path) -> list[Ru
                 backend=RuntimeBackend.PYTORCH,
                 device=DeviceType.CPU,
                 precision=Precision.FP32,
-                compatibility=pytorch_compat,
+                compatibility=cpu_compat,
                 equivalence=None,
                 benchmark=benchmark,
                 is_canonical=True,
             )
         )
 
-    canonical_fn = pytorch_fn if pytorch_fn is not None else onnx_fn
-    canonical_identity = "pytorch_cpu_fp32" if pytorch_fn is not None else "onnxruntime_cpu_fp32"
-    if onnx_compat.state.value == "available" and canonical_fn is not None and onnx_fn is not None:
+    onnx_cpu_compat = check_runtime_availability(
+        "onnxruntime_cpu_fp32",
+        RuntimeBackend.ONNX_RUNTIME,
+        DeviceType.CPU,
+        Precision.FP32,
+    )
+    if (
+        onnx_cpu_compat.state.value == "available"
+        and canonical_fn is not None
+        and onnx_cpu_fn is not None
+    ):
         equivalence = evaluate_equivalence(
             canonical_callable=canonical_fn,
-            candidate_callable=onnx_fn,
+            candidate_callable=onnx_cpu_fn,
             fixture_input=fixture_input,
             canonical_identity=canonical_identity,
             candidate_identity="onnxruntime_cpu_fp32",
@@ -87,7 +96,7 @@ def _build_fixture_candidates(environment, workload, cache_dir: Path) -> list[Ru
             precision=Precision.FP32,
             environment=environment,
             method=BenchmarkMethod(warmup_iterations=2, timed_iterations=5),
-            callable=lambda: onnx_fn(fixture_input),
+            callable=lambda: onnx_cpu_fn(fixture_input),
         )
         candidates.append(
             RuntimeCandidate(
@@ -95,12 +104,110 @@ def _build_fixture_candidates(environment, workload, cache_dir: Path) -> list[Ru
                 backend=RuntimeBackend.ONNX_RUNTIME,
                 device=DeviceType.CPU,
                 precision=Precision.FP32,
-                compatibility=onnx_compat,
+                compatibility=onnx_cpu_compat,
                 equivalence=equivalence,
                 benchmark=benchmark,
                 is_canonical=False,
             )
         )
+
+    cuda_runtime = runtimes.get("cuda")
+    pytorch_cuda_fn = cuda_runtime[0] if cuda_runtime else None
+    onnx_cuda_fn = cuda_runtime[1] if cuda_runtime else None
+    onnx_cuda_session = cuda_runtime[2] if cuda_runtime else None
+
+    if pytorch_cuda_fn is not None:
+        pytorch_cuda_compat = check_runtime_availability(
+            "pytorch_cuda_fp32",
+            RuntimeBackend.PYTORCH,
+            DeviceType.CUDA,
+            Precision.FP32,
+        )
+        if pytorch_cuda_compat.state.value == "available":
+            cuda_canonical_fn = canonical_fn if canonical_fn is not None else pytorch_cuda_fn
+            cuda_canonical_identity = canonical_identity or "pytorch_cuda_fp32"
+            equivalence = None
+            if canonical_fn is not None:
+                equivalence = evaluate_equivalence(
+                    canonical_callable=cuda_canonical_fn,
+                    candidate_callable=pytorch_cuda_fn,
+                    fixture_input=fixture_input,
+                    canonical_identity=cuda_canonical_identity,
+                    candidate_identity="pytorch_cuda_fp32",
+                    policy=EquivalenceKind.ABSOLUTE_TOLERANCE,
+                    tolerance_value=1e-4,
+                )
+            benchmark = benchmark_callable(
+                benchmark_id=f"fixture_{workload.workload_id}_pytorch_cuda_fp32",
+                workload=workload,
+                runtime_identity="pytorch_cuda_fp32",
+                device=DeviceType.CUDA,
+                precision=Precision.FP32,
+                environment=environment,
+                method=BenchmarkMethod(warmup_iterations=2, timed_iterations=5),
+                callable=lambda: pytorch_cuda_fn(fixture_input),
+            )
+            candidates.append(
+                RuntimeCandidate(
+                    runtime_identity="pytorch_cuda_fp32",
+                    backend=RuntimeBackend.PYTORCH,
+                    device=DeviceType.CUDA,
+                    precision=Precision.FP32,
+                    compatibility=pytorch_cuda_compat,
+                    equivalence=equivalence,
+                    benchmark=benchmark,
+                    is_canonical=False,
+                )
+            )
+
+    if onnx_cuda_fn is not None and onnx_cuda_session is not None:
+        active_providers = onnx_cuda_session.get_providers()
+        provider_is_cuda = "CUDAExecutionProvider" in active_providers
+        runtime_identity = (
+            "onnxruntime_cuda_fp32"
+            if provider_is_cuda
+            else "onnxruntime_cuda_advertised_cpu_fallback"
+        )
+        onnx_cuda_compat = check_runtime_availability(
+            runtime_identity,
+            RuntimeBackend.ONNX_RUNTIME,
+            DeviceType.CUDA if provider_is_cuda else DeviceType.CPU,
+            Precision.FP32,
+        )
+        if onnx_cuda_compat.state.value == "available":
+            equivalence = None
+            if canonical_fn is not None:
+                equivalence = evaluate_equivalence(
+                    canonical_callable=canonical_fn,
+                    candidate_callable=onnx_cuda_fn,
+                    fixture_input=fixture_input,
+                    canonical_identity=canonical_identity or "unknown",
+                    candidate_identity=runtime_identity,
+                    policy=EquivalenceKind.ABSOLUTE_TOLERANCE,
+                    tolerance_value=1e-4,
+                )
+            benchmark = benchmark_callable(
+                benchmark_id=f"fixture_{workload.workload_id}_{runtime_identity}",
+                workload=workload,
+                runtime_identity=runtime_identity,
+                device=DeviceType.CUDA if provider_is_cuda else DeviceType.CPU,
+                precision=Precision.FP32,
+                environment=environment,
+                method=BenchmarkMethod(warmup_iterations=2, timed_iterations=5),
+                callable=lambda: onnx_cuda_fn(fixture_input),
+            )
+            candidates.append(
+                RuntimeCandidate(
+                    runtime_identity=runtime_identity,
+                    backend=RuntimeBackend.ONNX_RUNTIME,
+                    device=DeviceType.CUDA if provider_is_cuda else DeviceType.CPU,
+                    precision=Precision.FP32,
+                    compatibility=onnx_cuda_compat,
+                    equivalence=equivalence,
+                    benchmark=benchmark,
+                    is_canonical=False,
+                )
+            )
 
     return candidates
 

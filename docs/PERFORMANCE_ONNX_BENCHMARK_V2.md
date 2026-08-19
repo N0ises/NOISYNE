@@ -334,7 +334,128 @@ product messaging:
 
 ---
 
-## 21. Validation status
+## 21. Sprint 15.5 — ONNX Runtime GPU execution validation
+
+Sprint 15.5 extends the Sprint 14 foundation to validate the ONNX Runtime
+**CUDA execution path** on the current development machine.  It does **not**
+convert production NØISYNE models to ONNX and does **not** make GPU execution
+the default or mandatory.
+
+### 21.1 Environment observed during Sprint 15.5
+
+| Field | Value |
+|-------|-------|
+| OS | Windows 11 AMD64 |
+| Python | 3.12.10 |
+| CPU | Intel64 Family 6 Model 154 |
+| Logical cores | 20 |
+| RAM | ~31.7 GiB |
+| GPU | NVIDIA GeForce RTX 3070 Laptop GPU |
+| GPU compute capability | 8.6 |
+| GPU VRAM | 8 GiB |
+| NVIDIA driver | 610.62 |
+| PyTorch | 2.11.0+cu126 |
+| PyTorch CUDA reported | 12.6 |
+| `torch.cuda.is_available()` | true |
+| ONNX package | 1.22.0 installed |
+| Initial ONNX Runtime | 1.27.0 CPU package (`onnxruntime`) |
+| Sprint 15.5 ONNX Runtime GPU | 1.19.2 (`onnxruntime-gpu`) |
+
+### 21.2 Provider compatibility finding
+
+Initial `onnxruntime` 1.27.0 reported only:
+
+- `AzureExecutionProvider`
+- `CPUExecutionProvider`
+
+`onnxruntime-gpu` 1.27.0 advertised `CUDAExecutionProvider`, but session creation
+failed because the wheel expected CUDA 13.x / cuBLAS 13 DLLs that are not
+present in the PyTorch CUDA 12.6 environment.  The session silently fell back to
+CPU.
+
+`onnxruntime-gpu` **1.19.2** is the compatible version for this CUDA 12.6
+environment.  After installing it:
+
+- Advertised providers: `TensorrtExecutionProvider`, `CUDAExecutionProvider`, `CPUExecutionProvider`
+- Actual active provider for the fixture session: `CUDAExecutionProvider`
+- `TensorrtExecutionProvider` still fails to load (TensorRT libraries absent) and
+  ORT transparently falls back to CUDA/CPU.
+
+This demonstrates that **advertised provider ≠ executable provider**.
+
+### 21.3 Fixture GPU benchmark results
+
+Measured with the Sprint 14 tiny fixture model on this machine only:
+
+| Runtime | Device | Warm median | Throughput |
+|---------|--------|-------------|------------|
+| PyTorch | CPU | ~68 µs | ~14,700 /s |
+| ONNX Runtime | CPU | ~13 µs | ~87,000 /s |
+| PyTorch | CUDA | ~123 µs | ~8,200 /s |
+| ONNX Runtime | CUDA | ~92 µs | ~5,500 /s |
+
+These numbers are **machine-specific and fixture-specific only**.  They do not
+predict performance for production NØISYNE models or other hardware.
+
+### 21.4 Fixture equivalence results
+
+All compared against the PyTorch CPU canonical implementation:
+
+| Candidate | Max absolute difference | Status |
+|-----------|------------------------|--------|
+| ONNX Runtime CPU FP32 | ~1.04e-07 | within_tolerance |
+| PyTorch CUDA FP32 | ~1.19e-07 | within_tolerance |
+| ONNX Runtime CUDA FP32 | ~5.96e-08 | within_tolerance |
+
+Tolerance used: `1e-4` absolute.  The fixture is too small to justify a
+production-model tolerance; production models would need their own equivalence
+study.
+
+### 21.5 Selection behavior
+
+With the default CLI policy (`preferred_device=CPU`), the CPU ONNX Runtime
+candidate is selected because it is the fastest validated CPU candidate.  GPU
+candidates are rejected only by device-preference policy, not by equivalence or
+availability.  If the policy prefers CUDA, ONNX Runtime CUDA would become the
+selected candidate (it passes equivalence and is faster than PyTorch CUDA for
+this fixture).
+
+### 21.6 Capability truth update
+
+Sprint 15.5 does **not** change the validation status of the three Sprint 14
+capabilities.  `onnx_runtime_optimization` remains `IMPLEMENTED / FOUNDATION_ONLY`
+because only the fixture model has been validated on GPU; production models are
+still unconverted and unvalidated.
+
+A future production-model optimization sprint would need to:
+
+1. Export each production model to ONNX.
+2. Validate equivalence against the canonical PyTorch implementation on
+   representative audio inputs.
+3. Benchmark on target hardware.
+4. Only then consider changing capability validation status.
+
+### 21.7 Installing the GPU extra
+
+The project still keeps ONNX Runtime optional.  The default `performance` extra
+uses the CPU wheel.  For GPU validation on a CUDA 12.x machine, install a
+matching `onnxruntime-gpu` version manually and verify that the session's active
+provider is actually `CUDAExecutionProvider`:
+
+```bash
+# Example for the CUDA 12.6 environment validated in Sprint 15.5
+pip install onnxruntime-gpu==1.19.2
+python -c "import onnxruntime as ort; print(ort.get_available_providers()); \
+           s = ort.InferenceSession('model.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider']); \
+           print(s.get_providers())"
+```
+
+Do not assume that `CUDAExecutionProvider` in `get_available_providers()`
+means GPU execution is actually working.
+
+---
+
+## 22. Validation status
 
 New Sprint 14 capabilities are registered as:
 
@@ -348,7 +469,7 @@ They are **not** marked `Production/Ready`.
 
 ---
 
-## 22. Files added / changed
+## 23. Files added / changed
 
 - `noisyne/performance/` package
   - `__init__.py`, `__main__.py`
