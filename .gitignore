@@ -50,6 +50,8 @@ logs/
 .coverage
 .coverage.*
 htmlcov/
+.noisyne_performance_test_cache/
+.noisyne_performance_cache/
 
 # ------------------------------------------------------------
 # Build
