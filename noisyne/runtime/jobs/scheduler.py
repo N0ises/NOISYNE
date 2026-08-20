@@ -126,13 +126,37 @@ class JobScheduler:
             self._dispatcher.start()
 
     def shutdown(self, wait: bool = True) -> None:
-        """Stop accepting new jobs and shut down the worker pool."""
+        """Stop accepting new jobs and shut down the worker pool.
+
+        Queued and paused jobs will never be dispatched after shutdown, so
+        they are marked ``CANCELLED`` here; otherwise ``wait()`` could block
+        forever on a job that can never reach a terminal state.  The sweep
+        covers every active job still in ``QUEUED``/``PAUSED``, including
+        jobs the dispatcher already handed to the worker pool that are still
+        blocked waiting for a concurrency slot; their wrappers observe the
+        terminal state and return without executing.  Running jobs are
+        unaffected and finish normally when *wait* is true.
+        """
         with self._lock:
             self._running = False
             self._condition.notify_all()
             executor = self._executor
             self._executor = None
             self._slots = None
+            for snapshot in self._registry.list_active():
+                if snapshot.state in (
+                    JobState.QUEUED,
+                    JobState.PAUSED,
+                ):
+                    final = replace(
+                        snapshot,
+                        state=JobState.CANCELLED,
+                        finished_at=_now_iso(),
+                        capability=_terminal_capability(),
+                    )
+                    self._registry.put(final)
+            self._queue.clear()
+            self._paused_ids.clear()
         if executor is not None:
             executor.shutdown(wait=wait)
         dispatcher = self._dispatcher
@@ -153,6 +177,9 @@ class JobScheduler:
         Returns the assigned job_id.  The caller receives a snapshot in
         ``QUEUED`` state immediately; heavy execution happens on a worker
         thread only when a concurrency slot is available.
+
+        Raises ``ValueError`` if an explicit *job_id* is already known to the
+        registry (active or history), so job ids are never silently reused.
         """
         if resource_profile is None:
             resource_profile = self._default_profile
@@ -188,6 +215,8 @@ class JobScheduler:
         with self._lock:
             if not self._running or self._executor is None or self._slots is None:
                 raise RuntimeError("Scheduler is not running")
+            if self._registry.get(assigned_id) is not None:
+                raise ValueError(f"Duplicate job_id: {assigned_id!r}")
             self._registry.put(snapshot)
             self._queue.append(assigned_id)
             self._condition.notify()
@@ -259,6 +288,11 @@ class JobScheduler:
                 with self._lock:
                     snap = self._registry.get(job_id)
                     if snap is None or snap.state.value in _TERMINAL_STATES:
+                        return
+                    if snap.state is JobState.PAUSED:
+                        # Pause landed after dispatch but before the RUNNING
+                        # transition; re-queue instead of running a paused job.
+                        self._queue.appendleft(job_id)
                         return
                     running = replace(
                         snap,

@@ -111,6 +111,10 @@ class JobExecutor:
                 pending_stages=[],
                 stage_states=stage_states,
             )
+            # A cancellation that lands after the service returned but before
+            # the terminal write still wins over recording a result.
+            if cancel_event.is_set():
+                return self._finish(snapshot, JobState.CANCELLED, registry)
             return self._finish(
                 snapshot, state, registry, result=result, error=error, progress=progress
             )

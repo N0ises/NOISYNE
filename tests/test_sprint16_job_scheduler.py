@@ -494,3 +494,221 @@ def test_no_live_llm() -> None:
     """Scheduler tests do not depend on live LLM/network."""
     # The tests are fully offline; this assertion documents the invariant.
     assert True
+
+
+# ---------------------------------------------------------------------------
+# Sprint 16 concurrency-hardening regression tests
+# ---------------------------------------------------------------------------
+
+
+class _GatedService(_FakeService):
+    """Fake service that blocks inside execute() until a gate is released."""
+
+    def __init__(self, gate: threading.Event, **kwargs: object) -> None:
+        super().__init__(**kwargs)  # type: ignore[arg-type]
+        self._gate = gate
+        self.executed_ids: list[str] = []
+
+    def execute(self, request: ApplicationRequest) -> ApplicationResult:
+        self._gate.wait(timeout=5.0)
+        with self._lock:
+            self.executed_ids.append(request.request_id)
+        return super().execute(request)
+
+
+def _wait_for(predicate: Callable[[], bool], timeout: float = 2.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        time.sleep(0.005)
+    return predicate()
+
+
+def test_duplicate_job_id_rejected() -> None:
+    """A job_id already known to the registry is never silently reused."""
+    sched = JobScheduler(_FakeService(), max_workers=1)
+    sched.start()
+    try:
+        sched.submit(_inspect_request(), job_id="dup-id")
+        with pytest.raises(ValueError, match="Duplicate job_id"):
+            sched.submit(_inspect_request(), job_id="dup-id")
+
+        final = sched.wait("dup-id", timeout=2.0)
+        assert final is not None
+        assert final.state is JobState.COMPLETED
+
+        # Even after the job moved to history, the id stays reserved.
+        with pytest.raises(ValueError, match="Duplicate job_id"):
+            sched.submit(_inspect_request(), job_id="dup-id")
+
+        # A fresh id still works.
+        other = sched.submit(_inspect_request(), job_id="other-id")
+        assert sched.wait(other, timeout=2.0).state is JobState.COMPLETED
+    finally:
+        sched.shutdown(wait=True)
+
+
+def test_shutdown_cancels_queued_jobs() -> None:
+    """Jobs still QUEUED at shutdown are CANCELLED, so wait() can never block
+    forever on a job that will never be dispatched."""
+    gate = threading.Event()
+    svc = _GatedService(gate)
+    sched = JobScheduler(svc, max_workers=1)
+    sched.start()
+    try:
+        blocker = sched.submit(_inspect_request("blocker"))
+        assert _wait_for(
+            lambda: (s := sched.get_status(blocker)) is not None and s.state is JobState.RUNNING
+        )
+
+        queued = sched.submit(_inspect_request("queued"))
+        # The dispatcher eagerly hands queued jobs to the worker pool, where
+        # this one blocks on the single concurrency slot, still QUEUED.
+        assert _wait_for(lambda: queued in sched._cancel_events)
+
+        # Shutdown while the blocker still holds the slot; the sweep must
+        # cancel the never-started job even though it already left the deque.
+        shutdown_thread = threading.Thread(
+            target=sched.shutdown, kwargs={"wait": True}, daemon=True
+        )
+        shutdown_thread.start()
+        assert _wait_for(
+            lambda: (s := sched.get_status(queued)) is not None and s.state is JobState.CANCELLED
+        )
+        assert shutdown_thread.is_alive()  # still waiting on the gated blocker
+
+        gate.set()
+        shutdown_thread.join(timeout=5.0)
+        assert not shutdown_thread.is_alive()
+
+        # Running jobs are unaffected and finish normally.
+        assert sched.get_status(blocker).state is JobState.COMPLETED
+
+        queued_final = sched.get_status(queued)
+        assert queued_final is not None
+        assert queued_final.state is JobState.CANCELLED
+        assert queued_final.finished_at is not None
+        assert "queued" not in svc.executed_ids
+
+        # wait() on the never-started job returns promptly, not after timeout.
+        t0 = time.monotonic()
+        waited = sched.wait(queued, timeout=1.0)
+        assert time.monotonic() - t0 < 0.5
+        assert waited is not None
+        assert waited.state is JobState.CANCELLED
+    finally:
+        gate.set()
+        sched.shutdown(wait=True)
+
+
+def test_shutdown_cancels_paused_jobs() -> None:
+    """Paused jobs are CANCELLED at shutdown, not stranded in a state wait()
+    would block on forever."""
+    gate = threading.Event()
+    svc = _GatedService(gate)
+    sched = JobScheduler(svc, max_workers=1)
+    sched.start()
+    try:
+        blocker = sched.submit(_inspect_request("blocker"))
+        assert _wait_for(
+            lambda: (s := sched.get_status(blocker)) is not None and s.state is JobState.RUNNING
+        )
+
+        paused = sched.submit(_inspect_request("paused"))
+        assert _wait_for(lambda: paused in sched._cancel_events)
+        pause_result = sched.pause(paused)
+        assert pause_result is not None
+        assert pause_result.state is JobState.PAUSED
+
+        shutdown_thread = threading.Thread(
+            target=sched.shutdown, kwargs={"wait": True}, daemon=True
+        )
+        shutdown_thread.start()
+        assert _wait_for(
+            lambda: (s := sched.get_status(paused)) is not None and s.state is JobState.CANCELLED
+        )
+
+        gate.set()
+        shutdown_thread.join(timeout=5.0)
+        assert not shutdown_thread.is_alive()
+
+        assert sched.get_status(blocker).state is JobState.COMPLETED
+        paused_final = sched.get_status(paused)
+        assert paused_final is not None
+        assert paused_final.state is JobState.CANCELLED
+        assert paused_final.finished_at is not None
+        assert "paused" not in svc.executed_ids
+    finally:
+        gate.set()
+        sched.shutdown(wait=True)
+
+
+def test_pause_after_dispatch_requeues_without_running() -> None:
+    """A pause that lands after dispatch but before the RUNNING transition
+    re-queues the job; a paused job must never execute."""
+    gate = threading.Event()
+    svc = _GatedService(gate)
+    sched = JobScheduler(svc, max_workers=1)
+    sched.start()
+    try:
+        blocker = sched.submit(_inspect_request("blocker"))
+        assert _wait_for(
+            lambda: (s := sched.get_status(blocker)) is not None and s.state is JobState.RUNNING
+        )
+
+        victim = sched.submit(_inspect_request("victim"))
+        # Wait until the dispatcher has picked the victim up (it is out of the
+        # queue and its wrapper is blocked on the single concurrency slot).
+        assert _wait_for(lambda: victim in sched._cancel_events)
+
+        paused = sched.pause(victim)
+        assert paused is not None
+        assert paused.state is JobState.PAUSED
+
+        gate.set()
+        assert sched.wait(blocker, timeout=2.0).state is JobState.COMPLETED
+
+        # The victim wrapper acquired the freed slot but must have re-queued
+        # instead of running while PAUSED.
+        assert _wait_for(lambda: sched.get_status(victim).state is JobState.PAUSED)
+        assert "victim" not in svc.executed_ids
+
+        resumed = sched.resume(victim)
+        assert resumed is not None
+        assert resumed.state is JobState.QUEUED
+        assert sched.wait(victim, timeout=2.0).state is JobState.COMPLETED
+        assert "victim" in svc.executed_ids
+    finally:
+        gate.set()
+        sched.shutdown(wait=True)
+
+
+def test_cancel_after_service_return_still_cancels(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A cancellation landing after the service returned but before the
+    terminal write wins over recording a COMPLETED/FAILED result."""
+    import noisyne.runtime.jobs.executor as executor_mod
+
+    real_result_cls = executor_mod.JobResult
+    sched = JobScheduler(_FakeService(), max_workers=1)
+    sched.start()
+    try:
+        job_id = "late-cancel"
+
+        def cancelling_result(*args: object, **kwargs: object) -> object:
+            # Fires while the executor builds the JobResult: after the service
+            # call returned and after the earlier cancel checkpoints, but
+            # before the terminal snapshot is written.
+            sched.cancel(job_id)
+            return real_result_cls(*args, **kwargs)  # type: ignore[arg-type]
+
+        monkeypatch.setattr(executor_mod, "JobResult", cancelling_result)
+        sched.submit(_inspect_request("late-cancel"), job_id=job_id)
+        final = sched.wait(job_id, timeout=2.0)
+        assert final is not None
+        assert final.state is JobState.CANCELLED
+        assert final.result is None
+    finally:
+        sched.shutdown(wait=True)
