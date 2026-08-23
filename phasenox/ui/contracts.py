@@ -82,6 +82,8 @@ class CapabilitySnapshot:
     reason: str | None = None
     checked_at: datetime | None = None
     dependencies: tuple[str, ...] = ()
+    tested_in_freeze: bool = False
+    readiness_source: str = "none"
 
 
 @dataclass(frozen=True, slots=True)
@@ -270,14 +272,24 @@ class IntelligenceParameter:
 
 @dataclass(frozen=True, slots=True)
 class IntelligenceItem:
+    statement_id: str = ""
+    source_operation: str = ""
     observation: str = ""
     finding: str = ""
     explanations: tuple[str, ...] = ()
     recommendation: str = ""
     proposed_action: str = ""
     confidence: float | None = None
+    confidence_meaning: str = ""
+    category: str = ""
+    severity: str = ""
     evidence: tuple[IntelligenceEvidence, ...] = ()
     parameters: tuple[IntelligenceParameter, ...] = ()
+    grounding_state: str = ""
+    validation_state: str = ""
+    assumptions: tuple[str, ...] = ()
+    limitations: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
