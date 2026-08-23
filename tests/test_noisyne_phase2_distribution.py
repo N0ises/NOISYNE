@@ -69,13 +69,13 @@ def _assert_no_private_artifacts(names: set[str], *, strip_root: bool = False) -
 
 @pytest.fixture
 def external_tmp_path() -> Path:
-    with tempfile.TemporaryDirectory(prefix="noisyne-phase3-") as raw:
+    with tempfile.TemporaryDirectory(prefix="phasenox-r3-") as raw:
         yield Path(raw)
 
 
 class TestDistributionMetadata:
-    def test_project_name_is_noisyne(self) -> None:
-        assert _project_metadata()["project"]["name"] == "noisyne"
+    def test_project_name_is_phasenox(self) -> None:
+        assert _project_metadata()["project"]["name"] == "phasenox"
 
     def test_canonical_and_compatibility_package_discovery(self) -> None:
         metadata = _project_metadata()
@@ -99,13 +99,10 @@ class TestDistributionMetadata:
         assert phasenox.__name__ == "phasenox"
         assert brain.__name__ == "brain"
 
-    def test_distribution_installs_both_cli_entry_points(self) -> None:
+    def test_distribution_installs_only_phasenox_cli_entry_point(self) -> None:
         scripts = _project_metadata()["project"]["scripts"]
 
-        assert scripts == {
-            "noisyne": "phasenox.cli:main",
-            "soundbrain": "phasenox.cli:main",
-        }
+        assert scripts == {"phasenox": "phasenox.cli:main"}
 
 
 @pytest.mark.packaging
@@ -147,8 +144,8 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
         cwd=source,
     )
 
-    wheel = artifacts / f"noisyne-{version}-py3-none-any.whl"
-    sdist = artifacts / f"noisyne-{version}.tar.gz"
+    wheel = artifacts / f"phasenox-{version}-py3-none-any.whl"
+    sdist = artifacts / f"phasenox-{version}.tar.gz"
     assert wheel.is_file()
     assert sdist.is_file()
 
@@ -160,7 +157,14 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
             "phasenox/infrastructure/config/resources/models.yaml",
             "phasenox/infrastructure/config/resources/runtime.yaml",
         } <= names
-        assert f"noisyne-{version}.dist-info/METADATA" in names
+        assert f"phasenox-{version}.dist-info/METADATA" in names
+        entry_points = archive.read(f"phasenox-{version}.dist-info/entry_points.txt").decode(
+            "utf-8"
+        )
+        assert entry_points.splitlines() == [
+            "[console_scripts]",
+            "phasenox = phasenox.cli:main",
+        ]
         assert {name for name in names if name.startswith("brain/")} == {"brain/__init__.py"}
         assert len({name for name in names if name.startswith("phasenox/")}) > 300
         _assert_no_private_artifacts(names)
@@ -169,14 +173,16 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
         names = set(archive.getnames())
         assert names
         assert all(
-            name == f"noisyne-{version}" or name.startswith(f"noisyne-{version}/") for name in names
+            name == f"phasenox-{version}" or name.startswith(f"phasenox-{version}/")
+            for name in names
         )
         _assert_no_private_artifacts(names, strip_root=True)
 
     installed = tmp_path / "installed"
     venv.EnvBuilder(with_pip=True).create(installed)
     python = _venv_executable(installed, "python")
-    phasenox = _venv_executable(installed, "noisyne")
+    phasenox = _venv_executable(installed, "phasenox")
+    noisyne = _venv_executable(installed, "noisyne")
     soundbrain = _venv_executable(installed, "soundbrain")
 
     subprocess.run(
@@ -199,7 +205,7 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
                 "from phasenox.infrastructure.config import get_application_root; "
                 "resources = files('phasenox.infrastructure.config').joinpath('resources'); "
                 "print(phasenox.__name__); print(brain.__name__); "
-                "print(NoisyneService is SoundBrainService); print(version('noisyne')); "
+                "print(NoisyneService is SoundBrainService); print(version('phasenox')); "
                 "print(','.join(name for name in ('audio.yaml', 'models.yaml', 'runtime.yaml') "
                 "if resources.joinpath(name).is_file())); "
                 "print(get_application_root() == Path(phasenox.__file__).resolve().parent.parent)"
@@ -219,12 +225,16 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
         "True",
     ]
 
-    for command in (phasenox, soundbrain):
-        result = subprocess.run(
-            [str(command), "--help"],
-            check=True,
-            capture_output=True,
-            text=True,
-            cwd=tmp_path,
-        )
-        assert "N\u00d8ISYNE" in result.stdout
+    assert phasenox.is_file()
+    assert not noisyne.exists()
+    assert not soundbrain.exists()
+
+    result = subprocess.run(
+        [str(phasenox), "--help"],
+        check=True,
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+    )
+    assert result.stdout.startswith("usage: phasenox")
+    assert "N\u00d8ISYNE" in result.stdout

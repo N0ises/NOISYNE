@@ -23,11 +23,11 @@ Use canonical interfaces in new code and validation:
 
 ```bash
 python -c "import phasenox"
-noisyne --help
+phasenox --help
 ```
 
-The `brain` Python namespace and `soundbrain` CLI remain compatibility aliases
-and should only appear in explicit compatibility tests or documentation.
+The `brain` Python namespace remains a compatibility alias. The former
+`noisyne` and `soundbrain` CLI commands are no longer installed.
 
 ---
 

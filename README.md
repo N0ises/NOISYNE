@@ -191,13 +191,13 @@ Additional providers can be integrated without modifying the Runtime.
 Install the published package:
 
 ```bash
-pip install noisyne
+pip install phasenox
 ```
 
 Install optional PDF/OCR support when required:
 
 ```bash
-pip install "noisyne[pdf]"
+pip install "phasenox[pdf]"
 ```
 
 For development from a source checkout:
@@ -241,11 +241,10 @@ Canonical product and compatibility identities:
 ```text
 Product: NØISYNE
 ASCII identity: NOISYNE
-Distribution: noisyne
+Distribution: phasenox
 Canonical Python package: phasenox
 Legacy Python package: brain (compatibility only)
-Canonical CLI: noisyne
-Legacy CLI: soundbrain (compatibility alias)
+Canonical CLI: phasenox
 Canonical service: NoisyneService
 Legacy service: SoundBrainService (compatibility alias)
 ```
@@ -261,19 +260,13 @@ Existing `brain.*` imports remain supported during the compatibility period.
 Use the canonical CLI for new workflows:
 
 ```bash
-noisyne --help
-```
-
-The legacy CLI remains available for compatibility:
-
-```bash
-soundbrain --help
+phasenox --help
 ```
 
 Application-root precedence is `NOISYNE_ROOT`, then the legacy
 `SOUNDBRAIN_ROOT`, then automatic structural detection.
 
-The product and distribution are NØISYNE/noisyne.
+The product and distribution are NØISYNE/phasenox.
 
 ```text
 Repository: N0ises/NOISYNE

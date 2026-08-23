@@ -6,7 +6,7 @@ Status: ACTIVE
 
 Repository: `N0ises/NOISYNE`
 
-Canonical distribution and Python namespace: `noisyne`
+Canonical distribution and Python namespace: `phasenox`
 
 ---
 
@@ -23,8 +23,8 @@ The V1 Desktop exists as a frozen release candidate on the isolated
 it is not part of the V2 backend branch.
 
 The repository rename is complete. New code and active documentation use
-NØISYNE/NOISYNE, `N0ises/NOISYNE` and `noisyne`. The legacy `brain` namespace,
-`soundbrain` CLI, `SoundBrainService`, `SOUNDBRAIN_ROOT`, `soundbrain` engine
+NØISYNE/NOISYNE, `N0ises/NOISYNE` and `phasenox`. The legacy `brain` namespace,
+`SoundBrainService`, `SOUNDBRAIN_ROOT`, `soundbrain` engine
 alias and `soundbrain` Chroma collection remain intentional compatibility
 contracts.
 

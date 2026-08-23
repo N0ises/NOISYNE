@@ -26,20 +26,20 @@ service, corpus or dependency is absent.
 
 | Area | Repository truth | Lifecycle note |
 | --- | --- | --- |
-| Identity | Distribution/namespace `noisyne`; repository `N0ises/NOISYNE` | Rename complete |
-| V1 application | `noisyne.application.PhasenoxService`; compatibility `NoisyneService`, `SoundBrainService` | Production V1 facade |
-| Product surface | `noisyne/cli.py`; canonical `noisyne` and legacy `soundbrain` commands | CLI production |
-| Runtime capabilities | `noisyne/runtime/capabilities.py` | Authoritative runtime lifecycle metadata |
+| Identity | Distribution/namespace `phasenox`; repository `N0ises/NOISYNE` | Rename complete |
+| V1 application | `phasenox.application.PhasenoxService`; compatibility `NoisyneService`, `SoundBrainService` | Production V1 facade |
+| Product surface | `phasenox/cli.py`; canonical `phasenox` command only | CLI production |
+| Runtime capabilities | `phasenox/runtime/capabilities.py` | Authoritative runtime lifecycle metadata |
 | Audio/DSP/engineering | Deterministic V1 analysis and recommendations | Production where registered |
 | Optional CLAP | Implemented and verified; model is not bundled | Availability depends on local assets |
 | RAG | Implemented with documented preflight issues | Not Production |
 | LLM reasoning | Implemented; external/local endpoint required | Not Production by default |
-| Workflow adapters | `noisyne/integration` deterministic file-export contracts | Implemented contracts; no DAW communication |
-| Local API | No tracked `noisyne/api` package | Planned for Sprint 16 |
+| Workflow adapters | `phasenox/integration` deterministic file-export contracts | Implemented contracts; no DAW communication |
+| Local API | No tracked `phasenox/api` package | Planned for Sprint 16 |
 | Desktop V1 | Frozen release candidate on isolated `desktop-ui` branch | Exists; not part of this branch |
 | V2 perceptual core | No validated V2 perceptual implementation | Planned |
 
-Compatibility identifiers such as `brain`, `soundbrain`, `SoundBrainService`,
+Compatibility identifiers such as `brain`, `SoundBrainService`,
 `SOUNDBRAIN_ROOT`, the `soundbrain` engine key and Chroma collection are retained
 deliberately and are not rename debt.
 

@@ -10,13 +10,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_package_metadata_and_console_scripts_are_canonical():
     metadata = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
-    assert metadata["project"]["name"] == "noisyne"
+    assert metadata["project"]["name"] == "phasenox"
     assert metadata["project"]["version"] == "1.0.0"
     assert metadata["project"]["description"].startswith("NØISYNE")
-    assert metadata["project"]["scripts"] == {
-        "noisyne": "phasenox.cli:main",
-        "soundbrain": "phasenox.cli:main",
-    }
+    assert metadata["project"]["scripts"] == {"phasenox": "phasenox.cli:main"}
     assert metadata["tool"]["setuptools"]["packages"]["find"]["include"] == [
         "phasenox*",
         "brain",
@@ -29,20 +26,21 @@ def test_current_docs_present_canonical_interfaces_first():
 
     for expected in (
         "Product: NØISYNE",
-        "Distribution: noisyne",
+        "Distribution: phasenox",
         "Canonical Python package: phasenox",
         "Legacy Python package: brain (compatibility only)",
-        "Canonical CLI: noisyne",
-        "Legacy CLI: soundbrain (compatibility alias)",
-        "pip install noisyne",
-        'pip install "noisyne[pdf]"',
+        "Canonical CLI: phasenox",
+        "pip install phasenox",
+        'pip install "phasenox[pdf]"',
         "NOISYNE_ROOT",
         "SOUNDBRAIN_ROOT",
     ):
         assert expected in readme
 
     assert 'python -c "import phasenox"' in contributing
-    assert "noisyne --help" in contributing
+    assert "phasenox --help" in contributing
+    assert "soundbrain --help" not in contributing
+    assert "noisyne --help" not in contributing
 
 
 def test_validation_tooling_prefers_canonical_cli_and_namespace():
@@ -88,4 +86,4 @@ def test_export_tool_groups_canonical_and_compatibility_packages(tmp_path):
 
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["product"] == "NOISYNE"
-    assert manifest["distribution"] == "noisyne"
+    assert manifest["distribution"] == "phasenox"

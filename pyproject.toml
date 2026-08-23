@@ -3,7 +3,7 @@ requires = ["setuptools>=80", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "noisyne"
+name = "phasenox"
 version = "1.0.0"
 description = "NØISYNE modular audio intelligence platform."
 readme = "docs/README_v2.md"
@@ -24,8 +24,7 @@ keywords = [
     "embedding",
     "analysis",
     "reference",
-    "noisyne",
-    "soundbrain"
+    "phasenox"
 ]
 
 classifiers = [
@@ -58,7 +57,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # PDF/OCR ingestion is only required for RAG corpus building, not for the core
-# V1 analyze/reference runtime. Install with `pip install noisyne[pdf]`.
+# V1 analyze/reference runtime. Install with `pip install phasenox[pdf]`.
 pdf = [
     "pymupdf",
     "marker-pdf",
@@ -76,8 +75,7 @@ include-package-data = true
 py-modules = ["main"]
 
 [project.scripts]
-noisyne = "phasenox.cli:main"
-soundbrain = "phasenox.cli:main"
+phasenox = "phasenox.cli:main"
 
 [tool.setuptools.package-data]
 "phasenox.infrastructure.config" = ["resources/*.yaml"]

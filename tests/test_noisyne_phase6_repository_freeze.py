@@ -13,9 +13,9 @@ def test_final_identity_matrix_records_canonical_and_compatibility_contracts():
     for expected in (
         "| Display | NØISYNE |",
         "| ASCII | NOISYNE |",
-        "| Distribution | `noisyne` |",
+        "| Distribution | `phasenox` |",
         "| Python namespace | `phasenox` | `brain` |",
-        "| CLI | `noisyne` | `soundbrain` |",
+        "| CLI | `phasenox` | — |",
         "| Service | `PhasenoxService` | `NoisyneService`, `SoundBrainService` |",
         "| Application root environment | `NOISYNE_ROOT` | `SOUNDBRAIN_ROOT` |",
         "| Engine key | `noisyne` | `soundbrain` |",

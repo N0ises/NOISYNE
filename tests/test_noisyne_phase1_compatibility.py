@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import importlib
 import io
-import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
-import pytest
 from brain.application.soundbrain_service import SoundBrainService
 
 from phasenox.application.noisyne_service import (
@@ -79,46 +77,38 @@ class TestEngineRegistryAliases:
         assert registry.get("noisyne") is registry.get("soundbrain")
 
 
-class TestCliAliases:
-    """The canonical `noisyne` CLI and the legacy `soundbrain` alias share behavior."""
+class TestCliIdentity:
+    """Only the canonical ``phasenox`` CLI remains installed after R3."""
 
     @staticmethod
-    def _capture_help(command: str, args: list[str]) -> str:
+    def _capture_help(args: list[str]) -> str:
         from main import main
 
-        old_argv0 = sys.argv[0] if sys.argv else ""
-        sys.argv[0] = command
+        captured = io.StringIO()
         try:
-            captured = io.StringIO()
-            try:
-                with redirect_stdout(captured):
-                    main(args)
-            except SystemExit as exc:
-                assert exc.code == 0
-            return captured.getvalue()
-        finally:
-            sys.argv[0] = old_argv0
+            with redirect_stdout(captured):
+                main(args)
+        except SystemExit as exc:
+            assert exc.code == 0
+        return captured.getvalue()
 
-    @pytest.mark.parametrize("command", ["noisyne", "soundbrain"])
-    def test_help_shows_product_identity(self, command):
-        output = self._capture_help(command, ["--help"])
+    def test_help_shows_product_identity(self):
+        output = self._capture_help(["--help"])
         assert "NØISYNE" in output
 
-    @pytest.mark.parametrize("command", ["noisyne", "soundbrain"])
-    def test_top_level_usage_uses_invoked_command(self, command):
-        output = self._capture_help(command, ["--help"])
-        assert f"usage: {command}" in output
+    def test_top_level_usage_uses_phasenox(self):
+        output = self._capture_help(["--help"])
+        assert "usage: phasenox" in output
 
-    @pytest.mark.parametrize("command", ["noisyne", "soundbrain"])
-    def test_analyze_help_uses_invoked_command(self, command):
-        output = self._capture_help(command, ["analyze", "--help"])
-        assert f"usage: {command} analyze" in output
+    def test_analyze_help_uses_phasenox(self):
+        output = self._capture_help(["analyze", "--help"])
+        assert "usage: phasenox analyze" in output
 
-    def test_pyproject_has_both_entry_points(self):
+    def test_pyproject_has_only_phasenox_entry_point(self):
         pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
         text = pyproject.read_text(encoding="utf-8")
-        assert 'noisyne = "phasenox.cli:main"' in text
-        assert 'soundbrain = "phasenox.cli:main"' in text
+        scripts = text.split("[project.scripts]", maxsplit=1)[1].split("[", maxsplit=1)[0]
+        assert scripts.strip() == 'phasenox = "phasenox.cli:main"'
 
 
 class TestReportIdentity:

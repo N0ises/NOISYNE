@@ -14,7 +14,7 @@ Canonical package: `noisyne/`
 
 All implementation lives under `noisyne`. The top-level `brain` package is a
 legacy import shim and must not receive duplicate implementations. The
-`soundbrain` CLI, `SoundBrainService`, `SOUNDBRAIN_ROOT`, `soundbrain` engine
+`SoundBrainService`, `SOUNDBRAIN_ROOT`, the `soundbrain` engine
 alias and `soundbrain` Chroma collection remain approved compatibility
 contracts.
 

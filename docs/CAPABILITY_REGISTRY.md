@@ -14,7 +14,7 @@ disabled, tested and composed. Runtime capability lifecycle truth is defined by
 records product-level capabilities that do not yet have runtime entries.
 
 The repository is `N0ises/NOISYNE`; the canonical distribution and Python
-namespace are `noisyne`. Compatibility names remain supported where specified
+namespace are `phasenox`. Compatibility names remain supported where specified
 by the technical rename freeze.
 
 ---
@@ -101,7 +101,7 @@ with a successful runtime availability probe.
 
 | Capability | State | Exact boundary |
 | --- | --- | --- |
-| V1 CLI | Production | Canonical `noisyne`; legacy `soundbrain` alias retained |
+| V1 CLI | Production | Canonical `phasenox`; former `noisyne` and `soundbrain` aliases removed |
 | V1 PhasenoxService | Production | Canonical facade; `NoisyneService` and `SoundBrainService` retained for compatibility |
 | Workflow Integration Contracts | Implemented | Deterministic JSON/text/Markdown exports only |
 | DAW Integration Contracts | Implemented | Adapter interfaces and file exports; no DAW communication |

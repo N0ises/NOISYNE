@@ -116,11 +116,8 @@ def _cmd_reference(args: argparse.Namespace) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    # Use the invoked executable name as program name so the legacy `soundbrain`
-    # alias and the canonical `noisyne` command both show correct help text.
-    prog_name = Path(sys.argv[0]).name if sys.argv and sys.argv[0] else "noisyne"
     parser = argparse.ArgumentParser(
-        prog=prog_name,
+        prog="phasenox",
         description="NØISYNE — AI-powered Audio Intelligence Platform",
     )
     subparsers = parser.add_subparsers(

@@ -47,7 +47,7 @@ class ExportBundle:
         payload = {
             "format": "ChatGPT Export V2",
             "product": "NOISYNE",
-            "distribution": "noisyne",
+            "distribution": "phasenox",
             "project": str(self.project),
             "git_commit": self._git_value("rev-parse", "HEAD"),
             "git_branch": self._git_value("branch", "--show-current"),

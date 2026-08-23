@@ -13,8 +13,8 @@ Intelligence to the frozen V1 Professional Audio Intelligence backend. V2
 estimates perception and translation risk, links conclusions to evidence and
 returns non-destructive recommendations. Autonomous mixing is V3, not V2.
 
-The canonical codebase is `N0ises/NOISYNE`, distributed as `noisyne` with the
-`noisyne` Python namespace. Approved legacy identifiers remain compatibility
+The canonical codebase is `N0ises/NOISYNE`, distributed as `phasenox` with the
+`phasenox` Python namespace. Approved legacy identifiers remain compatibility
 contracts and are not alternate implementations.
 
 ---

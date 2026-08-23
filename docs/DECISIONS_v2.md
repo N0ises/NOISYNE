@@ -16,7 +16,7 @@ freeze.
 
 ## Decision 001 — Project Identity
 
-NØISYNE is an Audio Intelligence System, distributed as `noisyne` from
+NØISYNE is an Audio Intelligence System, distributed as `phasenox` from
 `N0ises/NOISYNE`. It is not merely an audio analyzer or mixing assistant.
 
 Status: Accepted

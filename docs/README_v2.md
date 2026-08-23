@@ -168,24 +168,25 @@ tests/ Automated tests
 
 reports/ Generated reports
 
-The installed distribution is `noisyne`. New Python integrations should import
+The installed distribution is `phasenox`. New Python integrations should import
 from `phasenox.*`; `brain.*` remains available only as a compatibility namespace.
 
 Canonical installation and interfaces:
 
 ```bash
-pip install noisyne
-pip install "noisyne[pdf]"
-noisyne --help
+pip install phasenox
+pip install "phasenox[pdf]"
+phasenox --help
 ```
 
 ```python
 from phasenox.application import NoisyneService
 ```
 
-The legacy `soundbrain` CLI, `brain` namespace, and `SoundBrainService` remain
-supported compatibility aliases. Application-root precedence is `NOISYNE_ROOT`,
-then legacy `SOUNDBRAIN_ROOT`, then automatic structural detection.
+The `brain` namespace and `SoundBrainService` remain supported compatibility
+aliases. The former `noisyne` and `soundbrain` CLI commands are no longer
+installed. Application-root precedence is `NOISYNE_ROOT`, then legacy
+`SOUNDBRAIN_ROOT`, then automatic structural detection.
 
 ------------------------------------------------------------------------
 

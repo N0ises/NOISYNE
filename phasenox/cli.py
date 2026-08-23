@@ -1,8 +1,4 @@
-"""Installed console-script entry point for NØISYNE.
-
-The canonical command is ``noisyne``; ``soundbrain`` remains a supported
-backward-compatible alias registered in ``pyproject.toml``.
-"""
+"""Installed ``phasenox`` console-script entry point."""
 
 from main import main
 
