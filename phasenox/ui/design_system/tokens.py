@@ -1,4 +1,4 @@
-"""Qt-free NØISYNE design tokens mapped from the approved brand package."""
+"""Qt-free PHASENOX design tokens mapped from the approved brand package."""
 
 from __future__ import annotations
 
@@ -120,4 +120,3 @@ class DesignTokens:
 
 
 DEFAULT_TOKENS = DesignTokens()
-

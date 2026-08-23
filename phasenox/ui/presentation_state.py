@@ -44,7 +44,6 @@ NAVIGATION_ORDER = (
     PageId.ANALYZE,
     PageId.REFERENCES,
     PageId.INTELLIGENCE,
-    PageId.VOICE,
     PageId.KNOWLEDGE,
     PageId.REPORTS,
     PageId.SETTINGS,
@@ -618,4 +617,3 @@ class PresentationState:
     @classmethod
     def from_session(cls, session: SessionState) -> PresentationState:
         return cls(navigation=session.navigation, session=session)
-
