@@ -61,7 +61,7 @@ _ORIGINAL_PATH = os.environ.get("PATH", "")
 
 @pytest.fixture(scope="module")
 def fixture_runtimes() -> dict:
-    return build_fixture_runtimes_by_device(".noisyne_performance_test_cache")
+    return build_fixture_runtimes_by_device(".phasenox_performance_test_cache")
 
 
 @pytest.fixture(scope="module")
@@ -138,7 +138,7 @@ def test_bare_onnxruntime_cuda_executable_without_torch() -> None:
         "    _onnxruntime_cuda_executable,\n"
         ")\n"
         "_ensure_cuda_dll_paths()\n"
-        "ok = _onnxruntime_cuda_executable('.noisyne_performance_test_cache')\n"
+        "ok = _onnxruntime_cuda_executable('.phasenox_performance_test_cache')\n"
         "print('EXECUTABLE_CUDA=' + str(ok))\n"
     )
     env = os.environ.copy()
@@ -168,7 +168,7 @@ def test_bare_onnxruntime_without_dll_paths_falls_back_to_cpu() -> None:
         "import onnxruntime as ort\n"
         "import numpy as np\n"
         "s = ort.InferenceSession(\n"
-        "    '.noisyne_performance_test_cache/fixture_model.onnx',\n"
+        "    '.phasenox_performance_test_cache/fixture_model.onnx',\n"
         "    providers=['CUDAExecutionProvider', 'CPUExecutionProvider'],\n"
         ")\n"
         "print('ACTIVE_PROVIDER=' + s.get_providers()[0])\n"
@@ -207,7 +207,7 @@ def test_provider_preference_prefers_cuda_first() -> None:
 
     _ensure_cuda_dll_paths()
     session = ort.InferenceSession(
-        ".noisyne_performance_test_cache/fixture_model.onnx",
+        ".phasenox_performance_test_cache/fixture_model.onnx",
         providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
     )
     assert session.get_providers()[0] == "CUDAExecutionProvider"
@@ -227,7 +227,7 @@ def test_actual_cuda_session_loads_or_skips(fixture_runtimes: dict) -> None:
 
 def test_cpu_fixture_runtimes_are_usable() -> None:
     """CPU-only fixture runtimes are always built and produce finite output."""
-    runtimes = build_fixture_runtimes_by_device(".noisyne_performance_test_cache")
+    runtimes = build_fixture_runtimes_by_device(".phasenox_performance_test_cache")
     if "cpu" not in runtimes:
         pytest.skip("CPU fixture runtime unavailable")
     pt_fn, onnx_fn, _ = runtimes["cpu"]

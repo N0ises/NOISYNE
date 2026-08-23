@@ -6,7 +6,6 @@ import pytest
 
 from phasenox.audio.pipeline import AudioPipeline
 
-
 AUDIO_PATH = Path("tests/assets/test.wav")
 
 
@@ -22,7 +21,7 @@ def test_audio_pipeline_index_and_search():
         audio_id="song_001",
         metadata={
             "title": "Test Song",
-            "artist": "SoundBrain",
+            "artist": "PHASENOX",
         },
         document="First indexed audio",
     )

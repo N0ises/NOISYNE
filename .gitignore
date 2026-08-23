@@ -1,5 +1,5 @@
 # ============================================================
-# SoundBrain
+# PHASENOX
 # Git Ignore
 # ============================================================
 
@@ -50,8 +50,11 @@ logs/
 .coverage
 .coverage.*
 htmlcov/
-.noisyne_performance_test_cache/
-.noisyne_performance_cache/
+.phasenox_performance_test_cache/
+.phasenox_performance_cache/
+# Keep stale disposable performance caches ignored without preserving an old identity.
+.*_performance_test_cache/
+.*_performance_cache/
 
 # ------------------------------------------------------------
 # Build

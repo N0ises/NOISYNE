@@ -97,7 +97,7 @@ def _sample_mix_policy() -> dict[str, Any]:
     ).to_dict()
 
 
-def test_import_noisyne_application_is_lightweight() -> None:
+def test_import_phasenox_application_is_lightweight() -> None:
     """Importing phasenox.application must not initialize torch, ONNX, LLM, network, Qt."""
     code = (
         "import sys; "

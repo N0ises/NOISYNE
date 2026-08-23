@@ -210,7 +210,7 @@ def _ensure_cuda_dll_paths() -> None:
 
     if sys.platform != "win32":
         return
-    marker = "_noisyne_cuda_dll_paths_added"
+    marker = "_phasenox_cuda_dll_paths_added"
     if getattr(_ensure_cuda_dll_paths, marker, False):
         return
     site_packages = sysconfig.get_path("purelib")
@@ -273,7 +273,7 @@ def _export_tiny_onnx_if_missing(path: str, opset_version: int = 17) -> bool:
 
 
 def _onnxruntime_cuda_executable(
-    cache_dir: str = ".noisyne_performance_test_cache",
+    cache_dir: str = ".phasenox_performance_test_cache",
 ) -> bool:
     """Return True iff ONNX Runtime can actually run inference on CUDA."""
     import os
@@ -309,7 +309,7 @@ def _onnx_cuda_session_loaded(session: Any) -> bool:
 
 
 def build_fixture_runtimes_by_device(
-    cache_dir: str = ".noisyne_performance_test_cache",
+    cache_dir: str = ".phasenox_performance_test_cache",
 ) -> dict[
     str,
     tuple[

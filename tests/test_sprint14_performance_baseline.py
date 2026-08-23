@@ -552,7 +552,7 @@ def test_runtime_selection_rejects_missing_equivalence_when_required() -> None:
 
 
 def test_fixture_model_pytorch_onnx_equivalence() -> None:
-    pytorch_fn, onnx_fn, _ = build_fixture_runtimes(".noisyne_performance_test_cache")
+    pytorch_fn, onnx_fn, _ = build_fixture_runtimes(".phasenox_performance_test_cache")
     if pytorch_fn is None or onnx_fn is None:
         pytest.skip("PyTorch or ONNX Runtime not available for fixture model")
     fixture_input = np.random.randn(1, 64).astype(np.float32)

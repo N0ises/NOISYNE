@@ -282,7 +282,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--cache-dir",
         type=Path,
-        default=Path(".noisyne_performance_cache"),
+        default=Path(".phasenox_performance_cache"),
         help="Directory for cached ONNX exports",
     )
     parser.add_argument(

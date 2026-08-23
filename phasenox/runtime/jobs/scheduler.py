@@ -115,12 +115,12 @@ class JobScheduler:
             self._slots = threading.Semaphore(self._max_workers)
             self._executor = ThreadPoolExecutor(
                 max_workers=self._max_workers,
-                thread_name_prefix="noisyne_job_",
+                thread_name_prefix="phasenox_job_",
             )
             self._running = True
             self._dispatcher = threading.Thread(
                 target=self._dispatch_loop,
-                name="noisyne_job_dispatcher",
+                name="phasenox_job_dispatcher",
                 daemon=True,
             )
             self._dispatcher.start()
