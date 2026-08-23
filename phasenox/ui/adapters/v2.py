@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import shutil
@@ -80,36 +81,15 @@ class V2ApplicationAdapter:
 
     def capability_snapshots(self) -> tuple[CapabilitySnapshot, ...]:
         """Return lifecycle, dependency, and freeze evidence without claiming readiness."""
-        from phasenox.application.contracts import (
-            ApplicationRequest,
-            CapabilitySnapshotResult,
-            MachineAvailability,
-            OperationType,
-        )
-        from phasenox.application.service import PhasenoxV2Service
         from phasenox.runtime.capabilities import registry
 
-        service = self._v2_service_factory() if self._v2_service_factory else PhasenoxV2Service()
-        result = service.execute(
-            ApplicationRequest(
-                request_id="desktop-capability-inspect",
-                operation=OperationType.CAPABILITY_INSPECT,
-            )
-        )
-        if result.payload is None or "snapshot" not in result.payload:
-            return ()
-        machine = CapabilitySnapshotResult.from_dict(result.payload["snapshot"])
-        machine_by_name = {entry.name: entry for entry in machine.capabilities}
         readiness_required = {"clap_embedding", "llm_reasoning", "rag_retrieval"}
         hidden_capabilities = {"audio_intelligence", "daw_integration", "memory_learning"}
 
         snapshots: list[CapabilitySnapshot] = []
         for capability in registry:
             lifecycle = CapabilityLifecycle(capability.status.value)
-            entry = machine_by_name.get(capability.name)
-            machine_availability = (
-                entry.dependency_availability if entry is not None else MachineAvailability.UNKNOWN
-            )
+            dependency_state = self._dependency_package_state(capability.dependencies)
             if lifecycle is CapabilityLifecycle.PLANNED:
                 availability = Availability.UNAVAILABLE
                 reason_code = "lifecycle_planned"
@@ -127,12 +107,12 @@ class V2ApplicationAdapter:
                     "Package presence does not prove provider, model, or corpus readiness."
                 )
                 readiness_source = "readiness_required"
-            elif machine_availability is MachineAvailability.UNAVAILABLE:
+            elif dependency_state == "unavailable":
                 availability = Availability.UNAVAILABLE
                 reason_code = "dependency_unavailable"
                 reason = capability.reason_unavailable or "A required dependency is unavailable."
                 readiness_source = "dependency_probe"
-            elif machine_availability is MachineAvailability.UNKNOWN:
+            elif dependency_state == "unknown":
                 availability = Availability.UNKNOWN
                 reason_code = "dependency_unknown"
                 reason = "Dependency availability could not be determined."
@@ -162,6 +142,29 @@ class V2ApplicationAdapter:
                 )
             )
         return tuple(snapshots)
+
+    @staticmethod
+    def _dependency_package_state(dependencies: tuple[str, ...]) -> str:
+        """Probe package presence without importing heavy frameworks or providers."""
+        if not dependencies:
+            return "available"
+        states: list[str] = []
+        for dependency in dependencies:
+            module_name = dependency.replace("-", "_")
+            if not module_name.isidentifier():
+                states.append("unknown")
+                continue
+            try:
+                states.append(
+                    "available" if importlib.util.find_spec(module_name) is not None else "unavailable"
+                )
+            except (ImportError, ModuleNotFoundError, ValueError):
+                states.append("unknown")
+        if "unavailable" in states:
+            return "unavailable"
+        if "unknown" in states:
+            return "unknown"
+        return "available"
 
     def runtime_status(self) -> RuntimeStatus:
         # This is a lightweight status snapshot. It does not import Torch or
