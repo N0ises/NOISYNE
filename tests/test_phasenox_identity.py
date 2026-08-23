@@ -7,12 +7,48 @@ from phasenox.infrastructure.config.models import ChromaConfig
 from phasenox.memory.vector.config import DEFAULT_COLLECTION
 from phasenox.prompt.prompt_builder import PromptBuilder
 from phasenox.reasoning.prompts import SYSTEM_PROMPT
+from phasenox.reference.models import ReferenceComparison, ReferenceReport
+from phasenox.reference.report_builder import ReferenceReportBuilder
 from phasenox.runtime.engine_registry import registry
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_current_generated_identity_is_noisyne():
+class TestReportIdentity:
+    """Generated reference reports use the current PHASENØX product identity."""
+
+    def _minimal_report(self) -> ReferenceReport:
+        comparison = ReferenceComparison(
+            similarity=88.0,
+            confidence=0.95,
+            frequency_score=88.0,
+            dynamic_score=88.0,
+            stereo_score=88.0,
+            loudness_score=88.0,
+            transient_score=88.0,
+            phase_score=88.0,
+            tonal_score=88.0,
+            semantic_score=88.0,
+            band_differences=[],
+            engineer_decisions=[],
+            metrics=[],
+        )
+        return ReferenceReport(
+            comparison=comparison,
+            summary="test",
+            strengths=[],
+            weaknesses=[],
+            priorities=[],
+            next_actions=[],
+        )
+
+    def test_markdown_title_uses_phasenox(self):
+        report = self._minimal_report()
+        markdown = ReferenceReportBuilder().build_markdown(report)
+        assert markdown.startswith("# PHASENØX Reference Report")
+
+
+def test_current_generated_identity_is_phasenox():
     analysis = SimpleNamespace(
         tempo=120.0,
         pitch="A4",

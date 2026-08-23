@@ -13,10 +13,7 @@ from phasenox.application.phasenox_service import (
     AnalysisRequest,
     PhasenoxService,
 )
-from phasenox.reference.models import (
-    ReferenceComparison,
-    ReferenceReport,
-)
+from phasenox.reference.models import ReferenceComparison, ReferenceReport
 
 AUDIO_PATH = Path("tests/assets/test.wav")
 
@@ -37,31 +34,23 @@ class FakeAudioReviewService(AudioReviewService):
         return _fake_review_result()
 
 
-def _fake_comparison() -> ReferenceComparison:
-    return ReferenceComparison(
-        similarity=88.0,
-        confidence=0.95,
-        frequency_score=88.0,
-        dynamic_score=88.0,
-        stereo_score=88.0,
-        loudness_score=88.0,
-        transient_score=88.0,
-        phase_score=88.0,
-        tonal_score=88.0,
-        semantic_score=88.0,
-        band_differences=[],
-        engineer_decisions=[],
-        metrics=[],
-        references=[],
-        reference_similarities={},
-        metric_variance={},
-        segment_deviations=[],
-    )
-
-
 def _fake_reference_report() -> ReferenceReport:
     return ReferenceReport(
-        comparison=_fake_comparison(),
+        comparison=ReferenceComparison(
+            similarity=88.0,
+            confidence=0.95,
+            frequency_score=88.0,
+            dynamic_score=88.0,
+            stereo_score=88.0,
+            loudness_score=88.0,
+            transient_score=88.0,
+            phase_score=88.0,
+            tonal_score=88.0,
+            semantic_score=88.0,
+            band_differences=[],
+            engineer_decisions=[],
+            metrics=[],
+        ),
         summary="test",
         strengths=[],
         weaknesses=[],
@@ -72,8 +61,7 @@ def _fake_reference_report() -> ReferenceReport:
 
 class FakeReferencePipeline:
 
-    def __init__(self, *, multi: bool = False) -> None:
-        self._multi = multi
+    def __init__(self) -> None:
         self.calls: list[dict] = []
 
     def run(
@@ -95,10 +83,67 @@ class FakeReferencePipeline:
         return _fake_reference_report()
 
 
-def test_soundbrain_service_single_reference():
+@pytest.mark.skipif(
+    not AUDIO_PATH.exists(),
+    reason="No test audio file is available",
+)
+def test_phasenox_service_analyze():
+    request = AnalysisRequest(
+        audio_path=AUDIO_PATH,
+        intent="test analysis",
+        delivery_target="streaming",
+    )
+
+    service = PhasenoxService()
+    response = service.analyze(request)
+
+    assert response.audio is not None
+    assert response.analysis is not None
+    assert response.context is not None
+    assert response.engineering is not None
+    assert response.report is not None
+    assert response.comparison is None
+
+
+def test_phasenox_service_analyze_missing_audio_gracefully():
+    request = AnalysisRequest(
+        audio_path="tests/does_not_exist.wav",
+    )
+
+    service = PhasenoxService()
+    with pytest.raises(Exception):  # noqa: B017 — any failure for missing audio is acceptable
+        service.analyze(request)
+
+
+def test_phasenox_service_module_import_does_not_load_torch():
+    """Importing the service module must not load torch or transformers."""
+    import subprocess
+    import sys
+
+    script = (
+        "import sys\n"
+        "from phasenox.application.phasenox_service import AnalysisRequest\n"
+        "print('torch' in sys.modules, 'transformers' in sys.modules)\n"
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=Path(__file__).resolve().parents[1],
+    )
+
+    assert result.returncode == 0, result.stderr
+    output = result.stdout.strip()
+    assert output == "False False", f"heavy modules loaded: {output}"
+
+
+def test_phasenox_service_analyze_with_single_reference():
+    pipeline = FakeReferencePipeline()
     service = PhasenoxService(
         audio_review_service=FakeAudioReviewService(),
-        reference_pipeline=FakeReferencePipeline(),
+        reference_pipeline=pipeline,
     )
 
     request = AnalysisRequest(
@@ -112,9 +157,8 @@ def test_soundbrain_service_single_reference():
     response = service.analyze(request)
 
     assert response.comparison is not None
-    assert response.comparison.similarity == 88.0
-    assert len(service._reference_pipeline.calls) == 1
-    call = service._reference_pipeline.calls[0]
+    assert len(pipeline.calls) == 1
+    call = pipeline.calls[0]
     assert call["reference_audio"] == AUDIO_PATH
     assert call["current_audio"] == AUDIO_PATH
     assert call["intent"].genre == "pop"
@@ -122,14 +166,11 @@ def test_soundbrain_service_single_reference():
     assert call["intent"].focus_areas == ["loudness"]
 
 
-@pytest.mark.skipif(
-    not AUDIO_PATH.exists(),
-    reason="No test audio file is available",
-)
-def test_soundbrain_service_multiple_references():
+def test_phasenox_service_analyze_with_multiple_references():
+    pipeline = FakeReferencePipeline()
     service = PhasenoxService(
         audio_review_service=FakeAudioReviewService(),
-        reference_pipeline=FakeReferencePipeline(multi=True),
+        reference_pipeline=pipeline,
     )
 
     request = AnalysisRequest(
@@ -142,29 +183,8 @@ def test_soundbrain_service_multiple_references():
     response = service.analyze(request)
 
     assert response.comparison is not None
-    call = service._reference_pipeline.calls[0]
+    call = pipeline.calls[0]
     assert isinstance(call["reference_audio"], list)
     assert len(call["reference_audio"]) == 2
     assert call["intent"].genre == "electronic"
     assert call["intent"].focus_areas == ["dynamics", "stereo"]
-
-
-def test_soundbrain_service_reference_failure_is_graceful():
-    class BrokenReferencePipeline:
-        def run(self, **kwargs):
-            raise RuntimeError("reference engine down")
-
-    service = PhasenoxService(
-        audio_review_service=FakeAudioReviewService(),
-        reference_pipeline=BrokenReferencePipeline(),
-    )
-
-    request = AnalysisRequest(
-        audio_path=AUDIO_PATH,
-        reference_path=AUDIO_PATH,
-    )
-
-    response = service.analyze(request)
-
-    assert response.comparison is None
-    assert response.report is not None

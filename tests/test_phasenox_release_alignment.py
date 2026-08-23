@@ -1,10 +1,46 @@
+import io
 import json
 import subprocess
 import sys
 import tomllib
+from contextlib import redirect_stdout
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+class TestCliIdentity:
+    """Only the canonical ``phasenox`` CLI remains installed after R3."""
+
+    @staticmethod
+    def _capture_help(args: list[str]) -> str:
+        from main import main
+
+        captured = io.StringIO()
+        try:
+            with redirect_stdout(captured):
+                main(args)
+        except SystemExit as exc:
+            assert exc.code == 0
+        return captured.getvalue()
+
+    def test_help_shows_product_identity(self):
+        output = self._capture_help(["--help"])
+        assert "PHASENØX" in output
+
+    def test_top_level_usage_uses_phasenox(self):
+        output = self._capture_help(["--help"])
+        assert "usage: phasenox" in output
+
+    def test_analyze_help_uses_phasenox(self):
+        output = self._capture_help(["analyze", "--help"])
+        assert "usage: phasenox analyze" in output
+
+    def test_pyproject_has_only_phasenox_entry_point(self):
+        pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+        text = pyproject.read_text(encoding="utf-8")
+        scripts = text.split("[project.scripts]", maxsplit=1)[1].split("[", maxsplit=1)[0]
+        assert scripts.strip() == 'phasenox = "phasenox.cli:main"'
 
 
 def test_package_metadata_and_console_scripts_are_canonical():

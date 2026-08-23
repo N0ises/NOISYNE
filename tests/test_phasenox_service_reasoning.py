@@ -29,7 +29,7 @@ class FakeReasoningEngine:
     not AUDIO_PATH.exists(),
     reason="No test audio file is available",
 )
-def test_soundbrain_service_reasoning_wires_llm_answer_into_report(
+def test_phasenox_service_reasoning_wires_llm_answer_into_report(
     monkeypatch,
 ):
     """When reasoning succeeds, the report ai_summary uses the LLM answer."""
@@ -55,7 +55,7 @@ def test_soundbrain_service_reasoning_wires_llm_answer_into_report(
     not AUDIO_PATH.exists(),
     reason="No test audio file is available",
 )
-def test_soundbrain_service_reasoning_fails_gracefully(monkeypatch):
+def test_phasenox_service_reasoning_fails_gracefully(monkeypatch):
     """When reasoning raises, the deterministic report is still returned."""
 
     class BrokenReasoningEngine:

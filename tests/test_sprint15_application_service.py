@@ -41,12 +41,6 @@ from phasenox.perception.reference_contracts import (
 from phasenox.perception.translation_contracts import TranslationPolicyProvenance
 
 
-def test_legacy_v2_service_name_is_canonical_alias() -> None:
-    from phasenox.application import NoisyneV2Service
-
-    assert NoisyneV2Service is PhasenoxV2Service
-
-
 def _write_temp_wav(path: Path, duration_seconds: float = 0.5, sample_rate: int = 44100) -> None:
     """Write a deterministic mono sine WAV for service tests."""
     sample_count = int(duration_seconds * sample_rate)

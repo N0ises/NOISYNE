@@ -14,12 +14,6 @@ from phasenox.evaluation.metrics import (
 from phasenox.report.models import PhasenoxReport, ReportIssue
 
 
-def test_legacy_report_name_is_canonical_alias() -> None:
-    from phasenox.report.models import SoundBrainReport
-
-    assert SoundBrainReport is PhasenoxReport
-
-
 def _report(
     score: float = 75.0,
     confidence: float = 0.85,

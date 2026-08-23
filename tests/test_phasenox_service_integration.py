@@ -16,7 +16,7 @@ AUDIO_PATH = Path("tests/assets/test.wav")
     not AUDIO_PATH.exists(),
     reason="No test audio file is available",
 )
-def test_soundbrain_service_integration_deterministic():
+def test_phasenox_service_integration_deterministic():
     """End-to-end deterministic flow with default flags."""
     request = AnalysisRequest(
         audio_path=AUDIO_PATH,
@@ -50,7 +50,7 @@ def test_soundbrain_service_integration_deterministic():
     not AUDIO_PATH.exists(),
     reason="No test audio file is available",
 )
-def test_soundbrain_service_integration_with_reference():
+def test_phasenox_service_integration_with_reference():
     """Deterministic flow with reference comparison."""
     request = AnalysisRequest(
         audio_path=AUDIO_PATH,
@@ -67,7 +67,7 @@ def test_soundbrain_service_integration_with_reference():
     not AUDIO_PATH.exists(),
     reason="No test audio file is available",
 )
-def test_soundbrain_service_integration_with_mix_intelligence():
+def test_phasenox_service_integration_with_mix_intelligence():
     """Deterministic flow with mix intelligence enabled."""
     request = AnalysisRequest(
         audio_path=AUDIO_PATH,
@@ -93,7 +93,7 @@ def test_soundbrain_service_integration_with_mix_intelligence():
     not AUDIO_PATH.exists(),
     reason="No test audio file is available",
 )
-def test_soundbrain_service_integration_with_plugin_intelligence():
+def test_phasenox_service_integration_with_plugin_intelligence():
     """Deterministic flow with plugin intelligence enabled."""
     request = AnalysisRequest(
         audio_path=AUDIO_PATH,

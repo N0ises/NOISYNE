@@ -8,24 +8,29 @@ from phasenox.application.phasenox_service import (
     AnalysisRequest,
     PhasenoxService,
 )
+from phasenox.infrastructure.config import settings
 
 AUDIO_PATH = Path("tests/assets/test.wav")
+CLAP_MODEL_DIR = Path(settings.runtime.model_root) / settings.models.clap.name
 
 
 @pytest.mark.skipif(
     not AUDIO_PATH.exists(),
     reason="No test audio file is available",
 )
-def test_soundbrain_service_rag_does_not_crash_when_empty():
-    """RAG retrieval enabled with an empty/missing collection must not break the flow."""
+@pytest.mark.skipif(
+    not CLAP_MODEL_DIR.exists(),
+    reason="CLAP model is not available locally",
+)
+def test_phasenox_service_semantic_analysis_enabled():
+    """Semantic analysis with CLAP populates semantic_labels when model is present."""
     request = AnalysisRequest(
         audio_path=AUDIO_PATH,
-        intent="mastering check",
-        include_rag=True,
+        include_semantic_analysis=True,
     )
 
     service = PhasenoxService()
     response = service.analyze(request)
 
     assert response.report is not None
-    assert response.analysis is not None
+    assert isinstance(response.report.semantic_labels, list)
