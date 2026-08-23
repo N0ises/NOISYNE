@@ -79,6 +79,7 @@ phasenox = "phasenox.cli:main"
 
 [tool.setuptools.package-data]
 "phasenox.infrastructure.config" = ["resources/*.yaml"]
+"phasenox.resources.branding" = ["*.png", "*.svg"]
 
 [tool.setuptools.packages.find]
 include = ["phasenox*", "brain"]

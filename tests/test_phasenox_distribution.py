@@ -15,6 +15,22 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 PYPROJECT = ROOT / "pyproject.toml"
+BRAND_RESOURCE_FILENAMES = {
+    "phasenox-hero-banner.svg",
+    "phasenox-logo-16x16.png",
+    "phasenox-logo-32x32.png",
+    "phasenox-logo-64x64.png",
+    "phasenox-logo-128x128.png",
+    "phasenox-logo-256x256.png",
+    "phasenox-logo-512x512.png",
+    "phasenox-logo-1024x1024.png",
+    "phasenox-master-light.svg",
+    "phasenox-master.svg",
+    "phasenox-symbol-dark.svg",
+    "phasenox-symbol.svg",
+    "phasenox-wordmark-light.svg",
+    "phasenox-wordmark.svg",
+}
 
 
 def _project_metadata() -> dict[str, object]:
@@ -157,6 +173,7 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
             "phasenox/infrastructure/config/resources/models.yaml",
             "phasenox/infrastructure/config/resources/runtime.yaml",
         } <= names
+        assert {f"phasenox/resources/branding/{name}" for name in BRAND_RESOURCE_FILENAMES} <= names
         assert f"phasenox-{version}.dist-info/METADATA" in names
         entry_points = archive.read(f"phasenox-{version}.dist-info/entry_points.txt").decode(
             "utf-8"
@@ -176,6 +193,10 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
             name == f"phasenox-{version}" or name.startswith(f"phasenox-{version}/")
             for name in names
         )
+        assert {
+            f"phasenox-{version}/phasenox/resources/branding/{name}"
+            for name in BRAND_RESOURCE_FILENAMES
+        } <= names
         _assert_no_private_artifacts(names, strip_root=True)
 
     installed = tmp_path / "installed"
@@ -203,12 +224,17 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
                 "from phasenox.application import NoisyneService; "
                 "from brain.application import SoundBrainService; "
                 "from phasenox.infrastructure.config import get_application_root; "
+                "from phasenox.resources.branding import "
+                "ASCII_NAME, BRAND_ASSETS, DISPLAY_NAME; "
                 "resources = files('phasenox.infrastructure.config').joinpath('resources'); "
                 "print(phasenox.__name__); print(brain.__name__); "
                 "print(NoisyneService is SoundBrainService); print(version('phasenox')); "
                 "print(','.join(name for name in ('audio.yaml', 'models.yaml', 'runtime.yaml') "
                 "if resources.joinpath(name).is_file())); "
-                "print(get_application_root() == Path(phasenox.__file__).resolve().parent.parent)"
+                "print(get_application_root() == Path(phasenox.__file__).resolve().parent.parent); "
+                "print(DISPLAY_NAME); print(ASCII_NAME); print(len(BRAND_ASSETS)); "
+                "print(all(asset.resource().is_file() and bool(asset.read_bytes()) "
+                "for asset in BRAND_ASSETS.values()))"
             ),
         ],
         check=True,
@@ -222,6 +248,10 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
         "True",
         version,
         "audio.yaml,models.yaml,runtime.yaml",
+        "True",
+        "PHASENØX",
+        "PHASENOX",
+        "14",
         "True",
     ]
 

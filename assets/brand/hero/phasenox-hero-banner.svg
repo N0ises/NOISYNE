@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="720" viewBox="0 0 1920 720">
+    <rect width="1920" height="720" fill="#050505" />
+    <defs><linearGradient id="fade" x1="0" x2="1"><stop stop-color="#050505" /><stop offset=".5" stop-color="#10100f" /><stop offset="1" stop-color="#050505" /></linearGradient></defs>
+    <rect width="1920" height="720" fill="url(#fade)" />
+    <g opacity=".12" stroke="#F2F2F0" fill="none"><path d="M0 360 H160 L190 350 L220 370 L250 330 L280 400 L320 270 L360 450 L410 360 H620 L660 345 L700 380 L740 300 L780 430 L830 360 H1920" /><path d="M0 390 C180 330 260 450 420 380 S700 300 880 390 S1200 460 1400 360 S1700 310 1920 390" /></g>
+    <g transform="translate(170,170)"><text x="0" y="150" fill="#F2F2F0" font-family="'Arial Narrow','Helvetica Neue',Arial,sans-serif" font-size="150" font-weight="700" letter-spacing="15">PHASE</text><text x="660" y="150" fill="#F2F2F0" font-family="'Arial Narrow','Helvetica Neue',Arial,sans-serif" font-size="150" font-weight="700" letter-spacing="15">N</text><g aria-label="PHASENOX eye glyph" transform="translate(70,0)">
+      <defs><clipPath id="eyeClip1"><path d="M 710.9,108 Q 795,47.099999999999994 879.1,108 Q 795,168.9 710.9,108 Z" /></clipPath></defs><path d="M 710.9,108 Q 795,47.099999999999994 879.1,108 Q 795,168.9 710.9,108 Z" fill="none" stroke="#F2F2F0" stroke-width="6.96" stroke-linejoin="round" />
+      <g clip-path="url(#eyeClip1)"><circle cx="795" cy="108" r="31.900000000000002" fill="none" stroke="#F2F2F0" stroke-width="6.38" />
+      <circle cx="795" cy="108" r="11.02" fill="#F2F2F0" />
+      <path d="M 755.19,149.62 L 834.81,66.38" stroke="#F2F2F0" stroke-width="7.54" stroke-linecap="round" />
+    <path d="M 770.06,108 L 778.76,108 L 784.56,98.14 L 791.52,119.02 L 799.06,95.24 L 805.44,115.54 L 811.82,108 L 819.94,108" fill="none" stroke="#B5121B" stroke-width="3.19" stroke-linecap="round" stroke-linejoin="round" /></g></g><text x="990" y="150" fill="#F2F2F0" font-family="'Arial Narrow','Helvetica Neue',Arial,sans-serif" font-size="150" font-weight="700" letter-spacing="15">X</text>
+    <text x="6" y="230" fill="#8A8A86" font-family="'Arial Narrow','Helvetica Neue',Arial,sans-serif" font-size="25" letter-spacing="12">HEAR BEYOND THE NOISE</text>
+    <text x="6" y="300" fill="#F2F2F0" opacity=".55" font-family="'Arial Narrow','Helvetica Neue',Arial,sans-serif" font-size="20" letter-spacing="4">AUDIO INTELLIGENCE • PERCEPTION • REASONING • AGENTS</text></g>
+    <g transform="translate(1530,360)" opacity=".9"><g aria-label="PHASENOX eye glyph">
+      <defs><clipPath id="eyeClip2"><path d="M -166.75,0 Q 0,-120.75 166.75,0 Q 0,120.75 -166.75,0 Z" /></clipPath></defs><path d="M -166.75,0 Q 0,-120.75 166.75,0 Q 0,120.75 -166.75,0 Z" fill="none" stroke="#F2F2F0" stroke-width="13.799999999999999" stroke-linejoin="round" />
+      <g clip-path="url(#eyeClip2)"><circle cx="0" cy="0" r="63.25000000000001" fill="none" stroke="#F2F2F0" stroke-width="12.65" />
+      <circle cx="0" cy="0" r="21.85" fill="#F2F2F0" />
+      <path d="M -78.94,82.52 L 78.94,-82.52" stroke="#F2F2F0" stroke-width="14.950000000000001" stroke-linecap="round" />
+    <path d="M -49.449999999999996,0 L -32.2,0 L -20.7,-19.55 L -6.8999999999999995,21.85 L 8.05,-25.3 L 20.7,14.950000000000001 L 33.349999999999994,0 L 49.449999999999996,0" fill="none" stroke="#B5121B" stroke-width="6.325" stroke-linecap="round" stroke-linejoin="round" /></g></g></g>
+    <path d="M1400 610 H1800" stroke="#B5121B" stroke-width="2" opacity=".65" />
+    </svg>

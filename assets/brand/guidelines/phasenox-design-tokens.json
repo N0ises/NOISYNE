@@ -1,0 +1,21 @@
+{
+  "brand": {
+    "display": "PHASEN\u00d8X",
+    "ascii": "PHASENOX",
+    "tagline": "HEAR BEYOND THE NOISE"
+  },
+  "colors": {
+    "void": "#050505",
+    "bone": "#F2F2F0",
+    "signalGray": "#8A8A86",
+    "structure": "#2A2A28",
+    "liveSignal": "#B5121B"
+  },
+  "rules": {
+    "eye_is_o": true,
+    "purple": false,
+    "gradients": false,
+    "glow": false,
+    "primary_style": "dark cinematic minimal audio-intelligence"
+  }
+}
