@@ -173,10 +173,10 @@ def main() -> int:
             ProcessingGoal,
         )
         from phasenox.integration import AdapterFactory, ExportRequest, WorkflowSession
-        from phasenox.report.models import ReportIssue, SoundBrainReport
+        from phasenox.report.models import PhasenoxReport, ReportIssue
 
         workflow_output.mkdir(parents=True, exist_ok=True)
-        report = SoundBrainReport(
+        report = PhasenoxReport(
             audio_type="full_mix",
             source_type="file",
             instrument=None,

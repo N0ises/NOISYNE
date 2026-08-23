@@ -7,7 +7,7 @@ from typing import Any
 from phasenox.audio.mix.models import MixIntelligenceResult
 from phasenox.audio.plugin.models import PluginIntelligenceResult
 from phasenox.reference.models import ReferenceComparison
-from phasenox.report.models import SoundBrainReport
+from phasenox.report.models import PhasenoxReport
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,7 +37,7 @@ class ExportRequest:
 
     session: WorkflowSession
     output_dir: Path
-    report: SoundBrainReport | None = None
+    report: PhasenoxReport | None = None
     plugin_intelligence: PluginIntelligenceResult | None = None
     mix_intelligence: MixIntelligenceResult | None = None
     reference_comparison: ReferenceComparison | None = None

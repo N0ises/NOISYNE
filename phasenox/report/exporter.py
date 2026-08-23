@@ -4,13 +4,13 @@ import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from .models import SoundBrainReport
+from .models import PhasenoxReport
 
 
 class ReportExporter:
     def to_dict(
         self,
-        report: SoundBrainReport,
+        report: PhasenoxReport,
     ) -> dict:
         analysis = report.analysis
         if analysis is not None:
@@ -173,7 +173,7 @@ class ReportExporter:
 
     def save_json(
         self,
-        report: SoundBrainReport,
+        report: PhasenoxReport,
         path: str,
     ) -> None:
         data = self.to_dict(report)

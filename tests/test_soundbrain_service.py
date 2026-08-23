@@ -11,7 +11,7 @@ from phasenox.application.audio_review_service import (
 )
 from phasenox.application.soundbrain_service import (
     AnalysisRequest,
-    SoundBrainService,
+    PhasenoxService,
 )
 from phasenox.reference.models import ReferenceComparison, ReferenceReport
 
@@ -94,7 +94,7 @@ def test_soundbrain_service_analyze():
         delivery_target="streaming",
     )
 
-    service = SoundBrainService()
+    service = PhasenoxService()
     response = service.analyze(request)
 
     assert response.audio is not None
@@ -110,7 +110,7 @@ def test_soundbrain_service_analyze_missing_audio_gracefully():
         audio_path="tests/does_not_exist.wav",
     )
 
-    service = SoundBrainService()
+    service = PhasenoxService()
     with pytest.raises(Exception):  # noqa: B017 — any failure for missing audio is acceptable
         service.analyze(request)
 
@@ -141,7 +141,7 @@ def test_soundbrain_service_module_import_does_not_load_torch():
 
 def test_soundbrain_service_analyze_with_single_reference():
     pipeline = FakeReferencePipeline()
-    service = SoundBrainService(
+    service = PhasenoxService(
         audio_review_service=FakeAudioReviewService(),
         reference_pipeline=pipeline,
     )
@@ -168,7 +168,7 @@ def test_soundbrain_service_analyze_with_single_reference():
 
 def test_soundbrain_service_analyze_with_multiple_references():
     pipeline = FakeReferencePipeline()
-    service = SoundBrainService(
+    service = PhasenoxService(
         audio_review_service=FakeAudioReviewService(),
         reference_pipeline=pipeline,
     )

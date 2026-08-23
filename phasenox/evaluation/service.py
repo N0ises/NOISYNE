@@ -4,7 +4,7 @@ from typing import Any
 
 from phasenox.audio.mix.models import MixIntelligenceResult
 from phasenox.audio.plugin.models import PluginIntelligenceResult
-from phasenox.report.models import SoundBrainReport
+from phasenox.report.models import PhasenoxReport
 
 from .benchmark import BenchmarkRunner
 from .metrics import (
@@ -54,8 +54,8 @@ class EvaluationService:
         mix = getattr(response, "mix_intelligence", None)
         plugin = getattr(response, "plugin_intelligence", None)
 
-        if not isinstance(report, SoundBrainReport):
-            raise TypeError("response.report must be a SoundBrainReport")
+        if not isinstance(report, PhasenoxReport):
+            raise TypeError("response.report must be a PhasenoxReport")
 
         return self.evaluate_components(
             report=report,
@@ -67,7 +67,7 @@ class EvaluationService:
 
     def evaluate_components(
         self,
-        report: SoundBrainReport,
+        report: PhasenoxReport,
         *,
         comparison: Any | None = None,
         mix_intelligence: MixIntelligenceResult | None = None,

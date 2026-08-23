@@ -1,7 +1,7 @@
 # V2 Job Runtime / Scheduler Foundation
 
 Sprint 16 introduces the backend async job runtime that wraps the Sprint 15
-`NoisyneV2Service` operations. It provides queueing, bounded concurrency,
+`PhasenoxV2Service` operations. It provides queueing, bounded concurrency,
 cooperative cancellation, truthful progress, and bounded history without
 implementing any Desktop UI, Task Center, or production model changes.
 
@@ -17,7 +17,7 @@ Desktop V2 adapter.
 noisyne/runtime/jobs/
     contracts.py   # JobState, JobSnapshot, JobRequest, JobResult, etc.
     registry.py    # in-memory JobRegistry + bounded JobHistory
-    executor.py    # JobExecutor: runs one NoisyneV2Service call
+    executor.py    # JobExecutor: runs one PhasenoxV2Service call
     scheduler.py   # JobScheduler: queue, dispatch, cancel, pause, wait
 ```
 
@@ -180,9 +180,9 @@ from noisyne.runtime.jobs import (
     PauseCapability,
     CancellationCapability,
 )
-from noisyne.application import NoisyneV2Service, ApplicationRequest, OperationType
+from noisyne.application import PhasenoxV2Service, ApplicationRequest, OperationType
 
-scheduler = JobScheduler(NoisyneV2Service(), max_workers=2)
+scheduler = JobScheduler(PhasenoxV2Service(), max_workers=2)
 scheduler.start()
 job_id = scheduler.submit(
     ApplicationRequest(request_id="demo", operation=OperationType.CAPABILITY_INSPECT),
@@ -241,4 +241,3 @@ Sprint 16 does **not**:
 - add live LLM / LM Studio / Qwen integration.
 - add generation, voice AI, Ableton bridge, or C++ components.
 - implement the model downloader, installer, or path manager.
-

@@ -1,6 +1,6 @@
 """Sprint 15 V2 application service foundation.
 
-`NoisyneV2Service` composes frozen Sprint 2–14 components behind a small,
+`PhasenoxV2Service` composes frozen Sprint 2–14 components behind a small,
 deterministic public contract. Heavy imports remain lazy so that importing
 `phasenox.application` does not initialize torch, ONNX sessions, LLM clients,
 network, Qt, or audio devices.
@@ -172,7 +172,7 @@ def _dictify(contract: Any) -> dict[str, Any]:
     raise TypeError(f"Unsupported payload type: {type(contract).__name__}")
 
 
-class NoisyneV2Service:
+class PhasenoxV2Service:
     """Lightweight V2 application service over frozen Sprint 2–14 components."""
 
     def __init__(
@@ -669,4 +669,7 @@ class NoisyneV2Service:
         return evidence
 
 
-__all__ = ["NoisyneV2Service"]
+# Transitional R2 compatibility. The implementation remains canonical here.
+NoisyneV2Service = PhasenoxV2Service
+
+__all__ = ["NoisyneV2Service", "PhasenoxV2Service"]

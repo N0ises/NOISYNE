@@ -17,8 +17,8 @@ from phasenox.application import (
     ApplicationResultStatus,
     CapabilitySnapshotResult,
     MachineAvailability,
-    NoisyneV2Service,
     OperationType,
+    PhasenoxV2Service,
     StageState,
 )
 from phasenox.perception.common import ScalarValue, UnitBasis
@@ -39,6 +39,12 @@ from phasenox.perception.reference_contracts import (
     ReferenceTrackIdentity,
 )
 from phasenox.perception.translation_contracts import TranslationPolicyProvenance
+
+
+def test_legacy_v2_service_name_is_canonical_alias() -> None:
+    from phasenox.application import NoisyneV2Service
+
+    assert NoisyneV2Service is PhasenoxV2Service
 
 
 def _write_temp_wav(path: Path, duration_seconds: float = 0.5, sample_rate: int = 44100) -> None:
@@ -102,7 +108,7 @@ def test_import_noisyne_application_is_lightweight() -> None:
     code = (
         "import sys; "
         "import phasenox.application; "
-        "assert phasenox.application.NoisyneV2Service is not None; "
+        "assert phasenox.application.PhasenoxV2Service is not None; "
         "assert 'torch' not in sys.modules, 'torch loaded on import'; "
         "assert 'onnxruntime' not in sys.modules, 'onnxruntime loaded on import'; "
         "print('ok')"
@@ -155,7 +161,7 @@ def test_deterministic_request_id_preserved() -> None:
         operation=OperationType.CAPABILITY_INSPECT,
         parameters={},
     )
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     result = service.execute(request)
     assert result.request_id == "my-stable-id"
 
@@ -163,7 +169,7 @@ def test_deterministic_request_id_preserved() -> None:
 def test_analyze_success(tmp_path: Path) -> None:
     audio_path = tmp_path / "test.wav"
     _write_temp_wav(audio_path)
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="analyze-1",
         operation=OperationType.ANALYZE,
@@ -188,7 +194,7 @@ def test_reference_compare_success(tmp_path: Path) -> None:
     reference_path = tmp_path / "reference.wav"
     _write_temp_wav(source_path)
     _write_temp_wav(reference_path)
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="ref-1",
         operation=OperationType.REFERENCE_COMPARE,
@@ -207,7 +213,7 @@ def test_reference_compare_success(tmp_path: Path) -> None:
 
 def test_mix_evaluate_insufficient_evidence_success() -> None:
     """A policy with no matching evidence returns SUCCESS with truthful limitations."""
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="mix-1",
         operation=OperationType.MIX_EVALUATE,
@@ -224,7 +230,7 @@ def test_mix_evaluate_insufficient_evidence_success() -> None:
 
 def test_reason_no_grounded_statements_success() -> None:
     """REASON with no matching evidence yields NO_GROUNDED_STATEMENTS mapped to SUCCESS."""
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="reason-1",
         operation=OperationType.REASON,
@@ -239,7 +245,7 @@ def test_reason_no_grounded_statements_success() -> None:
 
 
 def test_capability_inspect_success() -> None:
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="cap-1",
         operation=OperationType.CAPABILITY_INSPECT,
@@ -258,7 +264,7 @@ def test_capability_inspect_success() -> None:
 
 def test_capability_lifecycle_separate_from_machine_availability() -> None:
     """A capability may be IMPLEMENTED while its dependency is UNAVAILABLE on this machine."""
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="cap-2",
         operation=OperationType.CAPABILITY_INSPECT,
@@ -292,7 +298,7 @@ def test_unavailable_dependency_reflected_in_snapshot() -> None:
         )
     )
     try:
-        service = NoisyneV2Service()
+        service = PhasenoxV2Service()
         request = ApplicationRequest(
             request_id="cap-3",
             operation=OperationType.CAPABILITY_INSPECT,
@@ -310,7 +316,7 @@ def test_unavailable_dependency_reflected_in_snapshot() -> None:
 
 
 def test_partial_semantics_for_invalid_mix_policy() -> None:
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="mix-bad",
         operation=OperationType.MIX_EVALUATE,
@@ -324,7 +330,7 @@ def test_partial_semantics_for_invalid_mix_policy() -> None:
 
 def test_bounded_error_no_stack_trace() -> None:
     """Public result errors must not contain stack traces, secrets, or prompts."""
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="err-1",
         operation=OperationType.ANALYZE,
@@ -346,7 +352,7 @@ def test_bounded_error_no_stack_trace() -> None:
 def test_repeated_call_determinism(tmp_path: Path) -> None:
     audio_path = tmp_path / "test.wav"
     _write_temp_wav(audio_path)
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="det-1",
         operation=OperationType.ANALYZE,
@@ -358,12 +364,15 @@ def test_repeated_call_determinism(tmp_path: Path) -> None:
 
 
 def test_v1_alias_not_loaded_by_default() -> None:
-    """V1 service aliases exist but are not imported by default."""
-    import phasenox.application
-
-    assert "NoisyneService" not in dir(phasenox.application)
-    alias = phasenox.application.NoisyneService
-    assert alias is not None
+    """The canonical V1 service export stays lazy until attribute access."""
+    code = (
+        "import sys; import phasenox.application; "
+        "assert 'phasenox.application.noisyne_service' not in sys.modules; "
+        "assert 'PhasenoxService' in dir(phasenox.application); "
+        "assert phasenox.application.PhasenoxService is not None; "
+        "assert 'phasenox.application.noisyne_service' in sys.modules"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)
 
 
 def test_no_qt_import() -> None:
@@ -377,7 +386,7 @@ def test_no_qt_import() -> None:
 
 def test_sprint14_onnx_not_promoted_to_production() -> None:
     """Capability inspect must not claim production ONNX readiness."""
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="cap-onnx",
         operation=OperationType.CAPABILITY_INSPECT,
@@ -395,7 +404,7 @@ def test_sprint14_onnx_not_promoted_to_production() -> None:
 
 def test_sprint13_memory_not_promoted_to_scientific_truth() -> None:
     """Memory foundation must not appear as scientific validation authority."""
-    service = NoisyneV2Service()
+    service = PhasenoxV2Service()
     request = ApplicationRequest(
         request_id="cap-mem",
         operation=OperationType.CAPABILITY_INSPECT,

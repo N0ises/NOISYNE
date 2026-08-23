@@ -17,7 +17,7 @@ from phasenox.audio.mix.root_cause import RootCauseAnalyzer
 from phasenox.audio.plugin.models import PluginIntelligenceResult
 from phasenox.audio.plugin.service import PluginIntelligenceService
 from phasenox.reference.models import ReferenceComparison, ReferenceIntent
-from phasenox.report.models import SoundBrainReport
+from phasenox.report.models import PhasenoxReport
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class AnalysisResponse:
     analysis: AnalysisResult
     context: AudioContext
     engineering: EngineerResult
-    report: SoundBrainReport
+    report: PhasenoxReport
     comparison: ReferenceComparison | None = None
     mix_intelligence: MixIntelligenceResult | None = None
     plugin_intelligence: PluginIntelligenceResult | None = None
@@ -71,7 +71,7 @@ class AnalysisResponse:
     warnings: list[str] = field(default_factory=list)
 
 
-class NoisyneService:
+class PhasenoxService:
     """
     Single entry point for the V1 NØISYNE workflow.
 
@@ -392,9 +392,9 @@ class NoisyneService:
     def _rebuild_report_with_reasoning(
         self,
         *,
-        report: SoundBrainReport,
+        report: PhasenoxReport,
         ai_answer: str,
-    ) -> SoundBrainReport:
+    ) -> PhasenoxReport:
         """
         Rebuild the report with the LLM-generated summary.
 
@@ -455,9 +455,9 @@ class NoisyneService:
 
     def _enrich_report_with_mix(
         self,
-        report: SoundBrainReport,
+        report: PhasenoxReport,
         mix_result: MixIntelligenceResult,
-    ) -> SoundBrainReport:
+    ) -> PhasenoxReport:
         """Attach deterministic mix intelligence fields to the report."""
         return replace(
             report,
@@ -524,8 +524,19 @@ class NoisyneService:
 
     def _enrich_report_with_plugin(
         self,
-        report: SoundBrainReport,
+        report: PhasenoxReport,
         plugin_result: PluginIntelligenceResult,
-    ) -> SoundBrainReport:
+    ) -> PhasenoxReport:
         """Attach deterministic plugin intelligence fields to the report."""
         return replace(report, plugin_intelligence=plugin_result)
+
+
+# Transitional R2 compatibility. The implementation remains canonical here.
+NoisyneService = PhasenoxService
+
+__all__ = [
+    "AnalysisRequest",
+    "AnalysisResponse",
+    "NoisyneService",
+    "PhasenoxService",
+]

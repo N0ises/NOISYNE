@@ -1,4 +1,4 @@
-"""Job executor: runs one NoisyneV2Service operation inside a worker thread."""
+"""Job executor: runs one PhasenoxV2Service operation inside a worker thread."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ class JobCancelled(Exception):
 
 
 class JobExecutor:
-    """Executes one ApplicationRequest via a supplied NoisyneV2Service."""
+    """Executes one ApplicationRequest via a supplied PhasenoxV2Service."""
 
     def __init__(self, service: Any) -> None:
         self._service = service

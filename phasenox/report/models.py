@@ -20,7 +20,7 @@ class ReportIssue:
 
 
 @dataclass
-class SoundBrainReport:
+class PhasenoxReport:
 
     audio_type: str
 
@@ -61,3 +61,9 @@ class SoundBrainReport:
     warnings: list[str] = field(default_factory=list)
 
     analysis: dict | None = None
+
+
+# Transitional R2 compatibility. The implementation remains canonical here.
+SoundBrainReport = PhasenoxReport
+
+__all__ = ["PhasenoxReport", "ReportIssue", "SoundBrainReport"]

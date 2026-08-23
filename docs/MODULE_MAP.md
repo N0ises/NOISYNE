@@ -42,7 +42,7 @@ contracts.
 | `noisyne/integration/` | Deterministic DAW-named workflow export contracts | No live DAW communication or control |
 | `noisyne/cli.py` | Canonical command-line surface | Calls application services |
 
-`noisyne.application.noisyne_service.NoisyneService` is the canonical V1
+`noisyne.application.noisyne_service.PhasenoxService` is the canonical V1
 facade. `noisyne.application.soundbrain_service.SoundBrainService` is retained
 as a compatibility alias.
 
@@ -120,7 +120,7 @@ The planned ownership boundaries are:
   risk output.
 - Perceptual reference/mix/reasoning integration — adapters over existing V1
   contracts rather than duplicate pipelines.
-- V2 application contract — `NoisyneService` boundary in Sprint 15.
+- V2 application contract — `PhasenoxV2Service` boundary in Sprint 15.
 - Local API/async operations — Sprint 16, after the service contract is stable.
 
 No algorithm or integration directories should be created for these areas

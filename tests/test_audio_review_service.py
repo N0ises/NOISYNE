@@ -1,14 +1,14 @@
 from pathlib import Path
 
-from phasenox.audio.analysis.models import AnalysisResult
-from phasenox.audio.context.models import AudioContext
-from phasenox.audio.engineer.models import EngineerResult
-from phasenox.audio.io.models import AudioData, AudioMetadata
-from phasenox.report.models import SoundBrainReport
 from phasenox.application.audio_review_service import (
     AudioReviewRequest,
     AudioReviewService,
 )
+from phasenox.audio.analysis.models import AnalysisResult
+from phasenox.audio.context.models import AudioContext
+from phasenox.audio.engineer.models import EngineerResult
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.report.models import PhasenoxReport
 
 
 class StubAudioIO:
@@ -48,11 +48,13 @@ class StubEngineer:
 
 
 class StubReportBuilder:
-    def __init__(self, report: SoundBrainReport) -> None:
+    def __init__(self, report: PhasenoxReport) -> None:
         self.report = report
         self.summary = None
 
-    def build(self, analysis, engineering, context, summary: str, analysis_dict=None) -> SoundBrainReport:
+    def build(
+        self, analysis, engineering, context, summary: str, analysis_dict=None
+    ) -> PhasenoxReport:
         self.summary = summary
         return self.report
 
@@ -62,7 +64,7 @@ class StubReportExporter:
         self.saved_report = None
         self.saved_path = None
 
-    def save_json(self, report: SoundBrainReport, path: str) -> None:
+    def save_json(self, report: PhasenoxReport, path: str) -> None:
         self.saved_report = report
         self.saved_path = path
 
@@ -109,7 +111,7 @@ def test_review_runs_deterministic_flow_without_semantic_model() -> None:
     )
     context = AudioContext(audio_type="music", source_type="mix")
     engineering = EngineerResult(score=90.0)
-    report = SoundBrainReport(
+    report = PhasenoxReport(
         audio_type="music",
         source_type="mix",
         instrument=None,
@@ -164,9 +166,7 @@ def test_review_passes_audio_to_semantic_context_detection_when_requested() -> N
         analyzer=StubAnalyzer(create_analysis()),
         context_detector=context_detector,
         engineer=StubEngineer(EngineerResult(score=90.0)),
-        report_builder=StubReportBuilder(
-            SoundBrainReport("music", "mix", None, True, 0.8)
-        ),
+        report_builder=StubReportBuilder(PhasenoxReport("music", "mix", None, True, 0.8)),
     )
 
     service.review(
@@ -195,7 +195,7 @@ def test_review_exports_the_report_when_an_output_path_is_requested() -> None:
             file_size=1,
         ),
     )
-    report = SoundBrainReport("music", "mix", None, True, 0.8)
+    report = PhasenoxReport("music", "mix", None, True, 0.8)
     exporter = StubReportExporter()
     service = AudioReviewService(
         audio_io=StubAudioIO(audio),

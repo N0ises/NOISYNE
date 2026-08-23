@@ -9,7 +9,7 @@ behind a deterministic, JSON-safe request/result contract.
 
 ## 1. Purpose
 
-`NoisyneV2Service` exposes a single entry point for V2 workflows:
+`PhasenoxV2Service` exposes a single entry point for V2 workflows:
 
 - `ANALYZE` — load audio and run the auditory frontend + descriptor foundation.
 - `REFERENCE_COMPARE` — compare source and reference audio using Sprint 9
@@ -29,7 +29,7 @@ behind a deterministic, JSON-safe request/result contract.
 Desktop / CLI / future adapter
       |
       v
-NoisyneV2Service
+PhasenoxV2Service
       |
       +-- ANALYZE --------------> AudioIOService + AuditoryFrontend + PerceptualDescriptorFoundation
       +-- REFERENCE_COMPARE ------> ObjectiveReferenceComparator
@@ -194,9 +194,10 @@ Result status mapping:
 
 ## 6. V1 separation
 
-V1 service aliases (`NoisyneService`, `SoundBrainService`, `AnalysisRequest`,
-`AnalysisResponse`) remain available through `noisyne.application.__getattr__`
-but are not imported by default. New V2 code should use `NoisyneV2Service` and
+The canonical V1 `PhasenoxService` export and compatibility aliases
+(`NoisyneService`, `SoundBrainService`, `AnalysisRequest`, `AnalysisResponse`)
+remain available through `noisyne.application.__getattr__`
+but are not imported by default. New V2 code should use `PhasenoxV2Service` and
 the Sprint 15 contracts.
 
 Sprint 15 does not migrate `V2ApplicationAdapter` or any Desktop UI code.

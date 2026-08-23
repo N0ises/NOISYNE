@@ -6,7 +6,7 @@ import pytest
 
 from phasenox.application.soundbrain_service import (
     AnalysisRequest,
-    SoundBrainService,
+    PhasenoxService,
 )
 
 AUDIO_PATH = Path("tests/assets/test.wav")
@@ -24,7 +24,7 @@ def test_soundbrain_service_integration_deterministic():
         delivery_target="streaming",
     )
 
-    service = SoundBrainService()
+    service = PhasenoxService()
     response = service.analyze(request)
 
     assert response.audio is not None
@@ -57,7 +57,7 @@ def test_soundbrain_service_integration_with_reference():
         reference_path=AUDIO_PATH,
     )
 
-    service = SoundBrainService()
+    service = PhasenoxService()
     response = service.analyze(request)
 
     assert response.comparison is not None
@@ -74,7 +74,7 @@ def test_soundbrain_service_integration_with_mix_intelligence():
         include_mix_intelligence=True,
     )
 
-    service = SoundBrainService()
+    service = PhasenoxService()
     response = service.analyze(request)
 
     assert response.mix_intelligence is not None
@@ -101,7 +101,7 @@ def test_soundbrain_service_integration_with_plugin_intelligence():
         include_plugin_intelligence=True,
     )
 
-    service = SoundBrainService()
+    service = PhasenoxService()
     response = service.analyze(request)
 
     assert response.mix_intelligence is not None

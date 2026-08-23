@@ -80,7 +80,7 @@ the start of V2. Machine availability must be evaluated separately.
 | RAG Retrieval | Implemented | Corpus/models/configuration required; preflight issues remain |
 | LLM Reasoning | Implemented | Accessible provider/model required; none is bundled |
 | Report Generation | Production | Structured JSON; reference path also supports Markdown |
-| Service Facade | Production | V1 `NoisyneService`; `SoundBrainService` is a compatibility alias |
+| Service Facade | Production | V1 `PhasenoxService`; `NoisyneService` and `SoundBrainService` are compatibility aliases |
 | Engine Registry | Production | In-memory routing registry |
 | Orchestration | Implemented | Not exercised by the frozen V1 CLI path |
 | Audio Intelligence | Planned | Broader semantic/perceptual intelligence is V2 work |
@@ -102,7 +102,7 @@ with a successful runtime availability probe.
 | Capability | State | Exact boundary |
 | --- | --- | --- |
 | V1 CLI | Production | Canonical `noisyne`; legacy `soundbrain` alias retained |
-| V1 NoisyneService | Production | Canonical facade; `SoundBrainService` retained for compatibility |
+| V1 PhasenoxService | Production | Canonical facade; `NoisyneService` and `SoundBrainService` retained for compatibility |
 | Workflow Integration Contracts | Implemented | Deterministic JSON/text/Markdown exports only |
 | DAW Integration Contracts | Implemented | Adapter interfaces and file exports; no DAW communication |
 | Ableton Launch Bridge | Planned (Sprint 20) | Launch/connect plus health/version/status smoke handshake only |

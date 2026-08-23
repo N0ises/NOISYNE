@@ -24,18 +24,20 @@ def test_legacy_modules_are_canonical_module_objects() -> None:
 
 def test_representative_public_type_identity() -> None:
     from brain.application import NoisyneService as LegacyNoisyneService
+    from brain.application import PhasenoxService as LegacyPhasenoxService
     from brain.application import SoundBrainService as LegacySoundBrainService
     from brain.application.noisyne_service import AnalysisRequest as LegacyAnalysisRequest
     from brain.memory.errors import MemoryConfigurationError as LegacyMemoryConfigurationError
     from brain.reference.models import Severity as LegacySeverity
 
-    from phasenox.application import NoisyneService, SoundBrainService
+    from phasenox.application import NoisyneService, PhasenoxService, SoundBrainService
     from phasenox.application.noisyne_service import AnalysisRequest
     from phasenox.memory.errors import MemoryConfigurationError
     from phasenox.reference.models import Severity
 
-    assert LegacyNoisyneService is NoisyneService
-    assert LegacySoundBrainService is SoundBrainService is NoisyneService
+    assert LegacyPhasenoxService is PhasenoxService
+    assert LegacyNoisyneService is NoisyneService is PhasenoxService
+    assert LegacySoundBrainService is SoundBrainService is PhasenoxService
     assert LegacyAnalysisRequest is AnalysisRequest
     assert LegacySeverity is Severity
     assert LegacyMemoryConfigurationError is MemoryConfigurationError

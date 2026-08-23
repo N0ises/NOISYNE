@@ -62,7 +62,7 @@ def _queued_capability() -> JobCapability:
 
 
 class JobScheduler:
-    """Bounded, asynchronous job scheduler wrapping NoisyneV2Service operations.
+    """Bounded, asynchronous job scheduler wrapping PhasenoxV2Service operations.
 
     The scheduler maintains its own dispatch queue on top of a thread pool so
     that ``QUEUED`` reflects scheduler-level back-pressure, not merely the
@@ -79,7 +79,7 @@ class JobScheduler:
     ) -> None:
         """Construct a scheduler.
 
-        *service* may be a ``NoisyneV2Service`` instance or a callable factory
+        *service* may be a ``PhasenoxV2Service`` instance or a callable factory
         that returns one.  A factory is useful when each worker thread needs
         its own service instance, though the default instance is shared by
         callers that pass an instance directly.

@@ -6,9 +6,8 @@ import pytest
 
 from phasenox.application.soundbrain_service import (
     AnalysisRequest,
-    SoundBrainService,
+    PhasenoxService,
 )
-
 
 AUDIO_PATH = Path("tests/assets/test.wav")
 
@@ -25,7 +24,7 @@ def test_soundbrain_service_rag_does_not_crash_when_empty():
         include_rag=True,
     )
 
-    service = SoundBrainService()
+    service = PhasenoxService()
     response = service.analyze(request)
 
     assert response.report is not None

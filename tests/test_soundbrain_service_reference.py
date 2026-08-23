@@ -11,7 +11,7 @@ from phasenox.application.audio_review_service import (
 )
 from phasenox.application.soundbrain_service import (
     AnalysisRequest,
-    SoundBrainService,
+    PhasenoxService,
 )
 from phasenox.reference.models import (
     ReferenceComparison,
@@ -96,7 +96,7 @@ class FakeReferencePipeline:
 
 
 def test_soundbrain_service_single_reference():
-    service = SoundBrainService(
+    service = PhasenoxService(
         audio_review_service=FakeAudioReviewService(),
         reference_pipeline=FakeReferencePipeline(),
     )
@@ -127,7 +127,7 @@ def test_soundbrain_service_single_reference():
     reason="No test audio file is available",
 )
 def test_soundbrain_service_multiple_references():
-    service = SoundBrainService(
+    service = PhasenoxService(
         audio_review_service=FakeAudioReviewService(),
         reference_pipeline=FakeReferencePipeline(multi=True),
     )
@@ -154,7 +154,7 @@ def test_soundbrain_service_reference_failure_is_graceful():
         def run(self, **kwargs):
             raise RuntimeError("reference engine down")
 
-    service = SoundBrainService(
+    service = PhasenoxService(
         audio_review_service=FakeAudioReviewService(),
         reference_pipeline=BrokenReferencePipeline(),
     )

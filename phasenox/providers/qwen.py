@@ -69,7 +69,7 @@ class QwenProvider(BaseAIProvider):
         Generate a chat completion through LM Studio.
 
         Raises ``requests.RequestException`` when LM Studio is unreachable or
-        returns an error. Callers (e.g. ``SoundBrainService``) are expected to
+        returns an error. Callers (e.g. ``PhasenoxService``) are expected to
         catch this and degrade gracefully.
         """
         model_name = self._resolve_model_name()

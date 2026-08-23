@@ -13,7 +13,7 @@ Approved Phase 6 freeze commit: `eb3d7ce7c5044b82b92fc5a1a8bda84df56bb9ce`
 | Distribution | `noisyne` | — |
 | Python namespace | `phasenox` | `brain` |
 | CLI | `noisyne` | `soundbrain` |
-| Service | `NoisyneService` | `SoundBrainService` |
+| Service | `PhasenoxService` | `NoisyneService`, `SoundBrainService` |
 | Application root environment | `NOISYNE_ROOT` | `SOUNDBRAIN_ROOT` |
 | Engine key | `noisyne` | `soundbrain` |
 | Persisted Chroma collection | `soundbrain` | Stable; intentionally unchanged |
@@ -46,7 +46,7 @@ relies on the legacy repository redirect.
 
 ## Intentional freezes and exclusions
 
-- `brain`, `soundbrain`, `SoundBrainService`, and `SOUNDBRAIN_ROOT` remain
+- `brain`, `soundbrain`, `NoisyneService`, `SoundBrainService`, and `SOUNDBRAIN_ROOT` remain
   supported compatibility contracts.
 - The persisted Chroma collection remains `soundbrain`; no data migration or
   collection rename is authorized.

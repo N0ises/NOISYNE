@@ -6,10 +6,9 @@ import pytest
 
 from phasenox.application.soundbrain_service import (
     AnalysisRequest,
-    SoundBrainService,
+    PhasenoxService,
 )
 from phasenox.infrastructure.config import settings
-
 
 AUDIO_PATH = Path("tests/assets/test.wav")
 CLAP_MODEL_DIR = Path(settings.runtime.model_root) / settings.models.clap.name
@@ -30,7 +29,7 @@ def test_soundbrain_service_semantic_analysis_enabled():
         include_semantic_analysis=True,
     )
 
-    service = SoundBrainService()
+    service = PhasenoxService()
     response = service.analyze(request)
 
     assert response.report is not None

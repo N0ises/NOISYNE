@@ -9,24 +9,35 @@ from pathlib import Path
 import pytest
 from brain.application.soundbrain_service import SoundBrainService
 
-from phasenox.application.noisyne_service import NoisyneService as CanonicalService
+from phasenox.application.noisyne_service import (
+    NoisyneService,
+)
+from phasenox.application.noisyne_service import (
+    PhasenoxService as CanonicalService,
+)
 from phasenox.reference.models import ReferenceComparison, ReferenceReport
 from phasenox.reference.report_builder import ReferenceReportBuilder
 from phasenox.runtime.engine_registry import registry
 
 
 class TestNoisyneServiceAlias:
-    """NoisyneService is the canonical facade; SoundBrainService remains an alias."""
+    """PhasenoxService is canonical; legacy service names remain aliases."""
 
-    def test_noisyne_service_is_canonical(self):
+    def test_phasenox_service_is_canonical(self):
         assert CanonicalService is not None
 
-    def test_soundbrain_service_is_alias(self):
+    def test_legacy_services_are_aliases(self):
+        assert NoisyneService is CanonicalService
         assert SoundBrainService is CanonicalService
 
-    def test_application_module_exports_both(self):
-        from phasenox.application import NoisyneService, SoundBrainService
+    def test_application_module_exports_canonical_and_legacy_names(self):
+        from phasenox.application import (
+            NoisyneService,
+            PhasenoxService,
+            SoundBrainService,
+        )
 
+        assert PhasenoxService is CanonicalService
         assert NoisyneService is CanonicalService
         assert SoundBrainService is CanonicalService
 
@@ -46,9 +57,11 @@ class TestNoisyneServiceAlias:
             AnalysisRequest,
             AnalysisResponse,
             NoisyneService,
+            PhasenoxService,
         )
 
         assert NoisyneService is CanonicalService
+        assert PhasenoxService is CanonicalService
         assert AnalysisRequest is not None
         assert AnalysisResponse is not None
 
@@ -160,9 +173,14 @@ class TestNamespaceCompatibility:
         canonical_module = importlib.import_module("phasenox.application.noisyne_service")
 
         assert legacy_module is canonical_module
+        assert legacy_module.PhasenoxService is CanonicalService
         assert legacy_module.NoisyneService is CanonicalService
 
     def test_legacy_application_exports_canonical_service(self):
         from brain.application import NoisyneService as LegacyNoisyneService
+        from brain.application import PhasenoxService as LegacyPhasenoxService
+        from brain.application import SoundBrainService as LegacySoundBrainService
 
+        assert LegacyPhasenoxService is CanonicalService
         assert LegacyNoisyneService is CanonicalService
+        assert LegacySoundBrainService is CanonicalService

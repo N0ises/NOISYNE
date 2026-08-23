@@ -46,11 +46,11 @@ class Orchestrator:
         Execute the V1 NØISYNE deterministic analysis workflow.
 
         This is a dedicated path that bypasses the generic question planning
-        pipeline and routes directly through ``SoundBrainService``.
+        pipeline and routes directly through ``PhasenoxService``.
         """
         from phasenox.application.soundbrain_service import (
             AnalysisRequest,
-            SoundBrainService,
+            PhasenoxService,
         )
 
         request = AnalysisRequest(
@@ -65,7 +65,7 @@ class Orchestrator:
             **kwargs,
         )
 
-        service = SoundBrainService()
+        service = PhasenoxService()
         response = service.analyze(request)
 
         return State(

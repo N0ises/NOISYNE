@@ -36,10 +36,10 @@ def _default_reference_output_directory(audio_path: str | Path) -> Path:
 
 
 def _cmd_analyze(args: argparse.Namespace) -> int:
-    """Run the V1 NØISYNE analysis workflow through NoisyneService."""
+    """Run the V1 NØISYNE analysis workflow through PhasenoxService."""
     from phasenox.application.noisyne_service import (
         AnalysisRequest,
-        NoisyneService,
+        PhasenoxService,
     )
 
     if args.output is None:
@@ -66,7 +66,7 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
         output_path=args.output,
     )
 
-    service = NoisyneService()
+    service = PhasenoxService()
     try:
         service.analyze(request)
     except Exception as exc:  # noqa: BLE001 — CLI top-level catch-all for user-facing error message
@@ -81,7 +81,7 @@ def _cmd_reference(args: argparse.Namespace) -> int:
     """Compare one or more reference audio files against the current mix."""
     from phasenox.application.noisyne_service import (
         AnalysisRequest,
-        NoisyneService,
+        PhasenoxService,
     )
 
     if args.output is None:
@@ -97,7 +97,7 @@ def _cmd_reference(args: argparse.Namespace) -> int:
         reference_output_directory=args.output,
     )
 
-    service = NoisyneService()
+    service = PhasenoxService()
     try:
         response = service.analyze(request)
     except Exception as exc:  # noqa: BLE001 — CLI top-level catch-all for user-facing error message

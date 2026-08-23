@@ -16,7 +16,7 @@ def test_final_identity_matrix_records_canonical_and_compatibility_contracts():
         "| Distribution | `noisyne` |",
         "| Python namespace | `phasenox` | `brain` |",
         "| CLI | `noisyne` | `soundbrain` |",
-        "| Service | `NoisyneService` | `SoundBrainService` |",
+        "| Service | `PhasenoxService` | `NoisyneService`, `SoundBrainService` |",
         "| Application root environment | `NOISYNE_ROOT` | `SOUNDBRAIN_ROOT` |",
         "| Engine key | `noisyne` | `soundbrain` |",
         "| Persisted Chroma collection | `soundbrain` |",

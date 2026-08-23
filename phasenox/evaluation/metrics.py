@@ -4,15 +4,15 @@ from typing import Any
 
 from phasenox.audio.mix.models import MixIntelligenceResult
 from phasenox.audio.plugin.models import PluginIntelligenceResult
-from phasenox.report.models import SoundBrainReport
+from phasenox.report.models import PhasenoxReport
 
 from .models import EvaluationMetric
 
 
 class AnalysisQualityMetrics:
-    """Evaluate the structural quality of a SoundBrainReport."""
+    """Evaluate the structural quality of a PhasenoxReport."""
 
-    def evaluate(self, report: SoundBrainReport) -> EvaluationMetric:
+    def evaluate(self, report: PhasenoxReport) -> EvaluationMetric:
         score = 0.5
         details: dict[str, Any] = {
             "report_score": report.score,
@@ -66,7 +66,7 @@ class AnalysisQualityMetrics:
 class RecommendationConsistencyMetrics:
     """Check that recommendations are linked to detected issues."""
 
-    def evaluate(self, report: SoundBrainReport) -> EvaluationMetric:
+    def evaluate(self, report: PhasenoxReport) -> EvaluationMetric:
         if not report.recommendations:
             return EvaluationMetric(
                 name="recommendation_consistency",
@@ -99,7 +99,7 @@ class ConfidenceEvaluationMetrics:
 
     def evaluate(
         self,
-        report: SoundBrainReport,
+        report: PhasenoxReport,
         mix_intelligence: MixIntelligenceResult | None,
         plugin_intelligence: PluginIntelligenceResult | None,
     ) -> EvaluationMetric:

@@ -4,11 +4,11 @@ from phasenox.audio.mix.models import MixIntelligenceResult
 from phasenox.audio.plugin.models import PluginIntelligenceResult, PluginIntelligenceStep
 from phasenox.evaluation import EvaluationService
 from phasenox.evaluation.models import BenchmarkCase
-from phasenox.report.models import ReportIssue, SoundBrainReport
+from phasenox.report.models import PhasenoxReport, ReportIssue
 
 
-def _make_report() -> SoundBrainReport:
-    return SoundBrainReport(
+def _make_report() -> PhasenoxReport:
+    return PhasenoxReport(
         audio_type="mix",
         source_type="full_track",
         instrument=None,

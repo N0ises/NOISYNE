@@ -22,7 +22,7 @@ from phasenox.integration import (
     StudioOneAdapter,
     WorkflowSession,
 )
-from phasenox.report.models import ReportIssue, SoundBrainReport
+from phasenox.report.models import PhasenoxReport, ReportIssue
 
 
 @pytest.fixture
@@ -31,8 +31,8 @@ def tmp_export_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_report() -> SoundBrainReport:
-    return SoundBrainReport(
+def mock_report() -> PhasenoxReport:
+    return PhasenoxReport(
         audio_type="full_mix",
         source_type="file",
         instrument=None,
@@ -106,7 +106,7 @@ def mock_plugin_intelligence() -> PluginIntelligenceResult:
 @pytest.fixture
 def export_request(
     tmp_export_dir: Path,
-    mock_report: SoundBrainReport,
+    mock_report: PhasenoxReport,
     mock_mix_intelligence: MixIntelligenceResult,
     mock_plugin_intelligence: PluginIntelligenceResult,
 ) -> ExportRequest:

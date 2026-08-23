@@ -480,9 +480,9 @@ registry.register(
 registry.register(
     Capability(
         name="service_facade",
-        description="V1 NoisyneService unified entry point",
+        description="V1 PhasenoxService unified entry point",
         status=CapabilityStatus.PRODUCTION,
-        requirements="All deterministic subsystems wired through NoisyneService",
+        requirements="All deterministic subsystems wired through PhasenoxService",
         tested_in_freeze=True,
     )
 )

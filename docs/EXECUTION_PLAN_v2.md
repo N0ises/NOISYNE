@@ -27,7 +27,7 @@ service, corpus or dependency is absent.
 | Area | Repository truth | Lifecycle note |
 | --- | --- | --- |
 | Identity | Distribution/namespace `noisyne`; repository `N0ises/NOISYNE` | Rename complete |
-| V1 application | `noisyne.application.NoisyneService`; compatibility `SoundBrainService` | Production V1 facade |
+| V1 application | `noisyne.application.PhasenoxService`; compatibility `NoisyneService`, `SoundBrainService` | Production V1 facade |
 | Product surface | `noisyne/cli.py`; canonical `noisyne` and legacy `soundbrain` commands | CLI production |
 | Runtime capabilities | `noisyne/runtime/capabilities.py` | Authoritative runtime lifecycle metadata |
 | Audio/DSP/engineering | Deterministic V1 analysis and recommendations | Production where registered |
@@ -91,7 +91,7 @@ autonomy, or production ONNX adoption.
 | 12 | Evaluation / scientific validation | Versioned dataset, metrics, baselines and limitations |
 | 13 | Knowledge / memory / personalization integration | Controlled overrides with provenance |
 | 14 | Performance baseline + ONNX benchmark spike | Evidence for adopt/defer decision; no assumed adoption |
-| 15 | V2 NoisyneService / capability contract | Stable V2 application boundary |
+| 15 | V2 PhasenoxV2Service / capability contract | Stable V2 application boundary |
 | 16 | Local API + async job/progress contract | Versioned local API and cancellation/progress semantics |
 | 17 | Desktop V2 integration | `NØISYNE Desktop -> V2ApplicationAdapter -> V2 backend` |
 | 18 | Desktop identity / user-data compatibility | Migration-safe identity and paths |

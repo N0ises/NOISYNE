@@ -11,7 +11,7 @@ from phasenox.audio.engineer import AudioEngineer
 from phasenox.audio.engineer.models import EngineerResult
 from phasenox.audio.io import AudioIOService
 from phasenox.audio.io.models import AudioData
-from phasenox.report import ReportBuilder, ReportExporter, SoundBrainReport
+from phasenox.report import PhasenoxReport, ReportBuilder, ReportExporter
 
 
 @dataclass(slots=True, frozen=True)
@@ -28,7 +28,7 @@ class AudioReviewResult:
     analysis: AnalysisResult
     context: AudioContext
     engineering: EngineerResult
-    report: SoundBrainReport
+    report: PhasenoxReport
 
 
 class AudioReviewService:

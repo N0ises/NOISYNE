@@ -92,7 +92,7 @@ autonomous-system work remain later-version concerns.
 | 12 | Evaluation / Scientific Validation |
 | 13 | Knowledge / Memory / Personalization Integration |
 | 14 | Performance Baseline + ONNX Benchmark Spike |
-| 15 | V2 NoisyneService / Capability Contract |
+| 15 | V2 PhasenoxV2Service / Capability Contract |
 | 16 | Local API + Async Job / Progress Contract |
 | 17 | Desktop V2 Integration |
 | 18 | Desktop Identity / User-Data Compatibility |

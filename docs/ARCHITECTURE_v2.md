@@ -57,7 +57,7 @@ Optional provider failure must not invalidate deterministic output.
 
 ### Layer 5 — Application Boundary
 
-The V2 `NoisyneService` capability contract is scheduled for Sprint 15. The
+The V2 `PhasenoxV2Service` capability contract was introduced in Sprint 15. The
 local API and asynchronous job/progress contract follow in Sprint 16. Domain
 models do not depend on API, UI or DAW-specific types.
 

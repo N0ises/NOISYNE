@@ -458,10 +458,10 @@ def test_gpu_serialization_policy() -> None:
 
 
 def test_sprint15_service_boundary_preserved() -> None:
-    """The scheduler executes ApplicationRequest through the real NoisyneV2Service shape."""
-    from phasenox.application.service import NoisyneV2Service
+    """The scheduler executes ApplicationRequest through the real PhasenoxV2Service shape."""
+    from phasenox.application.service import PhasenoxV2Service
 
-    sched = JobScheduler(NoisyneV2Service(), max_workers=1)
+    sched = JobScheduler(PhasenoxV2Service(), max_workers=1)
     sched.start()
     try:
         request = ApplicationRequest(

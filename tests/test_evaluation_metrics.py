@@ -11,7 +11,13 @@ from phasenox.evaluation.metrics import (
     PluginRecommendationMetrics,
     RecommendationConsistencyMetrics,
 )
-from phasenox.report.models import ReportIssue, SoundBrainReport
+from phasenox.report.models import PhasenoxReport, ReportIssue
+
+
+def test_legacy_report_name_is_canonical_alias() -> None:
+    from phasenox.report.models import SoundBrainReport
+
+    assert SoundBrainReport is PhasenoxReport
 
 
 def _report(
@@ -19,8 +25,8 @@ def _report(
     confidence: float = 0.85,
     issues: list[ReportIssue] | None = None,
     recommendations: list[str] | None = None,
-) -> SoundBrainReport:
-    return SoundBrainReport(
+) -> PhasenoxReport:
+    return PhasenoxReport(
         audio_type="mix",
         source_type="full_track",
         instrument=None,

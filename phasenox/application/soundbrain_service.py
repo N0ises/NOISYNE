@@ -3,15 +3,17 @@ from __future__ import annotations
 from phasenox.application.noisyne_service import (
     AnalysisRequest,
     AnalysisResponse,
-    NoisyneService,
+    PhasenoxService,
 )
 
-# Backward-compatible alias preserved for Phase 1.
-SoundBrainService = NoisyneService
+# Transitional R2 compatibility aliases. There is only one implementation.
+NoisyneService = PhasenoxService
+SoundBrainService = PhasenoxService
 
 __all__ = [
     "AnalysisRequest",
     "AnalysisResponse",
     "NoisyneService",
+    "PhasenoxService",
     "SoundBrainService",
 ]

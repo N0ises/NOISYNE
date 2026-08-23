@@ -21,7 +21,7 @@ from phasenox.application.contracts import (
     StageState,
 )
 from phasenox.application.errors import ApplicationErrorCode
-from phasenox.application.service import NoisyneV2Service
+from phasenox.application.service import NoisyneV2Service, PhasenoxV2Service
 
 __all__ = [
     "APPLICATION_SCHEMA_VERSION",
@@ -35,6 +35,8 @@ __all__ = [
     "MachineAvailability",
     "NoisyneV2Service",
     "OperationType",
+    "PhasenoxService",
+    "PhasenoxV2Service",
     "StageOutcome",
     "StageState",
 ]
@@ -42,7 +44,12 @@ __all__ = [
 
 def __getattr__(name: str):
     """Lazily re-export V1 service aliases without heavy imports."""
-    if name in ("AnalysisRequest", "AnalysisResponse", "NoisyneService"):
+    if name in (
+        "AnalysisRequest",
+        "AnalysisResponse",
+        "PhasenoxService",
+        "NoisyneService",
+    ):
         from phasenox.application import noisyne_service as _noisyne_service
 
         return getattr(_noisyne_service, name)
