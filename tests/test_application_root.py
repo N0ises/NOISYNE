@@ -17,8 +17,81 @@ def _patch_config_file(monkeypatch, config_file: Path):
 
 @pytest.fixture
 def no_env_root(monkeypatch):
+    monkeypatch.delenv("PHASENOX_ROOT", raising=False)
     monkeypatch.delenv("NOISYNE_ROOT", raising=False)
     monkeypatch.delenv("SOUNDBRAIN_ROOT", raising=False)
+
+
+def test_phasenox_root_env_overrides(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        env_root = Path(raw) / "canonical_root"
+        env_root.mkdir()
+        monkeypatch.setenv("PHASENOX_ROOT", str(env_root))
+        _patch_config_file(monkeypatch, Path(raw) / "irrelevant" / "__init__.py")
+        assert get_application_root() == env_root
+
+
+def test_phasenox_root_wins_over_noisyne_root(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        canonical_root = Path(raw) / "canonical_root"
+        legacy_root = Path(raw) / "noisyne_root"
+        canonical_root.mkdir()
+        legacy_root.mkdir()
+        monkeypatch.setenv("PHASENOX_ROOT", str(canonical_root))
+        monkeypatch.setenv("NOISYNE_ROOT", str(legacy_root))
+
+        with pytest.warns(RuntimeWarning, match="PHASENOX_ROOT.*NOISYNE_ROOT"):
+            assert get_application_root() == canonical_root
+
+
+def test_phasenox_root_wins_over_soundbrain_root(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        canonical_root = Path(raw) / "canonical_root"
+        legacy_root = Path(raw) / "soundbrain_root"
+        canonical_root.mkdir()
+        legacy_root.mkdir()
+        monkeypatch.setenv("PHASENOX_ROOT", str(canonical_root))
+        monkeypatch.setenv("SOUNDBRAIN_ROOT", str(legacy_root))
+
+        with pytest.warns(RuntimeWarning, match="PHASENOX_ROOT.*SOUNDBRAIN_ROOT"):
+            assert get_application_root() == canonical_root
+
+
+def test_phasenox_root_reports_all_conflicting_legacy_roots(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        canonical_root = Path(raw) / "canonical_root"
+        noisyne_root = Path(raw) / "noisyne_root"
+        soundbrain_root = Path(raw) / "soundbrain_root"
+        for root in (canonical_root, noisyne_root, soundbrain_root):
+            root.mkdir()
+        monkeypatch.setenv("PHASENOX_ROOT", str(canonical_root))
+        monkeypatch.setenv("NOISYNE_ROOT", str(noisyne_root))
+        monkeypatch.setenv("SOUNDBRAIN_ROOT", str(soundbrain_root))
+
+        with pytest.warns(RuntimeWarning) as warning_records:
+            assert get_application_root() == canonical_root
+
+        message = str(warning_records[0].message)
+        assert "NOISYNE_ROOT" in message
+        assert "SOUNDBRAIN_ROOT" in message
+
+
+def test_empty_phasenox_root_is_unset(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        legacy_root = Path(raw) / "legacy_root"
+        legacy_root.mkdir()
+        monkeypatch.setenv("PHASENOX_ROOT", "")
+        monkeypatch.setenv("NOISYNE_ROOT", str(legacy_root))
+        assert get_application_root() == legacy_root
+
+
+def test_phasenox_root_preserves_path_normalization(no_env_root, monkeypatch):
+    with tempfile.TemporaryDirectory() as raw:
+        normalized_root = Path(raw) / "normalized_root"
+        normalized_root.mkdir()
+        configured_root = normalized_root / "nested" / ".."
+        monkeypatch.setenv("PHASENOX_ROOT", str(configured_root))
+        assert get_application_root() == normalized_root.resolve()
 
 
 def test_noisyne_root_env_overrides(no_env_root, monkeypatch):

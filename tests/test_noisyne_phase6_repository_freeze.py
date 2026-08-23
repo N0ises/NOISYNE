@@ -17,7 +17,7 @@ def test_final_identity_matrix_records_canonical_and_compatibility_contracts():
         "| Python namespace | `phasenox` | `brain` |",
         "| CLI | `phasenox` | — |",
         "| Service | `PhasenoxService` | `NoisyneService`, `SoundBrainService` |",
-        "| Application root environment | `NOISYNE_ROOT` | `SOUNDBRAIN_ROOT` |",
+        "| Application root environment | `PHASENOX_ROOT` | `NOISYNE_ROOT`, `SOUNDBRAIN_ROOT` |",
         "| Engine key | `noisyne` | `soundbrain` |",
         "| Persisted Chroma collection | `soundbrain` |",
     ):
@@ -45,6 +45,7 @@ def test_setup_docs_do_not_require_repository_basename():
 
 
 def test_application_root_uses_structure_in_arbitrary_repository_directory(tmp_path, monkeypatch):
+    monkeypatch.delenv("PHASENOX_ROOT", raising=False)
     monkeypatch.delenv("NOISYNE_ROOT", raising=False)
     monkeypatch.delenv("SOUNDBRAIN_ROOT", raising=False)
 

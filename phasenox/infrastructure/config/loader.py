@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+import warnings
 from importlib import resources
 from pathlib import Path
 from typing import Any
@@ -29,8 +30,38 @@ except (
     yaml = None
 
 
-_ENV_ROOT = "NOISYNE_ROOT"
-_LEGACY_ENV_ROOT = "SOUNDBRAIN_ROOT"
+_ENV_ROOT = "PHASENOX_ROOT"
+_LEGACY_ENV_ROOTS = ("NOISYNE_ROOT", "SOUNDBRAIN_ROOT")
+
+
+def _environment_application_root() -> Path | None:
+    """Return the configured application root, honoring compatibility aliases."""
+    canonical_value = os.environ.get(_ENV_ROOT)
+    if canonical_value:
+        canonical_root = Path(canonical_value).expanduser().resolve()
+        conflicts = []
+        for name in _LEGACY_ENV_ROOTS:
+            value = os.environ.get(name)
+            if not value:
+                continue
+            legacy_root = Path(value).expanduser().resolve()
+            if legacy_root != canonical_root:
+                conflicts.append(f"{name}={legacy_root}")
+
+        if conflicts:
+            warnings.warn(
+                f"{_ENV_ROOT}={canonical_root} takes precedence over conflicting "
+                f"legacy application roots: {', '.join(conflicts)}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+        return canonical_root
+
+    for name in _LEGACY_ENV_ROOTS:
+        value = os.environ.get(name)
+        if value:
+            return Path(value).expanduser().resolve()
+    return None
 
 
 def get_application_root() -> Path:
@@ -38,29 +69,30 @@ def get_application_root() -> Path:
 
     Resolution order:
 
-    1. The ``NOISYNE_ROOT`` environment variable, if set.
-    2. The ``SOUNDBRAIN_ROOT`` environment variable, if set (legacy fallback).
-    3. The directory containing ``pyproject.toml`` or ``configs/`` when running
+    1. The ``PHASENOX_ROOT`` environment variable, if set.
+    2. The ``NOISYNE_ROOT`` environment variable, if set (legacy fallback).
+    3. The ``SOUNDBRAIN_ROOT`` environment variable, if set (legacy fallback).
+    4. The directory containing ``pyproject.toml`` or ``configs/`` when running
        from a source checkout.
-    4. The parent directory of the installed ``phasenox`` package (e.g.
+    5. The parent directory of the installed ``phasenox`` package (e.g.
        ``site-packages`` for a wheel install).
 
     This keeps runtime paths stable regardless of the current working directory.
     """
-    env_root = os.environ.get(_ENV_ROOT) or os.environ.get(_LEGACY_ENV_ROOT)
-    if env_root:
-        return Path(env_root).expanduser().resolve()
+    env_root = _environment_application_root()
+    if env_root is not None:
+        return env_root
 
     config_module = sys.modules.get("phasenox.infrastructure.config")
     if config_module is None:
         raise RuntimeError(
-            "Cannot determine NOISYNE application root: "
+            "Cannot determine PHASENOX application root: "
             "phasenox.infrastructure.config has not been imported."
         )
     config_file = getattr(config_module, "__file__", None)
     if config_file is None:
         raise RuntimeError(
-            "Cannot determine NOISYNE application root from the packaged "
+            "Cannot determine PHASENOX application root from the packaged "
             f"configuration location. Set the {_ENV_ROOT} environment variable."
         )
     config_dir = Path(config_file).resolve().parent

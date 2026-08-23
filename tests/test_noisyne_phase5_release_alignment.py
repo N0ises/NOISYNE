@@ -32,6 +32,7 @@ def test_current_docs_present_canonical_interfaces_first():
         "Canonical CLI: phasenox",
         "pip install phasenox",
         'pip install "phasenox[pdf]"',
+        "PHASENOX_ROOT",
         "NOISYNE_ROOT",
         "SOUNDBRAIN_ROOT",
     ):

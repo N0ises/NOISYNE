@@ -185,8 +185,8 @@ from phasenox.application import NoisyneService
 
 The `brain` namespace and `SoundBrainService` remain supported compatibility
 aliases. The former `noisyne` and `soundbrain` CLI commands are no longer
-installed. Application-root precedence is `NOISYNE_ROOT`, then legacy
-`SOUNDBRAIN_ROOT`, then automatic structural detection.
+installed. Application-root precedence is `PHASENOX_ROOT`, then legacy
+`NOISYNE_ROOT`, then `SOUNDBRAIN_ROOT`, then automatic structural detection.
 
 ------------------------------------------------------------------------
 

@@ -263,8 +263,8 @@ Use the canonical CLI for new workflows:
 phasenox --help
 ```
 
-Application-root precedence is `NOISYNE_ROOT`, then the legacy
-`SOUNDBRAIN_ROOT`, then automatic structural detection.
+Application-root precedence is `PHASENOX_ROOT`, then the legacy
+`NOISYNE_ROOT`, then `SOUNDBRAIN_ROOT`, then automatic structural detection.
 
 The product and distribution are NØISYNE/phasenox.
 

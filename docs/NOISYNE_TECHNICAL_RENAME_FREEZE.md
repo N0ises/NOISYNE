@@ -14,13 +14,13 @@ Approved Phase 6 freeze commit: `eb3d7ce7c5044b82b92fc5a1a8bda84df56bb9ce`
 | Python namespace | `phasenox` | `brain` |
 | CLI | `phasenox` | — |
 | Service | `PhasenoxService` | `NoisyneService`, `SoundBrainService` |
-| Application root environment | `NOISYNE_ROOT` | `SOUNDBRAIN_ROOT` |
+| Application root environment | `PHASENOX_ROOT` | `NOISYNE_ROOT`, `SOUNDBRAIN_ROOT` |
 | Engine key | `noisyne` | `soundbrain` |
 | Persisted Chroma collection | `soundbrain` | Stable; intentionally unchanged |
 | Repository | `N0ises/NOISYNE` | Rename complete |
 
-Environment precedence is `NOISYNE_ROOT` → `SOUNDBRAIN_ROOT` → automatic
-structural detection.
+Environment precedence is `PHASENOX_ROOT` → `NOISYNE_ROOT` →
+`SOUNDBRAIN_ROOT` → automatic structural detection.
 
 ## Phase record
 
