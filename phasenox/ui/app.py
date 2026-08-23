@@ -16,6 +16,7 @@ from .brand_resources import application_icon
 from .contracts import DesktopApplicationAdapter, ProductMetadata, RuntimeStatus, UiError
 from .design_system.theme import apply_theme
 from .errors import ExceptionBoundary, unexpected_error
+from .job_gateway import DesktopJobGateway
 from .logging_setup import configure_logging
 from .main_window import MainWindow
 from .packaging_probe import run_packaging_probe
@@ -81,12 +82,20 @@ def build_main_window(
     state_store: ApplicationStateStore | None = None,
     presentation_store: PresentationStore | None = None,
     executor: WorkerExecutor | None = None,
+    job_gateway: DesktopJobGateway | None = None,
 ) -> MainWindow:
     store = state_store or ApplicationStateStore()
     ui_store = presentation_store or PresentationStore()
     view_state = build_shell_view_state(adapter.product_metadata(), ui_store.state.navigation)
     worker_executor = executor or WorkerExecutor()
-    window = MainWindow(view_state, store, ui_store, adapter, worker_executor)
+    window = MainWindow(
+        view_state,
+        store,
+        ui_store,
+        adapter,
+        worker_executor,
+        job_gateway,
+    )
     icon = application_icon()
     if not icon.isNull():
         window.setWindowIcon(icon)
@@ -119,12 +128,15 @@ def run(
     session_binding = SessionPersistenceBinding(repository, presentation_store)
 
     executor = WorkerExecutor()
+    job_gateway = DesktopJobGateway()
+    job_gateway.start()
     state_store = ApplicationStateStore()
     window = build_main_window(
         application_adapter,
         state_store,
         presentation_store,
         executor,
+        job_gateway,
     )
     boundary = ExceptionBoundary(window.show_error)
     boundary.install()
@@ -179,6 +191,7 @@ def run(
     try:
         qt_exit_code = application.exec()
     finally:
+        job_gateway.shutdown(wait=False)
         executor.wait_for_done()
         boundary.uninstall()
         session_binding.save_current()

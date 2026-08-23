@@ -16,6 +16,7 @@ from .analysis_controller import AnalysisController
 from .contracts import DesktopApplicationAdapter, UiError
 from .design_system.components import AppShell, DesignButton, Sidebar
 from .design_system.tokens import DEFAULT_TOKENS
+from .job_gateway import DesktopJobGateway
 from .knowledge_controller import KnowledgeController
 from .pages import PageHost
 from .presentation import ShellViewState
@@ -31,6 +32,7 @@ from .shell_surfaces import (
     RuntimeStatusSurface,
 )
 from .state import ApplicationLifecycle, ApplicationState, ApplicationStateStore
+from .task_center_surface import TaskCenterSurface
 from .workers import WorkerExecutor
 
 
@@ -44,6 +46,7 @@ class MainWindow(QMainWindow):
         presentation_store: PresentationStore,
         application_adapter: DesktopApplicationAdapter,
         executor: WorkerExecutor,
+        job_gateway: DesktopJobGateway | None = None,
     ) -> None:
         super().__init__()
         self._state_store = state_store
@@ -131,6 +134,11 @@ class MainWindow(QMainWindow):
             tokens.spacing.sm,
         )
         top_layout.addStretch(1)
+        self._task_center = (
+            TaskCenterSurface(job_gateway, parent=self) if job_gateway is not None else None
+        )
+        if self._task_center is not None:
+            top_layout.addWidget(self._task_center)
         top_layout.addWidget(self._runtime_surface)
 
         self._notifications = NotificationSurface(tokens=tokens)
@@ -249,6 +257,7 @@ class MainWindow(QMainWindow):
         self._notifications.render(state.notifications)
 
     def closeEvent(self, event) -> None:
+        if self._task_center is not None:
+            self._task_center.stop()
         self._state_store.set_lifecycle(ApplicationLifecycle.STOPPED, "Stopped")
         super().closeEvent(event)
-
