@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from noisyne.audio.plugin.models import (
+from phasenox.audio.plugin.models import (
     ParameterRecommendation,
     PluginIntelligenceResult,
     PluginIntelligenceStep,
     PluginMatch,
     ProcessingGoal,
 )
-from noisyne.audio.plugin.validator import PluginIntelligenceValidator
+from phasenox.audio.plugin.validator import PluginIntelligenceValidator
 
 
 def _make_step(value: float, category: str = "eq") -> PluginIntelligenceStep:

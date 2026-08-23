@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 from brain.application.soundbrain_service import SoundBrainService
 
-from noisyne.application.noisyne_service import NoisyneService as CanonicalService
-from noisyne.reference.models import ReferenceComparison, ReferenceReport
-from noisyne.reference.report_builder import ReferenceReportBuilder
-from noisyne.runtime.engine_registry import registry
+from phasenox.application.noisyne_service import NoisyneService as CanonicalService
+from phasenox.reference.models import ReferenceComparison, ReferenceReport
+from phasenox.reference.report_builder import ReferenceReportBuilder
+from phasenox.runtime.engine_registry import registry
 
 
 class TestNoisyneServiceAlias:
@@ -25,7 +25,7 @@ class TestNoisyneServiceAlias:
         assert SoundBrainService is CanonicalService
 
     def test_application_module_exports_both(self):
-        from noisyne.application import NoisyneService, SoundBrainService
+        from phasenox.application import NoisyneService, SoundBrainService
 
         assert NoisyneService is CanonicalService
         assert SoundBrainService is CanonicalService
@@ -42,7 +42,7 @@ class TestNoisyneServiceAlias:
         assert AnalysisResponse is not None
 
     def test_noisyne_service_import_path_works(self):
-        from noisyne.application.noisyne_service import (
+        from phasenox.application.noisyne_service import (
             AnalysisRequest,
             AnalysisResponse,
             NoisyneService,
@@ -104,8 +104,8 @@ class TestCliAliases:
     def test_pyproject_has_both_entry_points(self):
         pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
         text = pyproject.read_text(encoding="utf-8")
-        assert 'noisyne = "noisyne.cli:main"' in text
-        assert 'soundbrain = "noisyne.cli:main"' in text
+        assert 'noisyne = "phasenox.cli:main"' in text
+        assert 'soundbrain = "phasenox.cli:main"' in text
 
 
 class TestReportIdentity:
@@ -146,9 +146,9 @@ class TestNamespaceCompatibility:
     """The canonical namespace is ``noisyne`` and ``brain`` remains compatible."""
 
     def test_noisyne_namespace_importable(self):
-        import noisyne
+        import phasenox
 
-        assert noisyne.__name__ == "noisyne"
+        assert phasenox.__name__ == "phasenox"
 
     def test_brain_namespace_importable(self):
         import brain
@@ -157,7 +157,7 @@ class TestNamespaceCompatibility:
 
     def test_noisyne_service_module_under_brain_is_canonical(self):
         legacy_module = importlib.import_module("brain.application.noisyne_service")
-        canonical_module = importlib.import_module("noisyne.application.noisyne_service")
+        canonical_module = importlib.import_module("phasenox.application.noisyne_service")
 
         assert legacy_module is canonical_module
         assert legacy_module.NoisyneService is CanonicalService

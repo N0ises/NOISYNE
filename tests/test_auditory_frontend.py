@@ -8,19 +8,19 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.perception import (
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.perception import (
     AUDITORY_FRONTEND_METHOD_VERSION,
     AuditoryFrontendConfig,
     AuditoryFrontendSummary,
 )
-from noisyne.perception.auditory import (
+from phasenox.perception.auditory import (
     AuditoryFrontend,
     AuditoryFrontendResult,
     erb_rate_to_hz,
     hz_to_erb_rate,
 )
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -328,7 +328,7 @@ def test_method_metadata_and_registry_state_are_truthful() -> None:
 def test_perception_root_import_remains_numpy_lightweight() -> None:
     script = """
 import sys
-import noisyne.perception
+import phasenox.perception
 print('numpy' in sys.modules)
 """
     result = subprocess.run(

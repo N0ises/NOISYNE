@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from noisyne.reference.models import (
+from phasenox.reference.models import (
     ReferenceComparison,
     ReferenceReport,
 )
-from noisyne.reference.pipeline import ReferencePipeline
+from phasenox.reference.pipeline import ReferencePipeline
 
 
 class FakeEngine:

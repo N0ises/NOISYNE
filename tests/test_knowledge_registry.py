@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from noisyne.knowledge import KnowledgeRegistry
-from noisyne.knowledge.loader import KnowledgeLoader
-from noisyne.knowledge.validator import KnowledgeValidator
+from phasenox.knowledge import KnowledgeRegistry
+from phasenox.knowledge.loader import KnowledgeLoader
+from phasenox.knowledge.validator import KnowledgeValidator
 
 
 def test_registry_loads_default_bundle() -> None:

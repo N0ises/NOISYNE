@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 import numpy as np
 import pytest
 
-from noisyne.performance import (
+from phasenox.performance import (
     AuditoryFrontendWorkload,
     BenchmarkFingerprint,
     BenchmarkMethod,
@@ -40,8 +40,8 @@ from noisyne.performance import (
     runtime_fingerprint_fields,
     select_runtime,
 )
-from noisyne.performance.fixture_model import build_fixture_runtimes
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.performance.fixture_model import build_fixture_runtimes
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 
 def _environment_fixture() -> PerformanceEnvironment:

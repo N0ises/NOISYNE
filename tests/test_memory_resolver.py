@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from noisyne.knowledge import KnowledgeLoader, KnowledgeResolver
-from noisyne.memory import MemoryLoader, MemoryResolver
-from noisyne.memory.models import MemoryBundle, ProjectProfile, UserProfile
+from phasenox.knowledge import KnowledgeLoader, KnowledgeResolver
+from phasenox.memory import MemoryLoader, MemoryResolver
+from phasenox.memory.models import MemoryBundle, ProjectProfile, UserProfile
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from noisyne.knowledge import KnowledgeValidator
-from noisyne.knowledge.loader import KnowledgeLoader
+from phasenox.knowledge import KnowledgeValidator
+from phasenox.knowledge.loader import KnowledgeLoader
 
 
 def test_validator_passes_default_bundle() -> None:

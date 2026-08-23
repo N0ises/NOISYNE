@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from noisyne.audio.plugin.models import PluginMatch
-from noisyne.audio.plugin.registry import PluginRegistry
+from phasenox.audio.plugin.models import PluginMatch
+from phasenox.audio.plugin.registry import PluginRegistry
 
 
 def test_registry_loads_from_dict():

@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from noisyne.audio.analysis.models import AnalysisResult
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.reference.models import (
+from phasenox.audio.analysis.models import AnalysisResult
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.reference.models import (
     Category,
     DecisionType,
     EngineerDecision,
@@ -16,8 +16,8 @@ from noisyne.reference.models import (
     SegmentDeviation,
     Severity,
 )
-from noisyne.reference.reasoner import ReferenceReasoner
-from noisyne.reference.service import ReferenceService
+from phasenox.reference.reasoner import ReferenceReasoner
+from phasenox.reference.service import ReferenceService
 
 AUDIO_PATH = Path("tests/assets/test.wav")
 
@@ -230,8 +230,8 @@ def test_low_confidence_decision_is_insufficient_evidence():
 
 # Regression tests for V1 reference comparison stabilization
 
-from noisyne.reference.comparator import ReferenceComparator
-from noisyne.reference.report_builder import ReferenceReportBuilder
+from phasenox.reference.comparator import ReferenceComparator
+from phasenox.reference.report_builder import ReferenceReportBuilder
 
 
 def test_reference_metric_includes_severity():
@@ -306,7 +306,7 @@ def test_category_scores_use_category_means():
 
 
 def test_report_builder_replaces_nonfinite_floats(tmp_path: Path):
-    from noisyne.reference.models import ReferenceComparison, ReferenceReport
+    from phasenox.reference.models import ReferenceComparison, ReferenceReport
 
     comparison = ReferenceComparison(
         similarity=float("nan"),

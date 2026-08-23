@@ -14,11 +14,11 @@ def test_package_metadata_and_console_scripts_are_canonical():
     assert metadata["project"]["version"] == "1.0.0"
     assert metadata["project"]["description"].startswith("NØISYNE")
     assert metadata["project"]["scripts"] == {
-        "noisyne": "noisyne.cli:main",
-        "soundbrain": "noisyne.cli:main",
+        "noisyne": "phasenox.cli:main",
+        "soundbrain": "phasenox.cli:main",
     }
     assert metadata["tool"]["setuptools"]["packages"]["find"]["include"] == [
-        "noisyne*",
+        "phasenox*",
         "brain",
     ]
 
@@ -30,7 +30,7 @@ def test_current_docs_present_canonical_interfaces_first():
     for expected in (
         "Product: NØISYNE",
         "Distribution: noisyne",
-        "Canonical Python package: noisyne",
+        "Canonical Python package: phasenox",
         "Legacy Python package: brain (compatibility only)",
         "Canonical CLI: noisyne",
         "Legacy CLI: soundbrain (compatibility alias)",
@@ -41,7 +41,7 @@ def test_current_docs_present_canonical_interfaces_first():
     ):
         assert expected in readme
 
-    assert 'python -c "import noisyne"' in contributing
+    assert 'python -c "import phasenox"' in contributing
     assert "noisyne --help" in contributing
 
 
@@ -51,15 +51,15 @@ def test_validation_tooling_prefers_canonical_cli_and_namespace():
         encoding="utf-8"
     )
 
-    assert "python -m noisyne.cli analyze" in validation
-    assert '"compileall", "noisyne", "brain", "tests"' in release_validation
-    assert '"-m",\n            "noisyne.cli"' in release_validation
+    assert "python -m phasenox.cli analyze" in validation
+    assert '"compileall", "phasenox", "brain", "tests"' in release_validation
+    assert '"-m",\n            "phasenox.cli"' in release_validation
 
 
 def test_export_tool_groups_canonical_and_compatibility_packages(tmp_path):
     project = tmp_path / "arbitrary-repository-name"
     output = tmp_path / "export-output"
-    canonical = project / "noisyne" / "audio" / "sample.py"
+    canonical = project / "phasenox" / "audio" / "sample.py"
     compatibility = project / "brain" / "__init__.py"
     canonical.parent.mkdir(parents=True)
     compatibility.parent.mkdir(parents=True)
@@ -82,7 +82,7 @@ def test_export_tool_groups_canonical_and_compatibility_packages(tmp_path):
     )
 
     assert result.returncode == 0, result.stderr
-    assert "VALUE = 'canonical'" in (output / "noisyne" / "audio.txt").read_text(encoding="utf-8")
+    assert "VALUE = 'canonical'" in (output / "phasenox" / "audio.txt").read_text(encoding="utf-8")
     assert "LEGACY = True" in (output / "brain" / "compatibility.txt").read_text(encoding="utf-8")
     assert not (output / "brain" / "audio.txt").exists()
 

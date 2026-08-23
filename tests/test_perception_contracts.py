@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from noisyne.perception import (
+from phasenox.perception import (
     PERCEPTUAL_SCHEMA_VERSION,
     AnalysisMetadata,
     AuditoryBand,
@@ -72,7 +72,7 @@ def _evidence(identifier: str = "evidence-lufs") -> PerceptualEvidence:
     return PerceptualEvidence(
         evidence_id=identifier,
         source=EvidenceSource.MEASUREMENT,
-        origin="noisyne.audio.analysis",
+        origin="phasenox.audio.analysis",
         measurement=_measurement(identifier),
         note="Objective source measurement; not a perceptual estimate.",
     )
@@ -606,7 +606,7 @@ def test_deserialization_rejects_union_with_no_valid_candidate() -> None:
 def test_perception_import_is_lightweight() -> None:
     script = """
 import sys
-import noisyne.perception
+import phasenox.perception
 heavy = {'torch', 'transformers', 'sentence_transformers', 'PySide6'}
 print(','.join(sorted(heavy.intersection(sys.modules))))
 """
@@ -632,12 +632,12 @@ def test_perception_package_has_no_forbidden_architecture_imports() -> None:
         "torch",
         "transformers",
         "onnxruntime",
-        "noisyne.integration",
-        "noisyne.providers",
+        "phasenox.integration",
+        "phasenox.providers",
     )
     source = "\n".join(
         path.read_text(encoding="utf-8")
-        for path in sorted((ROOT / "noisyne" / "perception").glob("*.py"))
+        for path in sorted((ROOT / "phasenox" / "perception").glob("*.py"))
     )
 
     assert all(item not in source for item in forbidden)

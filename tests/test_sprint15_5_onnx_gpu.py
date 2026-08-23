@@ -21,7 +21,7 @@ import sys
 import numpy as np
 import pytest
 
-from noisyne.performance import (
+from phasenox.performance import (
     BenchmarkMethod,
     CompatibilityResult,
     DeviceType,
@@ -45,7 +45,7 @@ from noisyne.performance import (
     evaluate_equivalence,
     select_runtime,
 )
-from noisyne.performance.fixture_model import (
+from phasenox.performance.fixture_model import (
     _ensure_cuda_dll_paths,
     _onnx_cuda_session_loaded,
     _onnxruntime_cuda_available,
@@ -133,7 +133,7 @@ def test_bare_onnxruntime_cuda_executable_without_torch() -> None:
     code = (
         "import sys\n"
         f"sys.path.insert(0, {os.getcwd()!r})\n"
-        "from noisyne.performance.fixture_model import (\n"
+        "from phasenox.performance.fixture_model import (\n"
         "    _ensure_cuda_dll_paths,\n"
         "    _onnxruntime_cuda_executable,\n"
         ")\n"

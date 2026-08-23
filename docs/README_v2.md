@@ -160,7 +160,7 @@ Autonomous Audio Intelligence System
 
 docs/ Documentation
 
-noisyne/ Canonical core intelligence
+phasenox/ Canonical core intelligence
 
 brain/ Legacy Python import compatibility shim
 
@@ -169,7 +169,7 @@ tests/ Automated tests
 reports/ Generated reports
 
 The installed distribution is `noisyne`. New Python integrations should import
-from `noisyne.*`; `brain.*` remains available only as a compatibility namespace.
+from `phasenox.*`; `brain.*` remains available only as a compatibility namespace.
 
 Canonical installation and interfaces:
 
@@ -180,7 +180,7 @@ noisyne --help
 ```
 
 ```python
-from noisyne.application import NoisyneService
+from phasenox.application import NoisyneService
 ```
 
 The legacy `soundbrain` CLI, `brain` namespace, and `SoundBrainService` remain

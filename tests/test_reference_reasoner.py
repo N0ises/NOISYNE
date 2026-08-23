@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from noisyne.reference.models import (
+from phasenox.reference.models import (
     Category,
     EngineerDecision,
     ReferenceComparison,
     ReferenceIntent,
     Severity,
 )
-from noisyne.reference.reasoner import ReferenceReasoner
+from phasenox.reference.reasoner import ReferenceReasoner
 
 
 def _comparison() -> ReferenceComparison:

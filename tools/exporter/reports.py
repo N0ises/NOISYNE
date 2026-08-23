@@ -35,7 +35,7 @@ def module_document(
             function_count += len(analysis.functions)
             line_count += analysis.lines
             for imported in analysis.imports:
-                (internal_imports if imported.startswith(".") or imported.startswith("noisyne.") else external_imports).add(imported)
+                (internal_imports if imported.startswith(".") or imported.startswith("phasenox.") else external_imports).add(imported)
     lines.extend([
         "", LINE, "", "SUMMARY", "", f"Files : {len(records)}", f"Classes : {class_count}",
         f"Functions : {function_count}", f"Imports : {len(internal_imports | external_imports)}",

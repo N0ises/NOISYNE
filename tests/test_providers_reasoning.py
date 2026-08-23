@@ -4,16 +4,16 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from noisyne.providers import (
+from phasenox.providers import (
     BaseAIProvider,
     GeminiProvider,
     LocalProvider,
     OpenAIProvider,
     QwenProvider,
 )
-from noisyne.providers.models import GenerateRequest, GenerateResponse
-from noisyne.reasoning.engine import LLMReasoningProvider, ReasoningEngine
-from noisyne.reasoning.models import (
+from phasenox.providers.models import GenerateRequest, GenerateResponse
+from phasenox.reasoning.engine import LLMReasoningProvider, ReasoningEngine
+from phasenox.reasoning.models import (
     ReasoningContext,
     ReasoningPrompt,
     ReasoningResult,

@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.analysis.key import KeyAnalysis
-from noisyne.audio.io.models import AudioData, AudioMetadata
+from phasenox.audio.analysis.key import KeyAnalysis
+from phasenox.audio.io.models import AudioData, AudioMetadata
 
 
 def _audio(chroma: np.ndarray | None = None) -> AudioData:

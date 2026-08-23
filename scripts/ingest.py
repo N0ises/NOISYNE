@@ -2,9 +2,9 @@ import uuid
 from pathlib import Path
 
 import fitz
-from noisyne.chroma import knowledge
+from phasenox.chroma import knowledge
 
-from noisyne.embedding import embedding_model
+from phasenox.embedding import embedding_model
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PDF_FOLDER = PROJECT_ROOT / "data" / "courses" / "psychoacoustics"

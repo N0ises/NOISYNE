@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.perception import (
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.perception import (
     DescriptorClass,
     DescriptorDefinition,
     DescriptorImplementationState,
@@ -18,11 +18,11 @@ from noisyne.perception import (
     ResultStatus,
     descriptor_taxonomy,
 )
-from noisyne.perception.descriptors import (
+from phasenox.perception.descriptors import (
     PerceptualDescriptorFoundation,
     PerceptualDescriptorFoundationResult,
 )
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -433,7 +433,7 @@ def test_descriptor_capabilities_are_implemented_not_verified() -> None:
 def test_perception_root_import_remains_numpy_lightweight_with_descriptor_contracts() -> None:
     script = """
 import sys
-import noisyne.perception
+import phasenox.perception
 print('numpy' in sys.modules)
 """
     result = subprocess.run(

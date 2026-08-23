@@ -81,10 +81,10 @@ class TestDistributionMetadata:
         metadata = _project_metadata()
 
         assert metadata["tool"]["setuptools"]["packages"]["find"]["include"] == [
-            "noisyne*",
+            "phasenox*",
             "brain",
         ]
-        assert (ROOT / "noisyne" / "__init__.py").is_file()
+        assert (ROOT / "phasenox" / "__init__.py").is_file()
         assert (ROOT / "brain" / "__init__.py").is_file()
         compatibility_sources = {
             path.relative_to(ROOT / "brain")
@@ -94,17 +94,17 @@ class TestDistributionMetadata:
         assert compatibility_sources == {Path("__init__.py")}
 
         import brain
-        import noisyne
+        import phasenox
 
-        assert noisyne.__name__ == "noisyne"
+        assert phasenox.__name__ == "phasenox"
         assert brain.__name__ == "brain"
 
     def test_distribution_installs_both_cli_entry_points(self) -> None:
         scripts = _project_metadata()["project"]["scripts"]
 
         assert scripts == {
-            "noisyne": "noisyne.cli:main",
-            "soundbrain": "noisyne.cli:main",
+            "noisyne": "phasenox.cli:main",
+            "soundbrain": "phasenox.cli:main",
         }
 
 
@@ -117,8 +117,8 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
     artifacts = tmp_path / "dist"
 
     shutil.copytree(
-        ROOT / "noisyne",
-        source / "noisyne",
+        ROOT / "phasenox",
+        source / "phasenox",
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
     )
     shutil.copytree(
@@ -156,13 +156,13 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
         names = set(archive.namelist())
         assert "brain/__init__.py" in names
         assert {
-            "noisyne/infrastructure/config/resources/audio.yaml",
-            "noisyne/infrastructure/config/resources/models.yaml",
-            "noisyne/infrastructure/config/resources/runtime.yaml",
+            "phasenox/infrastructure/config/resources/audio.yaml",
+            "phasenox/infrastructure/config/resources/models.yaml",
+            "phasenox/infrastructure/config/resources/runtime.yaml",
         } <= names
         assert f"noisyne-{version}.dist-info/METADATA" in names
         assert {name for name in names if name.startswith("brain/")} == {"brain/__init__.py"}
-        assert len({name for name in names if name.startswith("noisyne/")}) > 300
+        assert len({name for name in names if name.startswith("phasenox/")}) > 300
         _assert_no_private_artifacts(names)
 
     with tarfile.open(sdist, "r:gz") as archive:
@@ -176,7 +176,7 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
     installed = tmp_path / "installed"
     venv.EnvBuilder(with_pip=True).create(installed)
     python = _venv_executable(installed, "python")
-    noisyne = _venv_executable(installed, "noisyne")
+    phasenox = _venv_executable(installed, "noisyne")
     soundbrain = _venv_executable(installed, "soundbrain")
 
     subprocess.run(
@@ -192,17 +192,17 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
             str(python),
             "-c",
             (
-                "import brain, noisyne; from importlib.metadata import version; "
+                "import brain, phasenox; from importlib.metadata import version; "
                 "from importlib.resources import files; from pathlib import Path; "
-                "from noisyne.application import NoisyneService; "
+                "from phasenox.application import NoisyneService; "
                 "from brain.application import SoundBrainService; "
-                "from noisyne.infrastructure.config import get_application_root; "
-                "resources = files('noisyne.infrastructure.config').joinpath('resources'); "
-                "print(noisyne.__name__); print(brain.__name__); "
+                "from phasenox.infrastructure.config import get_application_root; "
+                "resources = files('phasenox.infrastructure.config').joinpath('resources'); "
+                "print(phasenox.__name__); print(brain.__name__); "
                 "print(NoisyneService is SoundBrainService); print(version('noisyne')); "
                 "print(','.join(name for name in ('audio.yaml', 'models.yaml', 'runtime.yaml') "
                 "if resources.joinpath(name).is_file())); "
-                "print(get_application_root() == Path(noisyne.__file__).resolve().parent.parent)"
+                "print(get_application_root() == Path(phasenox.__file__).resolve().parent.parent)"
             ),
         ],
         check=True,
@@ -211,7 +211,7 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
         cwd=tmp_path,
     )
     assert metadata_result.stdout.splitlines() == [
-        "noisyne",
+        "phasenox",
         "brain",
         "True",
         version,
@@ -219,7 +219,7 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
         "True",
     ]
 
-    for command in (noisyne, soundbrain):
+    for command in (phasenox, soundbrain):
         result = subprocess.run(
             [str(command), "--help"],
             check=True,

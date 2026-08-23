@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from noisyne.runtime.engine_registry import EngineRegistry, registry
+from phasenox.runtime.engine_registry import EngineRegistry, registry
 
 
 def test_engine_registry_register_and_get():

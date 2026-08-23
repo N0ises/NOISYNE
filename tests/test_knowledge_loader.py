@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from noisyne.knowledge import KnowledgeLoader
-from noisyne.knowledge.models import KnowledgeBundle
+from phasenox.knowledge import KnowledgeLoader
+from phasenox.knowledge.models import KnowledgeBundle
 
 
 def test_loader_loads_default_bundle() -> None:

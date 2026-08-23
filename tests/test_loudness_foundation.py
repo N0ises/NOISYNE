@@ -8,17 +8,17 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.analysis.lufs import LUFSAnalyzer
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.perception import (
+from phasenox.audio.analysis.lufs import LUFSAnalyzer
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.perception import (
     AcousticPresentation,
     FrequencyResponseCompensation,
     LoudnessCalibration,
     PerceivedLoudnessResult,
     ResultStatus,
 )
-from noisyne.perception.loudness import PerceivedLoudnessFoundation
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.perception.loudness import PerceivedLoudnessFoundation
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -333,7 +333,7 @@ def test_loudness_foundation_capability_is_implemented_but_not_verified() -> Non
 def test_perception_root_import_remains_numpy_lightweight_with_loudness_contracts() -> None:
     script = """
 import sys
-import noisyne.perception
+import phasenox.perception
 print('numpy' in sys.modules)
 """
     result = subprocess.run(

@@ -1,6 +1,6 @@
 """Compatibility namespace for legacy :mod:`brain` imports.
 
-The implementation lives exclusively under :mod:`noisyne`.  This package
+The implementation lives exclusively under :mod:`phasenox`.  This package
 installs a small import hook that maps every ``brain.*`` import to the matching
 canonical module object, preserving class, enum, exception, registry, and
 module-level state identity during the compatibility period.
@@ -15,8 +15,8 @@ import sys
 from types import ModuleType
 
 _LEGACY_PREFIX = __name__
-_CANONICAL_PREFIX = "noisyne"
-_FINDER_MARKER = "_noisyne_legacy_namespace_finder"
+_CANONICAL_PREFIX = "phasenox"
+_FINDER_MARKER = "_phasenox_legacy_namespace_finder"
 _canonical_package = importlib.import_module(_CANONICAL_PREFIX)
 
 
@@ -36,15 +36,15 @@ class _LegacyModuleLoader(importlib.abc.Loader):
     def exec_module(self, module: ModuleType) -> None:
         # Import machinery temporarily applies the legacy spec to the returned
         # module. Restore canonical metadata so resources and introspection keep
-        # reporting the authoritative ``noisyne.*`` module path.
+        # reporting the authoritative ``phasenox.*`` module path.
         for name, value in self._metadata.items():
             setattr(module, name, value)
 
 
 class _LegacyModuleFinder(importlib.abc.MetaPathFinder):
-    """Resolve ``brain.*`` names to their existing ``noisyne.*`` modules."""
+    """Resolve ``brain.*`` names to their existing ``phasenox.*`` modules."""
 
-    _noisyne_legacy_namespace_finder = True
+    _phasenox_legacy_namespace_finder = True
 
     def find_spec(
         self,

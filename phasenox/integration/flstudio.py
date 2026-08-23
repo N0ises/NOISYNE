@@ -1,0 +1,34 @@
+from __future__ import annotations
+
+from phasenox.integration.base import BaseWorkflowAdapter
+from phasenox.integration.models import DAWCapability
+
+
+class FLStudioAdapter(BaseWorkflowAdapter):
+    """Placeholder contract adapter for FL Studio."""
+
+    name = "flstudio"
+
+    def capabilities(self) -> list[DAWCapability]:
+        return [
+            DAWCapability(
+                "analysis_import",
+                "Import analysis summary as project info",
+                available=False,
+            ),
+            DAWCapability(
+                "processing_chain",
+                "Export Patcher chain recommendation as text",
+                available=True,
+            ),
+            DAWCapability(
+                "plugin_recommendations",
+                "Export plugin recommendations as JSON metadata",
+                available=True,
+            ),
+            DAWCapability(
+                "report_export",
+                "Export full report as Markdown and JSON",
+                available=True,
+            ),
+        ]

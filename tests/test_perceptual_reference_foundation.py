@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.perception import (
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.perception import (
     EmbeddingSimilarityMetric,
     MethodMetadata,
     ReferenceComparisonConfig,
@@ -26,12 +26,12 @@ from noisyne.perception import (
     ResultStatus,
     reference_intelligence,
 )
-from noisyne.perception.reference_intelligence import (
+from phasenox.perception.reference_intelligence import (
     EmbeddingCosineComparator,
     ObjectiveReferenceComparator,
     ReferenceRuntimeResult,
 )
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -552,7 +552,7 @@ def test_capability_truth_is_narrow_and_clap_remains_verified() -> None:
 
 def test_perception_contract_import_remains_lightweight() -> None:
     code = (
-        "import sys; import noisyne.perception; "
+        "import sys; import phasenox.perception; "
         "assert 'numpy' not in sys.modules; assert 'torch' not in sys.modules"
     )
     subprocess.run([sys.executable, "-c", code], cwd=ROOT, check=True)

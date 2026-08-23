@@ -5,15 +5,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from noisyne.application.audio_review_service import (
+from phasenox.application.audio_review_service import (
     AudioReviewResult,
     AudioReviewService,
 )
-from noisyne.application.soundbrain_service import (
+from phasenox.application.soundbrain_service import (
     AnalysisRequest,
     SoundBrainService,
 )
-from noisyne.reference.models import ReferenceComparison, ReferenceReport
+from phasenox.reference.models import ReferenceComparison, ReferenceReport
 
 AUDIO_PATH = Path("tests/assets/test.wav")
 
@@ -122,7 +122,7 @@ def test_soundbrain_service_module_import_does_not_load_torch():
 
     script = (
         "import sys\n"
-        "from noisyne.application.soundbrain_service import AnalysisRequest\n"
+        "from phasenox.application.soundbrain_service import AnalysisRequest\n"
         "print('torch' in sys.modules, 'transformers' in sys.modules)\n"
     )
 

@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from noisyne.audio.analysis.models import AnalysisResult
-from noisyne.audio.context.models import AudioContext
-from noisyne.audio.engineer.models import EngineerResult
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.report.models import SoundBrainReport
-from noisyne.application.audio_review_service import (
+from phasenox.audio.analysis.models import AnalysisResult
+from phasenox.audio.context.models import AudioContext
+from phasenox.audio.engineer.models import EngineerResult
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.report.models import SoundBrainReport
+from phasenox.application.audio_review_service import (
     AudioReviewRequest,
     AudioReviewService,
 )

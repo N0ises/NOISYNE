@@ -6,9 +6,9 @@ from time import sleep
 
 import torch
 
-from noisyne.runtime import ModelRepository, ModelRuntime
-from noisyne.runtime.loader import ModelLoader
-from noisyne.runtime.models import LoadedModelAssets
+from phasenox.runtime import ModelRepository, ModelRuntime
+from phasenox.runtime.loader import ModelLoader
+from phasenox.runtime.models import LoadedModelAssets
 
 
 class FakeModel:

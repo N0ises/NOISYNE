@@ -19,7 +19,7 @@ foreach ($file in $files) {
     Write-Host "Analyzing: $($file.Name)"
     Write-Host "=========================================="
 
-    python -m noisyne.cli analyze "$($file.FullName)" `
+    python -m phasenox.cli analyze "$($file.FullName)" `
         --mix-intelligence `
         --plugin-intelligence `
         --reasoning `

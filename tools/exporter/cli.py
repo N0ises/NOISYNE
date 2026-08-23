@@ -217,9 +217,9 @@ def _write_full(
     canonical_groups = set(groups) - {"root", "scripts", "docs", "compatibility"}
     for category in sorted({"misc"} | canonical_groups):
         bundle.text(
-            Path("noisyne") / f"{category}.txt",
+            Path("phasenox") / f"{category}.txt",
             module_document(
-                f"noisyne.{category}", groups.get(category, []), analyses, generated_at
+                f"phasenox.{category}", groups.get(category, []), analyses, generated_at
             ),
         )
     bundle.text(
@@ -262,8 +262,8 @@ def _write_module(
         record.relative_path.parts and record.relative_path.parts[0].casefold() == "brain"
         for record in records
     )
-    package = "brain" if legacy_only else "noisyne"
-    title = "brain compatibility namespace" if legacy_only else f"noisyne.{selector}"
+    package = "brain" if legacy_only else "phasenox"
+    title = "brain compatibility namespace" if legacy_only else f"phasenox.{selector}"
     bundle.text(
         Path(package) / f"{safe_name}.txt",
         module_document(title, records, analyses, generated_at),
@@ -291,7 +291,7 @@ def _category_for(record: FileRecord) -> str:
     package = parts[0].casefold()
     if package == "brain":
         return "compatibility"
-    if package != "noisyne":
+    if package != "phasenox":
         return "root"
     if len(parts) > 2:
         return parts[1].casefold()

@@ -12,9 +12,9 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from noisyne.providers import ProviderFactory, ProviderService
-from noisyne.providers.mock import MockProvider
-from noisyne.providers.models import GenerateRequest
+from phasenox.providers import ProviderFactory, ProviderService
+from phasenox.providers.mock import MockProvider
+from phasenox.providers.models import GenerateRequest
 
 REPORTS_DIR = PROJECT_ROOT / "reports"
 VALIDATION_PATH = REPORTS_DIR / "v1_release_validation.json"
@@ -56,19 +56,19 @@ def parse_pytest_summary(output: str) -> dict:
 
 VALIDATED_FILES = [
     # Sprint 12 modified files.
-    "noisyne/infrastructure/config/models.py",
-    "noisyne/infrastructure/config/loader.py",
-    "noisyne/llm/qwen.py",
-    "noisyne/embedding.py",
-    "noisyne/rag/reranker.py",
-    "noisyne/text/embeddings/providers/sentence_transformer.py",
-    "noisyne/audio/plugin/parameter_generator.py",
-    "noisyne/report/exporter.py",
-    "noisyne/report/models.py",
-    "noisyne/application/soundbrain_service.py",
-    "noisyne/reasoning/parser.py",
-    "noisyne/providers/factory.py",
-    "noisyne/rag/pdf_ocr_loader.py",
+    "phasenox/infrastructure/config/models.py",
+    "phasenox/infrastructure/config/loader.py",
+    "phasenox/llm/qwen.py",
+    "phasenox/embedding.py",
+    "phasenox/rag/reranker.py",
+    "phasenox/text/embeddings/providers/sentence_transformer.py",
+    "phasenox/audio/plugin/parameter_generator.py",
+    "phasenox/report/exporter.py",
+    "phasenox/report/models.py",
+    "phasenox/application/soundbrain_service.py",
+    "phasenox/reasoning/parser.py",
+    "phasenox/providers/factory.py",
+    "phasenox/rag/pdf_ocr_loader.py",
     "scripts/generate_v1_release_validation.py",
 ]
 
@@ -86,7 +86,7 @@ def main() -> int:
         },
         "formatting": run_command([python, "-m", "black", "--check"] + VALIDATED_FILES),
         "lint": run_command([python, "-m", "ruff", "check"] + VALIDATED_FILES),
-        "compileall": run_command([python, "-m", "compileall", "noisyne", "brain", "tests"]),
+        "compileall": run_command([python, "-m", "compileall", "phasenox", "brain", "tests"]),
         "tests": {},
         "cli": {},
         "workflow_export": {},
@@ -153,7 +153,7 @@ def main() -> int:
         [
             python,
             "-m",
-            "noisyne.cli",
+            "phasenox.cli",
             "analyze",
             "tests/audio.wav",
             "--reasoning",
@@ -166,14 +166,14 @@ def main() -> int:
     # Workflow export validation.
     workflow_output = PROJECT_ROOT / "outputs" / "v1_release_workflow"
     try:
-        from noisyne.audio.mix.models import MixIntelligenceResult, ProcessingStep
-        from noisyne.audio.plugin.models import (
+        from phasenox.audio.mix.models import MixIntelligenceResult, ProcessingStep
+        from phasenox.audio.plugin.models import (
             PluginIntelligenceResult,
             PluginIntelligenceStep,
             ProcessingGoal,
         )
-        from noisyne.integration import AdapterFactory, ExportRequest, WorkflowSession
-        from noisyne.report.models import ReportIssue, SoundBrainReport
+        from phasenox.integration import AdapterFactory, ExportRequest, WorkflowSession
+        from phasenox.report.models import ReportIssue, SoundBrainReport
 
         workflow_output.mkdir(parents=True, exist_ok=True)
         report = SoundBrainReport(
@@ -264,7 +264,7 @@ def main() -> int:
     # Evaluation validation.
     eval_report_path = REPORTS_DIR / "v1_release_evaluation.json"
     try:
-        from noisyne.evaluation.service import EvaluationService
+        from phasenox.evaluation.service import EvaluationService
 
         eval_service = EvaluationService()
         eval_result = eval_service.evaluate_components(report)

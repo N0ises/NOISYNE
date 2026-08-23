@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.perception import (
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.perception import (
     PERCEPTUAL_SCHEMA_VERSION,
     POLICY_CONDITIONED_TRANSLATION_RISK_METHOD_ID,
     TRANSLATION_EVIDENCE_METHOD_ID,
@@ -39,14 +39,14 @@ from noisyne.perception import (
     TranslationRiskPolicy,
     UnitBasis,
 )
-from noisyne.perception.transfer import ImpulseResponseTransfer, MagnitudeResponseEvidence
-from noisyne.perception.transfer_contracts import PlaybackTransferProfile
-from noisyne.perception.translation import (
+from phasenox.perception.transfer import ImpulseResponseTransfer, MagnitudeResponseEvidence
+from phasenox.perception.transfer_contracts import PlaybackTransferProfile
+from phasenox.perception.translation import (
     TranslationEvidenceAnalyzer,
     TranslationEvidenceRuntimeResult,
     TranslationRiskEvaluator,
 )
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 
 def _readonly(values: object) -> np.ndarray:
@@ -481,7 +481,7 @@ def test_lightweight_perception_import_still_avoids_numpy() -> None:
     program = (
         "import sys; "
         f"sys.path.insert(0, {str(repository)!r}); "
-        "import noisyne.perception; "
+        "import phasenox.perception; "
         "assert 'numpy' not in sys.modules"
     )
     completed = subprocess.run(

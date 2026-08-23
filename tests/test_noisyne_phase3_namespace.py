@@ -16,10 +16,10 @@ def test_legacy_modules_are_canonical_module_objects() -> None:
     )
 
     for suffix in module_names:
-        canonical = importlib.import_module(f"noisyne.{suffix}")
+        canonical = importlib.import_module(f"phasenox.{suffix}")
         legacy = importlib.import_module(f"brain.{suffix}")
         assert legacy is canonical
-        assert legacy.__name__ == f"noisyne.{suffix}"
+        assert legacy.__name__ == f"phasenox.{suffix}"
 
 
 def test_representative_public_type_identity() -> None:
@@ -29,10 +29,10 @@ def test_representative_public_type_identity() -> None:
     from brain.memory.errors import MemoryConfigurationError as LegacyMemoryConfigurationError
     from brain.reference.models import Severity as LegacySeverity
 
-    from noisyne.application import NoisyneService, SoundBrainService
-    from noisyne.application.noisyne_service import AnalysisRequest
-    from noisyne.memory.errors import MemoryConfigurationError
-    from noisyne.reference.models import Severity
+    from phasenox.application import NoisyneService, SoundBrainService
+    from phasenox.application.noisyne_service import AnalysisRequest
+    from phasenox.memory.errors import MemoryConfigurationError
+    from phasenox.reference.models import Severity
 
     assert LegacyNoisyneService is NoisyneService
     assert LegacySoundBrainService is SoundBrainService is NoisyneService
@@ -45,20 +45,20 @@ def test_legacy_first_import_order_preserves_identity() -> None:
     code = """
 import importlib
 legacy = importlib.import_module('brain.reference.models')
-canonical = importlib.import_module('noisyne.reference.models')
+canonical = importlib.import_module('phasenox.reference.models')
 assert legacy is canonical
 assert legacy.Severity is canonical.Severity
-assert legacy.__name__ == 'noisyne.reference.models'
+assert legacy.__name__ == 'phasenox.reference.models'
 """
     subprocess.run([sys.executable, "-c", code], check=True)
 
 
 def test_legacy_pickle_module_path_resolves_to_canonical_type() -> None:
-    from noisyne.reference.models import Severity
+    from phasenox.reference.models import Severity
 
     canonical_payload = pickle.dumps(Severity.LOW, protocol=0)
     legacy_payload = canonical_payload.replace(
-        b"cnoisyne.reference.models\nSeverity\n",
+        b"cphasenox.reference.models\nSeverity\n",
         b"cbrain.reference.models\nSeverity\n",
     )
 
@@ -67,7 +67,7 @@ def test_legacy_pickle_module_path_resolves_to_canonical_type() -> None:
 
 
 def test_legacy_resource_package_resolves_canonical_resources() -> None:
-    canonical = resources.files("noisyne.infrastructure.config").joinpath("resources")
+    canonical = resources.files("phasenox.infrastructure.config").joinpath("resources")
     legacy = resources.files("brain.infrastructure.config").joinpath("resources")
 
     for name in ("audio.yaml", "models.yaml", "runtime.yaml"):
@@ -77,7 +77,7 @@ def test_legacy_resource_package_resolves_canonical_resources() -> None:
 def test_root_imports_remain_lightweight() -> None:
     code = """
 import sys
-import noisyne
+import phasenox
 import brain
 assert 'torch' not in sys.modules
 assert 'transformers' not in sys.modules

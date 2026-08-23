@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from noisyne.memory import MemoryRegistry
+from phasenox.memory import MemoryRegistry
 
 
 def test_registry_loads_default_bundle() -> None:

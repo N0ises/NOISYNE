@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from noisyne.knowledge import KnowledgeLoader, KnowledgeResolver
+from phasenox.knowledge import KnowledgeLoader, KnowledgeResolver
 
 
 @pytest.fixture

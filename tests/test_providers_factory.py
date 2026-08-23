@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from noisyne.providers import (
+from phasenox.providers import (
     BaseAIProvider,
     GeminiProvider,
     LocalProvider,

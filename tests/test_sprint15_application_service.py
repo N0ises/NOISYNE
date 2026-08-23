@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from noisyne.application import (
+from phasenox.application import (
     ApplicationRequest,
     ApplicationResult,
     ApplicationResultStatus,
@@ -21,8 +21,8 @@ from noisyne.application import (
     OperationType,
     StageState,
 )
-from noisyne.perception.common import ScalarValue, UnitBasis
-from noisyne.perception.mix_intelligence_contracts import (
+from phasenox.perception.common import ScalarValue, UnitBasis
+from phasenox.perception.mix_intelligence_contracts import (
     MixCriterionOperator,
     MixEvidenceDimensionId,
     MixEvidenceSourceType,
@@ -31,14 +31,14 @@ from noisyne.perception.mix_intelligence_contracts import (
     MixIssuePriority,
     MixIssueType,
 )
-from noisyne.perception.reference_contracts import (
+from phasenox.perception.reference_contracts import (
     ReferenceComparisonConfig,
     ReferenceComparisonMode,
     ReferenceProvenance,
     ReferenceRole,
     ReferenceTrackIdentity,
 )
-from noisyne.perception.translation_contracts import TranslationPolicyProvenance
+from phasenox.perception.translation_contracts import TranslationPolicyProvenance
 
 
 def _write_temp_wav(path: Path, duration_seconds: float = 0.5, sample_rate: int = 44100) -> None:
@@ -98,11 +98,11 @@ def _sample_mix_policy() -> dict[str, Any]:
 
 
 def test_import_noisyne_application_is_lightweight() -> None:
-    """Importing noisyne.application must not initialize torch, ONNX, LLM, network, Qt."""
+    """Importing phasenox.application must not initialize torch, ONNX, LLM, network, Qt."""
     code = (
         "import sys; "
-        "import noisyne.application; "
-        "assert noisyne.application.NoisyneV2Service is not None; "
+        "import phasenox.application; "
+        "assert phasenox.application.NoisyneV2Service is not None; "
         "assert 'torch' not in sys.modules, 'torch loaded on import'; "
         "assert 'onnxruntime' not in sys.modules, 'onnxruntime loaded on import'; "
         "print('ok')"
@@ -281,7 +281,7 @@ def test_capability_lifecycle_separate_from_machine_availability() -> None:
 
 def test_unavailable_dependency_reflected_in_snapshot() -> None:
     """If a fake dependency is added to a capability, it reports UNAVAILABLE."""
-    from noisyne.runtime.capabilities import Capability, CapabilityStatus, registry
+    from phasenox.runtime.capabilities import Capability, CapabilityStatus, registry
 
     registry.register(
         Capability(
@@ -359,20 +359,20 @@ def test_repeated_call_determinism(tmp_path: Path) -> None:
 
 def test_v1_alias_not_loaded_by_default() -> None:
     """V1 service aliases exist but are not imported by default."""
-    import noisyne.application
+    import phasenox.application
 
-    assert "NoisyneService" not in dir(noisyne.application)
-    alias = noisyne.application.NoisyneService
+    assert "NoisyneService" not in dir(phasenox.application)
+    alias = phasenox.application.NoisyneService
     assert alias is not None
 
 
 def test_no_qt_import() -> None:
     """Application module must not require Qt."""
-    import noisyne.application
+    import phasenox.application
 
     # If PySide/PyQt were imported, they'd be in sys.modules. We just assert the
     # module loads without error; the lightweight import test above is stronger.
-    assert noisyne.application is not None
+    assert phasenox.application is not None
 
 
 def test_sprint14_onnx_not_promoted_to_production() -> None:

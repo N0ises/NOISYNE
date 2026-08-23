@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from noisyne.infrastructure.config import get_application_root
-from noisyne.memory import MemoryLoader
-from noisyne.memory.errors import MemoryConfigurationError
+from phasenox.infrastructure.config import get_application_root
+from phasenox.memory import MemoryLoader
+from phasenox.memory.errors import MemoryConfigurationError
 
 
 def test_loader_root_is_absolute_and_application_relative():

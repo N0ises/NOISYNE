@@ -1,13 +1,13 @@
 from pathlib import Path
 from types import SimpleNamespace
 
-from noisyne.audio.analysis.report import AnalysisReport
-from noisyne.audio.engineer.report import EngineerReport
-from noisyne.infrastructure.config.models import ChromaConfig
-from noisyne.memory.vector.config import DEFAULT_COLLECTION
-from noisyne.prompt.prompt_builder import PromptBuilder
-from noisyne.reasoning.prompts import SYSTEM_PROMPT
-from noisyne.runtime.engine_registry import registry
+from phasenox.audio.analysis.report import AnalysisReport
+from phasenox.audio.engineer.report import EngineerReport
+from phasenox.infrastructure.config.models import ChromaConfig
+from phasenox.memory.vector.config import DEFAULT_COLLECTION
+from phasenox.prompt.prompt_builder import PromptBuilder
+from phasenox.reasoning.prompts import SYSTEM_PROMPT
+from phasenox.runtime.engine_registry import registry
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 

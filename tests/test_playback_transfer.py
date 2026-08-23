@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.perception import (
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.perception import (
     PLAYBACK_TRANSFER_METHOD_ID,
     PLAYBACK_TRANSFER_METHOD_VERSION,
     ExtrapolationPolicy,
@@ -30,12 +30,12 @@ from noisyne.perception import (
     TransferProvenance,
     UnitBasis,
 )
-from noisyne.perception.transfer import (
+from phasenox.perception.transfer import (
     ImpulseResponseTransfer,
     MagnitudeResponseEvidence,
     PlaybackTransferEngine,
 )
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 
 def _readonly(values: object) -> np.ndarray:
@@ -390,7 +390,7 @@ def test_lightweight_perception_import_does_not_import_numpy_runtime() -> None:
     program = (
         "import sys; "
         f"sys.path.insert(0, {str(repository)!r}); "
-        "import noisyne.perception; "
+        "import phasenox.perception; "
         "assert 'numpy' not in sys.modules"
     )
     completed = subprocess.run(

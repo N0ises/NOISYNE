@@ -242,7 +242,7 @@ Canonical product and compatibility identities:
 Product: NØISYNE
 ASCII identity: NOISYNE
 Distribution: noisyne
-Canonical Python package: noisyne
+Canonical Python package: phasenox
 Legacy Python package: brain (compatibility only)
 Canonical CLI: noisyne
 Legacy CLI: soundbrain (compatibility alias)
@@ -253,7 +253,7 @@ Legacy service: SoundBrainService (compatibility alias)
 New integrations should use canonical imports:
 
 ```python
-from noisyne.application import NoisyneService
+from phasenox.application import NoisyneService
 ```
 
 Existing `brain.*` imports remain supported during the compatibility period.

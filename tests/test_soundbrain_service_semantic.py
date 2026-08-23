@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from noisyne.application.soundbrain_service import (
+from phasenox.application.soundbrain_service import (
     AnalysisRequest,
     SoundBrainService,
 )
-from noisyne.infrastructure.config import settings
+from phasenox.infrastructure.config import settings
 
 
 AUDIO_PATH = Path("tests/assets/test.wav")

@@ -22,7 +22,7 @@ pip install -r requirements-dev.txt
 Use canonical interfaces in new code and validation:
 
 ```bash
-python -c "import noisyne"
+python -c "import phasenox"
 noisyne --help
 ```
 

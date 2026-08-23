@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from noisyne.audio.analysis.models import AnalysisResult
-from noisyne.audio.context.models import AudioContext
-from noisyne.audio.engineer.models import EngineerResult
-from noisyne.audio.mix.explanation import ExplanationBuilder
-from noisyne.audio.mix.models import ProcessingStep, RootCause
+from phasenox.audio.analysis.models import AnalysisResult
+from phasenox.audio.context.models import AudioContext
+from phasenox.audio.engineer.models import EngineerResult
+from phasenox.audio.mix.explanation import ExplanationBuilder
+from phasenox.audio.mix.models import ProcessingStep, RootCause
 
 
 def _make_analysis(**kwargs) -> AnalysisResult:

@@ -9,7 +9,7 @@ from collections.abc import Callable
 
 import pytest
 
-from noisyne.application.contracts import (
+from phasenox.application.contracts import (
     ApplicationRequest,
     ApplicationResult,
     ApplicationResultStatus,
@@ -17,7 +17,7 @@ from noisyne.application.contracts import (
     StageOutcome,
     StageState,
 )
-from noisyne.runtime.jobs import (
+from phasenox.runtime.jobs import (
     JobScheduler,
     JobState,
     PauseCapability,
@@ -112,7 +112,7 @@ def _inspect_request(request_id: str = "r1") -> ApplicationRequest:
 def test_lightweight_import() -> None:
     """Importing the job scheduler must not initialize torch/onnx/Qt/network."""
     modules_before = set(sys.modules)
-    import noisyne.runtime.jobs as jobs_module  # noqa: F401
+    import phasenox.runtime.jobs as jobs_module  # noqa: F401
 
     new_modules = set(sys.modules) - modules_before
     forbidden = {"torch", "onnxruntime", "PySide6", "torchaudio"}
@@ -459,7 +459,7 @@ def test_gpu_serialization_policy() -> None:
 
 def test_sprint15_service_boundary_preserved() -> None:
     """The scheduler executes ApplicationRequest through the real NoisyneV2Service shape."""
-    from noisyne.application.service import NoisyneV2Service
+    from phasenox.application.service import NoisyneV2Service
 
     sched = JobScheduler(NoisyneV2Service(), max_workers=1)
     sched.start()
@@ -482,7 +482,7 @@ def test_sprint15_service_boundary_preserved() -> None:
 def test_no_qt_import() -> None:
     """Importing the scheduler module does not bring in Qt, torch, or ONNX."""
     modules_before = set(sys.modules)
-    import noisyne.runtime.jobs as jobs_module  # noqa: F401
+    import phasenox.runtime.jobs as jobs_module  # noqa: F401
 
     new_modules = set(sys.modules) - modules_before
     forbidden = {"PySide6", "torch", "onnxruntime", "torchaudio"}
@@ -689,7 +689,7 @@ def test_cancel_after_service_return_still_cancels(
 ) -> None:
     """A cancellation landing after the service returned but before the
     terminal write wins over recording a COMPLETED/FAILED result."""
-    import noisyne.runtime.jobs.executor as executor_mod
+    import phasenox.runtime.jobs.executor as executor_mod
 
     real_result_cls = executor_mod.JobResult
     sched = JobScheduler(_FakeService(), max_workers=1)

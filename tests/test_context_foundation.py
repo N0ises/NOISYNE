@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from noisyne.perception import (
+from phasenox.perception import (
     PERCEPTUAL_SCHEMA_VERSION,
     ConfidenceBasis,
     ContextClaim,
@@ -35,8 +35,8 @@ from noisyne.perception import (
     TranslationRiskPolicy,
     UnitBasis,
 )
-from noisyne.perception.context_resolution import ContextPolicySelector, PerceptualContextResolver
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.perception.context_resolution import ContextPolicySelector, PerceptualContextResolver
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 
 def _claim(
@@ -565,10 +565,10 @@ def test_lightweight_perception_and_context_resolution_import_avoid_dsp_and_ml()
     program = (
         "import sys; "
         f"sys.path.insert(0, {str(repository)!r}); "
-        "import noisyne.perception; import noisyne.perception.context_resolution; "
+        "import phasenox.perception; import phasenox.perception.context_resolution; "
         "assert 'numpy' not in sys.modules; assert 'torch' not in sys.modules; "
-        "assert 'noisyne.perception.translation' not in sys.modules; "
-        "assert 'noisyne.perception.transfer' not in sys.modules"
+        "assert 'phasenox.perception.translation' not in sys.modules; "
+        "assert 'phasenox.perception.transfer' not in sys.modules"
     )
     completed = subprocess.run(
         [sys.executable, "-I", "-c", program], capture_output=True, text=True, check=False

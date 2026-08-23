@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from noisyne.evaluation.models import EvaluationMetric
-from noisyne.evaluation.scoring import ScoreAggregator
+from phasenox.evaluation.models import EvaluationMetric
+from phasenox.evaluation.scoring import ScoreAggregator
 
 
 def test_aggregator_computes_weighted_average() -> None:

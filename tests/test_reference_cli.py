@@ -6,9 +6,9 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import main
-from noisyne.application.audio_review_service import AudioReviewService
-from noisyne.reference.engine import ReferenceEngine
-from noisyne.reference.models import ReferenceComparison, ReferenceReport
+from phasenox.application.audio_review_service import AudioReviewService
+from phasenox.reference.engine import ReferenceEngine
+from phasenox.reference.models import ReferenceComparison, ReferenceReport
 
 
 def _reference_report() -> ReferenceReport:

@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.perception import (
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.perception import (
     ConfidenceBasis,
     ContextClaim,
     ContextDimension,
@@ -50,14 +50,14 @@ from noisyne.perception import (
     TranslationRiskPolicy,
     UnitBasis,
 )
-from noisyne.perception.masking import SimultaneousMaskingFoundation
-from noisyne.perception.mix_intelligence import PerceptualMixIntelligenceEngine
-from noisyne.perception.mix_intelligence_contracts import MixIssueCriterion
-from noisyne.perception.reference_intelligence import ObjectiveReferenceComparator
-from noisyne.perception.transfer import ImpulseResponseTransfer
-from noisyne.perception.transfer_contracts import PlaybackTransferProfile
-from noisyne.perception.translation import TranslationEvidenceAnalyzer, TranslationRiskEvaluator
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.perception.masking import SimultaneousMaskingFoundation
+from phasenox.perception.mix_intelligence import PerceptualMixIntelligenceEngine
+from phasenox.perception.mix_intelligence_contracts import MixIssueCriterion
+from phasenox.perception.reference_intelligence import ObjectiveReferenceComparator
+from phasenox.perception.transfer import ImpulseResponseTransfer
+from phasenox.perception.transfer_contracts import PlaybackTransferProfile
+from phasenox.perception.translation import TranslationEvidenceAnalyzer, TranslationRiskEvaluator
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -810,10 +810,10 @@ def test_precomputed_evaluator_import_is_lightweight() -> None:
     program = (
         "import sys; "
         f"sys.path.insert(0, {str(ROOT)!r}); "
-        "import noisyne.perception.mix_intelligence; "
+        "import phasenox.perception.mix_intelligence; "
         "assert 'numpy' not in sys.modules; assert 'torch' not in sys.modules; "
-        "assert 'noisyne.perception.auditory' not in sys.modules; "
-        "assert 'noisyne.perception.masking' not in sys.modules"
+        "assert 'phasenox.perception.auditory' not in sys.modules; "
+        "assert 'phasenox.perception.masking' not in sys.modules"
     )
     completed = subprocess.run(
         [sys.executable, "-I", "-c", program],

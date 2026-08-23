@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from noisyne.memory.vector.manager import VectorManager
-from noisyne.memory.vector.models import VectorRecord
-from noisyne.memory.vector.providers.chroma import ChromaProvider
+from phasenox.memory.vector.manager import VectorManager
+from phasenox.memory.vector.models import VectorRecord
+from phasenox.memory.vector.providers.chroma import ChromaProvider
 
 
 class _FakeProvider(ChromaProvider):
@@ -63,7 +63,7 @@ class _FakeDatabase:
         self.provider = provider
 
     def collection(self, name: str):
-        from noisyne.memory.vector.collection import VectorCollection
+        from phasenox.memory.vector.collection import VectorCollection
 
         return VectorCollection(self.provider, name)
 

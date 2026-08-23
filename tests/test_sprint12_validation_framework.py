@@ -6,12 +6,12 @@ import math
 import numpy as np
 import pytest
 
-from noisyne.perception.auditory_contracts import (
+from phasenox.perception.auditory_contracts import (
     AUDITORY_FRONTEND_METHOD_ID,
     AUDITORY_FRONTEND_METHOD_VERSION,
     AuditoryFrontendConfig,
 )
-from noisyne.perception.common import (
+from phasenox.perception.common import (
     Confidence,
     MethodMetadata,
     ResultState,
@@ -19,11 +19,11 @@ from noisyne.perception.common import (
     ScalarValue,
     UnitBasis,
 )
-from noisyne.perception.descriptor_contracts import (
+from phasenox.perception.descriptor_contracts import (
     BRIGHTNESS_CORRELATE_METHOD_ID,
     BRIGHTNESS_CORRELATE_METHOD_VERSION,
 )
-from noisyne.perception.mix_intelligence_contracts import (
+from phasenox.perception.mix_intelligence_contracts import (
     MIX_INTELLIGENCE_METHOD_ID,
     MIX_INTELLIGENCE_METHOD_VERSION,
     MixCriterionEvaluation,
@@ -38,7 +38,7 @@ from noisyne.perception.mix_intelligence_contracts import (
     MixIssuePriority,
     MixIssueType,
 )
-from noisyne.perception.reference_contracts import (
+from phasenox.perception.reference_contracts import (
     REFERENCE_FOUNDATION_METHOD_ID,
     REFERENCE_FOUNDATION_METHOD_VERSION,
     ReferenceComparisonConfig,
@@ -51,14 +51,14 @@ from noisyne.perception.reference_contracts import (
     ReferenceProvenance,
     ReferenceTrackIdentity,
 )
-from noisyne.perception.translation_contracts import (
+from phasenox.perception.translation_contracts import (
     TranslationEvidenceDimensionId,
     TranslationPolicyProvenance,
     TranslationRiskComparison,
     TranslationRiskCriterion,
     TranslationRiskPolicy,
 )
-from noisyne.perception.validation_contracts import (
+from phasenox.perception.validation_contracts import (
     VALIDATION_SCHEMA_VERSION,
     FixtureKind,
     MethodValidationRecord,
@@ -68,8 +68,8 @@ from noisyne.perception.validation_contracts import (
     ValidationStatus,
     ValidationSummary,
 )
-from noisyne.perception.validation_fixtures import NoisyneValidationFixtureProvider
-from noisyne.perception.validation_matrix import PerceptualValidationMatrix
+from phasenox.perception.validation_fixtures import NoisyneValidationFixtureProvider
+from phasenox.perception.validation_matrix import PerceptualValidationMatrix
 
 # =============================================================================
 # 1. Validation Status Taxonomy
@@ -512,7 +512,7 @@ class TestBoundaryInvalidInputs:
 
     def test_exact_criterion_boundary(self) -> None:
         # Test policy evaluation at exact boundary
-        from noisyne.perception.mix_intelligence_contracts import _criterion_triggered
+        from phasenox.perception.mix_intelligence_contracts import _criterion_triggered
 
         threshold = ScalarValue(
             value=0.5,
@@ -524,7 +524,7 @@ class TestBoundaryInvalidInputs:
             unit_basis=UnitBasis.DECLARED_UNIT,
             unit="dB",
         )
-        from noisyne.perception.mix_intelligence_contracts import MixCriterionOperator
+        from phasenox.perception.mix_intelligence_contracts import MixCriterionOperator
 
         result = _criterion_triggered(
             actual_at_boundary, MixCriterionOperator.GREATER_THAN_OR_EQUAL, threshold
@@ -532,7 +532,7 @@ class TestBoundaryInvalidInputs:
         assert result is True
 
     def test_just_above_boundary(self) -> None:
-        from noisyne.perception.mix_intelligence_contracts import _criterion_triggered
+        from phasenox.perception.mix_intelligence_contracts import _criterion_triggered
 
         threshold = ScalarValue(
             value=0.5,
@@ -544,13 +544,13 @@ class TestBoundaryInvalidInputs:
             unit_basis=UnitBasis.DECLARED_UNIT,
             unit="dB",
         )
-        from noisyne.perception.mix_intelligence_contracts import MixCriterionOperator
+        from phasenox.perception.mix_intelligence_contracts import MixCriterionOperator
 
         result = _criterion_triggered(actual, MixCriterionOperator.GREATER_THAN, threshold)
         assert result is True
 
     def test_just_below_boundary(self) -> None:
-        from noisyne.perception.mix_intelligence_contracts import _criterion_triggered
+        from phasenox.perception.mix_intelligence_contracts import _criterion_triggered
 
         threshold = ScalarValue(
             value=0.5,
@@ -562,7 +562,7 @@ class TestBoundaryInvalidInputs:
             unit_basis=UnitBasis.DECLARED_UNIT,
             unit="dB",
         )
-        from noisyne.perception.mix_intelligence_contracts import MixCriterionOperator
+        from phasenox.perception.mix_intelligence_contracts import MixCriterionOperator
 
         result = _criterion_triggered(actual, MixCriterionOperator.GREATER_THAN, threshold)
         assert result is False
@@ -744,7 +744,7 @@ class TestValidationContracts:
 class TestCapabilityTruthIntegration:
     def test_lifecycle_state_separate_from_validation(self) -> None:
         # Runtime CapabilityStatus is separate from ValidationStatus
-        from noisyne.runtime.capabilities import CapabilityStatus
+        from phasenox.runtime.capabilities import CapabilityStatus
 
         cap_statuses = set(CapabilityStatus)
         val_statuses = set(ValidationStatus)

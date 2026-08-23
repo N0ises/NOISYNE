@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from noisyne.audio.plugin.models import (
+from phasenox.audio.plugin.models import (
     ParameterRecommendation,
     PluginIntelligenceResult,
     PluginIntelligenceStep,
 )
-from noisyne.evaluation.metrics import (
+from phasenox.evaluation.metrics import (
     AnalysisQualityMetrics,
     ConfidenceEvaluationMetrics,
     PluginRecommendationMetrics,
     RecommendationConsistencyMetrics,
 )
-from noisyne.report.models import ReportIssue, SoundBrainReport
+from phasenox.report.models import ReportIssue, SoundBrainReport
 
 
 def _report(

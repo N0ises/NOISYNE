@@ -13,7 +13,7 @@ def _reports_dir() -> Path:
     Import is deferred to avoid heavy module-level imports until a
     command is actually executed.
     """
-    from noisyne.infrastructure.config import settings
+    from phasenox.infrastructure.config import settings
 
     return settings.runtime.report_dir
 
@@ -37,7 +37,7 @@ def _default_reference_output_directory(audio_path: str | Path) -> Path:
 
 def _cmd_analyze(args: argparse.Namespace) -> int:
     """Run the V1 NØISYNE analysis workflow through NoisyneService."""
-    from noisyne.application.noisyne_service import (
+    from phasenox.application.noisyne_service import (
         AnalysisRequest,
         NoisyneService,
     )
@@ -79,7 +79,7 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
 
 def _cmd_reference(args: argparse.Namespace) -> int:
     """Compare one or more reference audio files against the current mix."""
-    from noisyne.application.noisyne_service import (
+    from phasenox.application.noisyne_service import (
         AnalysisRequest,
         NoisyneService,
     )

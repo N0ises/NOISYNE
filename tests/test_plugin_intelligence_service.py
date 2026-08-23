@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from noisyne.audio.context.models import AudioContext
-from noisyne.audio.mix.models import (
+from phasenox.audio.context.models import AudioContext
+from phasenox.audio.mix.models import (
     MixIntelligenceResult,
     PrioritizedIssue,
     RootCause,
 )
-from noisyne.audio.plugin.service import PluginIntelligenceService
+from phasenox.audio.plugin.service import PluginIntelligenceService
 
 
 def test_service_analyze_returns_steps():

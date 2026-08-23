@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from noisyne.audio.pipeline import AudioPipeline
+from phasenox.audio.pipeline import AudioPipeline
 
 
 AUDIO_PATH = Path("tests/assets/test.wav")

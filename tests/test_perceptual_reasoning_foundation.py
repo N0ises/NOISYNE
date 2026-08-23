@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from noisyne.perception import (
+from phasenox.perception import (
     Confidence,
     ConfidenceBasis,
     GroundingFact,
@@ -40,18 +40,18 @@ from noisyne.perception import (
     TranslationPolicyProvenance,
     UnitBasis,
 )
-from noisyne.perception.mix_intelligence_contracts import (
+from phasenox.perception.mix_intelligence_contracts import (
     MIX_INTELLIGENCE_METHOD_ID,
     MIX_INTELLIGENCE_METHOD_VERSION,
     MixIssueCriterion,
     mix_issue_id,
     mix_issue_sort_key,
 )
-from noisyne.perception.reasoning import (
+from phasenox.perception.reasoning import (
     DeterministicReasoningProvider,
     PerceptualReasoningEngine,
 )
-from noisyne.perception.reasoning_contracts import (
+from phasenox.perception.reasoning_contracts import (
     ReasoningRequest,
     grounding_fact_id,
     grounding_fact_set_digest,
@@ -59,7 +59,7 @@ from noisyne.perception.reasoning_contracts import (
     render_reasoning_statement,
     source_result_digest,
 )
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -731,10 +731,10 @@ def test_reasoning_import_is_lightweight() -> None:
     program = (
         "import sys; "
         f"sys.path.insert(0, {str(ROOT)!r}); "
-        "import noisyne.perception.reasoning; "
+        "import phasenox.perception.reasoning; "
         "assert 'numpy' not in sys.modules; assert 'torch' not in sys.modules; "
         "assert 'openai' not in sys.modules; assert 'chromadb' not in sys.modules; "
-        "assert 'noisyne.reasoning' not in sys.modules; assert 'noisyne.rag' not in sys.modules"
+        "assert 'phasenox.reasoning' not in sys.modules; assert 'phasenox.rag' not in sys.modules"
     )
     completed = subprocess.run(
         [sys.executable, "-I", "-c", program],

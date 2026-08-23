@@ -11,7 +11,7 @@ Approved Phase 6 freeze commit: `eb3d7ce7c5044b82b92fc5a1a8bda84df56bb9ce`
 | Display | NØISYNE | — |
 | ASCII | NOISYNE | — |
 | Distribution | `noisyne` | — |
-| Python namespace | `noisyne` | `brain` |
+| Python namespace | `phasenox` | `brain` |
 | CLI | `noisyne` | `soundbrain` |
 | Service | `NoisyneService` | `SoundBrainService` |
 | Application root environment | `NOISYNE_ROOT` | `SOUNDBRAIN_ROOT` |

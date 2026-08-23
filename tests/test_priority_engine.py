@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from noisyne.audio.engineer.models import EngineerResult, Issue
-from noisyne.audio.mix.models import RootCause, RootCauseResult
-from noisyne.audio.mix.priority import PriorityEngine
+from phasenox.audio.engineer.models import EngineerResult, Issue
+from phasenox.audio.mix.models import RootCause, RootCauseResult
+from phasenox.audio.mix.priority import PriorityEngine
 
 
 def _make_engineer(issues) -> EngineerResult:

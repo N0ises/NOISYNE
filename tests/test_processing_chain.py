@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from noisyne.audio.context.models import AudioContext
-from noisyne.audio.mix.chains import ProcessingChainRecommender
-from noisyne.audio.mix.models import PrioritizedIssue, RootCause, RootCauseResult
+from phasenox.audio.context.models import AudioContext
+from phasenox.audio.mix.chains import ProcessingChainRecommender
+from phasenox.audio.mix.models import PrioritizedIssue, RootCause, RootCauseResult
 
 
 def _make_prioritized(

@@ -8,21 +8,21 @@ import numpy as np
 import pytest
 import torch
 
-from noisyne.audio.analysis.crest_factor import CrestFactorAnalysis
-from noisyne.audio.analysis.dynamic_range import DynamicRangeAnalysis
-from noisyne.audio.analysis.key import KeyAnalysis
-from noisyne.audio.analysis.lufs import LUFSAnalyzer
-from noisyne.audio.analysis.mfcc import MFCCAnalyzer
-from noisyne.audio.analysis.models import AnalysisResult
-from noisyne.audio.analysis.peak import PeakAnalyzer
-from noisyne.audio.analysis.phase import PhaseCorrelationAnalysis
-from noisyne.audio.analysis.stereo import StereoWidthAnalysis
-from noisyne.audio.analysis.tempo import TempoAnalyzer
-from noisyne.audio.context.models import AudioContext
-from noisyne.audio.context.rules import ContextRuleEngine
-from noisyne.audio.engineer.models import Issue
-from noisyne.audio.engineer.rules import RuleEngine
-from noisyne.audio.io.models import AudioData, AudioMetadata
+from phasenox.audio.analysis.crest_factor import CrestFactorAnalysis
+from phasenox.audio.analysis.dynamic_range import DynamicRangeAnalysis
+from phasenox.audio.analysis.key import KeyAnalysis
+from phasenox.audio.analysis.lufs import LUFSAnalyzer
+from phasenox.audio.analysis.mfcc import MFCCAnalyzer
+from phasenox.audio.analysis.models import AnalysisResult
+from phasenox.audio.analysis.peak import PeakAnalyzer
+from phasenox.audio.analysis.phase import PhaseCorrelationAnalysis
+from phasenox.audio.analysis.stereo import StereoWidthAnalysis
+from phasenox.audio.analysis.tempo import TempoAnalyzer
+from phasenox.audio.context.models import AudioContext
+from phasenox.audio.context.rules import ContextRuleEngine
+from phasenox.audio.engineer.models import Issue
+from phasenox.audio.engineer.rules import RuleEngine
+from phasenox.audio.io.models import AudioData, AudioMetadata
 
 
 def _audio(samples: np.ndarray, sample_rate: int = 44100, channels: int | None = None) -> AudioData:
@@ -234,8 +234,8 @@ class TestFullMixClassification:
         reason="Fixture tests/assets/test.wav is not available",
     )
     def test_real_fixture_classified_as_full_mix(self):
-        from noisyne.audio.io import AudioIOService
-        from noisyne.audio.analysis.analyzer import AudioAnalyzer
+        from phasenox.audio.io import AudioIOService
+        from phasenox.audio.analysis.analyzer import AudioAnalyzer
 
         audio = AudioIOService().load("tests/assets/test.wav")
         analysis = AudioAnalyzer().analyze(audio)
@@ -339,7 +339,7 @@ class TestKeyDetection:
 class TestCLAPDownmix:
 
     def test_encode_audio_downmixes_stereo_before_processing(self):
-        from noisyne.audio.embeddings.clap import CLAPEmbedding
+        from phasenox.audio.embeddings.clap import CLAPEmbedding
 
         sr = 44100
         left = np.ones(sr, dtype=np.float32) * 0.5

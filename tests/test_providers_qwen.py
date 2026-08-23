@@ -6,14 +6,14 @@ from unittest import mock
 
 import pytest
 
-from noisyne.providers import QwenProvider
-from noisyne.providers.models import GenerateRequest, GenerateResponse
+from phasenox.providers import QwenProvider
+from phasenox.providers.models import GenerateRequest, GenerateResponse
 
 
 @pytest.fixture
 def lmstudio_config():
     """Patch LLM settings to a predictable LM Studio endpoint and model."""
-    with mock.patch("noisyne.providers.qwen.settings") as settings:
+    with mock.patch("phasenox.providers.qwen.settings") as settings:
         settings.llm.base_url = "http://127.0.0.1:1234/v1"
         settings.llm.api_key = "lm-studio"
         settings.llm.model = "local-model"
@@ -24,7 +24,7 @@ def test_qwen_provider_returns_lmstudio_completion(lmstudio_config):
     """Successful generation should call LM Studio and return the answer."""
     provider = QwenProvider()
 
-    with mock.patch("noisyne.providers.qwen.requests") as mock_requests:
+    with mock.patch("phasenox.providers.qwen.requests") as mock_requests:
         mock_requests.get.return_value.json.return_value = {"data": [{"id": "qwen2.5-7b-instruct"}]}
         mock_requests.get.return_value.raise_for_status = mock.Mock()
         mock_requests.post.return_value.json.return_value = {
@@ -76,7 +76,7 @@ def test_qwen_provider_uses_configured_model_name(lmstudio_config):
     lmstudio_config.llm.model = "my-custom-qwen"
     provider = QwenProvider()
 
-    with mock.patch("noisyne.providers.qwen.requests") as mock_requests:
+    with mock.patch("phasenox.providers.qwen.requests") as mock_requests:
         mock_requests.post.return_value.json.return_value = {
             "choices": [{"message": {"content": "OK"}, "finish_reason": "stop"}],
             "usage": {"total_tokens": 1},
@@ -95,7 +95,7 @@ def test_qwen_provider_falls_back_when_model_list_unreachable(lmstudio_config):
     """If /v1/models fails, the provider should fall back to 'local-model'."""
     provider = QwenProvider()
 
-    with mock.patch("noisyne.providers.qwen.requests") as mock_requests:
+    with mock.patch("phasenox.providers.qwen.requests") as mock_requests:
         mock_requests.get.side_effect = ConnectionError("LM Studio is offline")
         mock_requests.post.return_value.json.return_value = {
             "choices": [{"message": {"content": "Fallback"}, "finish_reason": "stop"}],
@@ -113,7 +113,7 @@ def test_qwen_provider_gracefully_fails_when_lmstudio_unreachable(lmstudio_confi
     """A network failure during chat/completions should surface as a request exception."""
     provider = QwenProvider()
 
-    with mock.patch("noisyne.providers.qwen.requests") as mock_requests:
+    with mock.patch("phasenox.providers.qwen.requests") as mock_requests:
         mock_requests.get.return_value.json.return_value = {"data": [{"id": "qwen2.5-7b-instruct"}]}
         mock_requests.get.return_value.raise_for_status = mock.Mock()
         mock_requests.post.side_effect = ConnectionError("LM Studio not running")
@@ -134,10 +134,10 @@ def test_qwen_provider_module_does_not_import_transformers():
             )
         return original_import(name, *args, **kwargs)
 
-    sys.modules.pop("noisyne.providers.qwen", None)
+    sys.modules.pop("phasenox.providers.qwen", None)
     builtins.__import__ = blocking_import
     try:
-        import noisyne.providers.qwen as qwen_module
+        import phasenox.providers.qwen as qwen_module
 
         provider = qwen_module.QwenProvider()
         assert provider.name == "qwen"

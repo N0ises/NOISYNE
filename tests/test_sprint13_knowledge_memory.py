@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from noisyne.perception import (
+from phasenox.perception import (
     HistoryActor,
     KnowledgeFilter,
     KnowledgeMemoryType,
@@ -21,10 +21,10 @@ from noisyne.perception import (
     TrustBasis,
     UserPreferenceItem,
 )
-from noisyne.perception.knowledge_store import InMemoryMemoryStore
-from noisyne.perception.validation_contracts import ValidationStatus
-from noisyne.perception.validation_matrix import PerceptualValidationMatrix
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.perception.knowledge_store import InMemoryMemoryStore
+from phasenox.perception.validation_contracts import ValidationStatus
+from phasenox.perception.validation_matrix import PerceptualValidationMatrix
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 
 def _memory_item(

@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from noisyne.audio.mix.models import MixIntelligenceResult, ProcessingStep
-from noisyne.audio.plugin.models import (
+from phasenox.audio.mix.models import MixIntelligenceResult, ProcessingStep
+from phasenox.audio.plugin.models import (
     ParameterRecommendation,
     PluginIntelligenceResult,
     PluginIntelligenceStep,
     ProcessingGoal,
 )
-from noisyne.integration import (
+from phasenox.integration import (
     AbletonAdapter,
     AdapterFactory,
     CubaseAdapter,
@@ -22,7 +22,7 @@ from noisyne.integration import (
     StudioOneAdapter,
     WorkflowSession,
 )
-from noisyne.report.models import ReportIssue, SoundBrainReport
+from phasenox.report.models import ReportIssue, SoundBrainReport
 
 
 @pytest.fixture

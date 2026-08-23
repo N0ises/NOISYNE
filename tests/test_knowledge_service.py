@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from noisyne.knowledge import KnowledgeService
+from phasenox.knowledge import KnowledgeService
 
 
 def test_service_loads_default_bundle() -> None:

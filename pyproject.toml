@@ -76,14 +76,14 @@ include-package-data = true
 py-modules = ["main"]
 
 [project.scripts]
-noisyne = "noisyne.cli:main"
-soundbrain = "noisyne.cli:main"
+noisyne = "phasenox.cli:main"
+soundbrain = "phasenox.cli:main"
 
 [tool.setuptools.package-data]
-"noisyne.infrastructure.config" = ["resources/*.yaml"]
+"phasenox.infrastructure.config" = ["resources/*.yaml"]
 
 [tool.setuptools.packages.find]
-include = ["noisyne*", "brain"]
+include = ["phasenox*", "brain"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

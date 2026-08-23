@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from noisyne.audio.plugin.registry import PluginRegistry
-from noisyne.audio.plugin.selector import PluginSelector
+from phasenox.audio.plugin.registry import PluginRegistry
+from phasenox.audio.plugin.selector import PluginSelector
 
 
 def test_selector_returns_options_by_category():

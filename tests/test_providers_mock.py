@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from noisyne.providers import MockProvider, ProviderService
-from noisyne.providers.models import GenerateRequest, GenerateResponse
+from phasenox.providers import MockProvider, ProviderService
+from phasenox.providers.models import GenerateRequest, GenerateResponse
 
 
 def test_mock_provider_returns_deterministic_response():

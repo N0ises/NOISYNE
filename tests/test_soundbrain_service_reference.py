@@ -5,15 +5,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from noisyne.application.audio_review_service import (
+from phasenox.application.audio_review_service import (
     AudioReviewResult,
     AudioReviewService,
 )
-from noisyne.application.soundbrain_service import (
+from phasenox.application.soundbrain_service import (
     AnalysisRequest,
     SoundBrainService,
 )
-from noisyne.reference.models import (
+from phasenox.reference.models import (
     ReferenceComparison,
     ReferenceReport,
 )

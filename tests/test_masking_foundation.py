@@ -8,18 +8,18 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from noisyne.audio.io.models import AudioData, AudioMetadata
-from noisyne.perception import (
+from phasenox.audio.io.models import AudioData, AudioMetadata
+from phasenox.perception import (
     FrequencyMaskingResult,
     RelativeMaskingPairContext,
     ResultStatus,
 )
-from noisyne.perception.masking import (
+from phasenox.perception.masking import (
     SimultaneousMaskingFoundation,
     moore_glasberg_1983_erb_hz,
     moore_glasberg_1983_roex_p_weights,
 )
-from noisyne.runtime.capabilities import CapabilityStatus, registry
+from phasenox.runtime.capabilities import CapabilityStatus, registry
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -356,7 +356,7 @@ def test_frequency_masking_foundation_capability_is_implemented_not_verified() -
 def test_perception_root_import_remains_numpy_lightweight_with_masking_contract() -> None:
     script = """
 import sys
-import noisyne.perception
+import phasenox.perception
 print('numpy' in sys.modules)
 """
     result = subprocess.run(

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from noisyne.integration import AdapterFactory, WorkflowAdapter
-from noisyne.integration.ableton import AbletonAdapter
-from noisyne.integration.cubase import CubaseAdapter
-from noisyne.integration.flstudio import FLStudioAdapter
-from noisyne.integration.reaper import ReaperAdapter
-from noisyne.integration.studio_one import StudioOneAdapter
+from phasenox.integration import AdapterFactory, WorkflowAdapter
+from phasenox.integration.ableton import AbletonAdapter
+from phasenox.integration.cubase import CubaseAdapter
+from phasenox.integration.flstudio import FLStudioAdapter
+from phasenox.integration.reaper import ReaperAdapter
+from phasenox.integration.studio_one import StudioOneAdapter
 
 EXPECTED_ADAPTERS = {"ableton", "reaper", "cubase", "flstudio", "studio_one"}
 
