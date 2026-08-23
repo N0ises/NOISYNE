@@ -1,4 +1,4 @@
-# SoundBrain Dependency Graph
+# PHASENOX Dependency Graph
 
 Version: 1.0
 
@@ -8,7 +8,7 @@ Status: ACTIVE
 
 # Purpose
 
-This document defines the allowed dependency directions inside SoundBrain.
+This document defines the allowed dependency directions inside PHASENOX.
 
 It prevents architectural drift, circular dependencies, and hidden coupling.
 

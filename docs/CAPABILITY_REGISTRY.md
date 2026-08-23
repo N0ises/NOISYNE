@@ -1,4 +1,4 @@
-# NØISYNE Capability Registry
+# PHASENØX Capability Registry
 
 Version: 2.0
 
@@ -10,7 +10,7 @@ Status: ACTIVE
 
 A capability is a discrete feature that can be discovered, validated, enabled,
 disabled, tested and composed. Runtime capability lifecycle truth is defined by
-`noisyne/runtime/capabilities.py`; this document explains that registry and
+`phasenox/runtime/capabilities.py`; this document explains that registry and
 records product-level capabilities that do not yet have runtime entries.
 
 The repository is `N0ises/NOISYNE`; the canonical distribution and Python
@@ -41,7 +41,7 @@ A contract or adapter existing also does not imply a live external integration.
 
 ## Authoritative Runtime Registry Snapshot
 
-This table mirrors the lifecycle states in `noisyne/runtime/capabilities.py` at
+This table mirrors the lifecycle states in `phasenox/runtime/capabilities.py` at
 the start of V2. Machine availability must be evaluated separately.
 
 | Runtime capability | Lifecycle | Availability constraint / truth |
@@ -120,7 +120,7 @@ with a successful runtime availability probe.
 
 ## Workflow Integration Contract Detail
 
-`noisyne/integration` contains placeholder adapters for Ableton Live, REAPER,
+`phasenox/integration` contains placeholder adapters for Ableton Live, REAPER,
 Cubase, FL Studio and Studio One. Their supported operations write deterministic
 files:
 
@@ -137,7 +137,7 @@ contract metadata, not external-system availability.
 
 ## V1 Release-Candidate Qualification
 
-NØISYNE V1.0.0-rc1 completed release hardening for its supported deterministic
+PHASENØX V1.0.0-rc1 completed release hardening for its supported deterministic
 paths. Optional or incomplete capabilities retain their actual registry states;
 the release-candidate designation does not promote every registry entry to
 Production.

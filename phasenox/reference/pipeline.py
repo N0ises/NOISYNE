@@ -11,7 +11,7 @@ from .report_builder import ReferenceReportBuilder
 
 class ReferencePipeline:
     """
-    NØISYNE Reference Intelligence Pipeline
+    PHASENOX Reference Intelligence Pipeline
 
     Pipeline
 

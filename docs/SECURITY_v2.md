@@ -9,7 +9,7 @@ Status: ACTIVE
 
 # Purpose
 
-SoundBrain processes professional audio, AI models and engineering knowledge.
+PHASENOX processes professional audio, AI models and engineering knowledge.
 Security is a core engineering requirement.
 
 ---
@@ -70,7 +70,7 @@ The system should:
 
 # Data Protection
 
-SoundBrain should minimize stored data.
+PHASENOX should minimize stored data.
 
 Sensitive project material should not be retained longer than necessary.
 

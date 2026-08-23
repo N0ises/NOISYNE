@@ -33,7 +33,7 @@ def generate(
     messages = [
         {
             "role": "system",
-            "content": "You are NØISYNE, an expert audio engineer and music production assistant.",
+            "content": "You are PHASENØX, an expert audio engineer and music production assistant.",
         },
         {"role": "user", "content": prompt},
     ]

@@ -1,4 +1,4 @@
-# NØISYNE Architecture Decisions
+# PHASENØX Architecture Decisions
 
 Version: 2.1
 
@@ -8,7 +8,7 @@ Status: ACTIVE
 
 ## Purpose
 
-This document records accepted long-term architectural decisions for NØISYNE.
+This document records accepted long-term architectural decisions for PHASENØX.
 Historical compatibility identifiers remain governed by the technical rename
 freeze.
 
@@ -16,7 +16,7 @@ freeze.
 
 ## Decision 001 — Project Identity
 
-NØISYNE is an Audio Intelligence System, distributed as `phasenox` from
+PHASENØX is an Audio Intelligence System, distributed as `phasenox` from
 `N0ises/NOISYNE`. It is not merely an audio analyzer or mixing assistant.
 
 Status: Accepted
@@ -126,7 +126,7 @@ Status: Accepted
 
 ## Decision 016 — Capability Truth
 
-Actual runtime code and `noisyne/runtime/capabilities.py` determine present
+Actual runtime code and `phasenox/runtime/capabilities.py` determine present
 capability truth. Lifecycle state and current-machine availability are separate.
 A module, adapter or contract does not by itself establish runtime availability.
 
@@ -138,7 +138,7 @@ The frozen V1 Desktop remains isolated from V2 backend development. Desktop V2
 integrates only after stable V2 service and async-operation contracts through:
 
 ```text
-NØISYNE Desktop -> V2ApplicationAdapter -> NØISYNE V2 backend
+PHASENØX Desktop -> V2ApplicationAdapter -> PHASENØX V2 backend
 ```
 
 Status: Accepted

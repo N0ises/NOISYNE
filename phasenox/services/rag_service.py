@@ -18,7 +18,7 @@ class SearchResult:
 
 class RAGService:
     """
-    Public API for the NØISYNE Retrieval-Augmented Generation subsystem.
+    Public API for the PHASENOX Retrieval-Augmented Generation subsystem.
 
     All higher-level modules (Executor, Audio, Vision, Recommendation,
     Reasoning, Agents...) must access RAG only through this class.

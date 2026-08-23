@@ -1,4 +1,4 @@
-# NØISYNE V2 Audio Architecture
+# PHASENØX V2 Audio Architecture
 
 Version: 2.0
 
@@ -8,7 +8,7 @@ Status: ACTIVE
 
 ## Purpose
 
-The V2 audio architecture extends NØISYNE's frozen V1 measurement pipeline with
+The V2 audio architecture extends PHASENØX's frozen V1 measurement pipeline with
 research-anchored perceptual modeling. It predicts how audio may be perceived
 and translated across playback contexts, then produces evidence-linked,
 non-destructive recommendations. It does not process source audio or control a
@@ -83,7 +83,7 @@ evidence and validation method before capability promotion.
 ### Playback Profiles — Sprint 6
 
 Represents versioned reproduction contexts. Profiles are analysis inputs, not
-claims that NØISYNE emulates every physical playback system.
+claims that PHASENØX emulates every physical playback system.
 
 ### Translation Risk — Sprint 7
 
@@ -112,7 +112,7 @@ At minimum, future research and validation must consider:
 - ITU-R BS.1770 for programme loudness and true peak.
 - EBU R128 for production/broadcast loudness context.
 
-NØISYNE does not claim present conformance to these standards. A conformance
+PHASENØX does not claim present conformance to these standards. A conformance
 claim requires reviewed implementation scope, fixtures, tolerances, repeatable
 results and recorded limitations.
 

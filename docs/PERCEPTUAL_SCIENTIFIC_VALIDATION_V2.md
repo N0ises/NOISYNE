@@ -1,4 +1,4 @@
-# NØISYNE V2 — Perceptual Scientific Validation
+# PHASENØX V2 — Perceptual Scientific Validation
 
 ## Sprint 12 — Evaluation / Scientific Validation
 
@@ -10,7 +10,7 @@
 
 ## 1. Purpose
 
-This document establishes the scientific validation framework for the NØISYNE V2 perceptual pipeline (Sprints 2–11).  It is **not** a product feature specification and does **not** add new perceptual capabilities.
+This document establishes the scientific validation framework for the PHASENØX V2 perceptual pipeline (Sprints 2–11).  It is **not** a product feature specification and does **not** add new perceptual capabilities.
 
 The goal is to answer, for each existing V2 perceptual method:
 
@@ -56,7 +56,7 @@ Sprint 12 introduces an explicit validation lifecycle that is **deliberately sep
 
 ## 4. Claim Matrix Coverage
 
-The machine-readable claim matrix (`noisyne/perception/validation_matrix.py`) covers:
+The machine-readable claim matrix (`phasenox/perception/validation_matrix.py`) covers:
 
 ### Sprint 2 — Auditory Frontend
 - **Status:** IMPLEMENTED / VERIFIED
@@ -284,9 +284,9 @@ Future sprints **must not**:
 
 ### New Files
 
-- `noisyne/perception/validation_contracts.py` — Validation contracts and API
-- `noisyne/perception/validation_matrix.py` — Machine-readable claim matrix
-- `noisyne/perception/validation_fixtures.py` — Deterministic fixture provider
+- `phasenox/perception/validation_contracts.py` — Validation contracts and API
+- `phasenox/perception/validation_matrix.py` — Machine-readable claim matrix
+- `phasenox/perception/validation_fixtures.py` — Deterministic fixture provider
 - `tests/test_sprint12_validation_framework.py` — Sprint 12 validation tests
 - `docs/PERCEPTUAL_SCIENTIFIC_VALIDATION_V2.md` — This document
 

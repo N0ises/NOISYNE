@@ -1,12 +1,12 @@
-# NØISYNE V2 Relative Simultaneous-Masking Foundation
+# PHASENØX V2 Relative Simultaneous-Masking Foundation
 
 Version: 1.0
 
 Status: Sprint 4 deterministic foundation implemented; masking thresholds and events unavailable
 
-Canonical runtime: `noisyne.perception.masking`
+Canonical runtime: `phasenox.perception.masking`
 
-Input contract: `noisyne.perception.masking_contracts`
+Input contract: `phasenox.perception.masking_contracts`
 
 ## Implemented Phenomenon
 
@@ -110,7 +110,7 @@ relabelled as masking.
 The filter weights are calculated directly on the linear-Hz FFT bins using the
 1983 equations. No Bark representation is added. ITU-R BS.1387-2 uses
 Bark-domain structures for its reference/test audio-quality model, but that does
-not justify changing NØISYNE's general frontend or importing the PEAQ model.
+not justify changing PHASENØX's general frontend or importing the PEAQ model.
 
 ## ITU-R BS.1387-2 Decision
 
@@ -126,7 +126,7 @@ No BS.1387 equation, constant, table, threshold, spreading function, temporal
 stage, or quality mapping is used in Sprint 4. The Recommendation's reference-
 test codec/equipment purpose, its fallback playback-level convention, its
 temporal stages, and its stated patent/licensing requirements do not establish a
-general pairwise mix-masking algorithm. NØISYNE makes no BS.1387 or PEAQ
+general pairwise mix-masking algorithm. PHASENØX makes no BS.1387 or PEAQ
 compliance claim.
 
 ## Input Contract and Pairwise Policy

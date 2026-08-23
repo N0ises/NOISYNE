@@ -43,12 +43,12 @@ class Orchestrator:
         **kwargs: Any,
     ) -> State:
         """
-        Execute the V1 NØISYNE deterministic analysis workflow.
+        Execute the V1 PHASENOX deterministic analysis workflow.
 
         This is a dedicated path that bypasses the generic question planning
         pipeline and routes directly through ``PhasenoxService``.
         """
-        from phasenox.application.soundbrain_service import (
+        from phasenox.application.phasenox_service import (
             AnalysisRequest,
             PhasenoxService,
         )

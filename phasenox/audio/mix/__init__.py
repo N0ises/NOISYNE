@@ -1,4 +1,4 @@
-"""NØISYNE deterministic Mix Intelligence.
+"""PHASENOX deterministic Mix Intelligence.
 
 Heavy exports are loaded lazily via ``__getattr__`` so that importing the
 package models does not pull in the heuristic engines at import time.

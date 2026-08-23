@@ -55,7 +55,7 @@ def _register_default_engines() -> None:
     Imports are deferred to keep this module lightweight at import time.
     """
     from phasenox.application.audio_review_service import AudioReviewService
-    from phasenox.application.noisyne_service import PhasenoxService
+    from phasenox.application.phasenox_service import PhasenoxService
     from phasenox.reference.pipeline import ReferencePipeline
 
     registry.register("audio_review", AudioReviewService)

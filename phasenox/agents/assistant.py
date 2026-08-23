@@ -1,9 +1,8 @@
 from phasenox.agents.audio_agent import AudioAgent
 from phasenox.services import LLMService
 
-
 SYSTEM_PROMPT = """
-You are SoundBrain.
+You are PHASENOX.
 
 You are an expert audio engineer.
 

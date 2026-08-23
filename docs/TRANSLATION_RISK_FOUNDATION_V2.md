@@ -1,4 +1,4 @@
-# NØISYNE V2 Translation Evidence and Risk Foundation
+# PHASENØX V2 Translation Evidence and Risk Foundation
 
 Version: 1.0.0
 
@@ -205,7 +205,7 @@ Expected analytical values include:
 - **SPECTRAL POWER LOSS != MASKING**
 - **FULL-MIX ANALYSIS != SOURCE ATTRIBUTION**
 - **POLICY THRESHOLD EXCEEDED != PROBABILITY OF FAILURE**
-- **PEAQ != NOISYNE TRANSLATION RISK**
+- **PEAQ != PHASENOX TRANSLATION RISK**
 - **DEVICE CATEGORY != TRANSFER EVIDENCE**
 
 Sprint 8 may add explicit listener, genre, delivery, or artistic context. Sprint 7 does not infer those

@@ -1,19 +1,19 @@
-# SoundBrain Philosophy
+# PHASENOX Philosophy
 
-## Why SoundBrain Exists
+## Why PHASENOX Exists
 
 Professional audio production has historically relied on a combination
 of measurement, experience, critical listening, and intuition.
 
 Most software measures. Very little software understands.
 
-SoundBrain is built to bridge that gap.
+PHASENOX is built to bridge that gap.
 
 ------------------------------------------------------------------------
 
 # Philosophy
 
-SoundBrain does not replace engineers.
+PHASENOX does not replace engineers.
 
 It amplifies their knowledge, accelerates their workflow, explains its
 reasoning, and performs repetitive technical tasks while leaving
@@ -60,7 +60,7 @@ artistic goals, and delivery platforms matter.
 
 Audio is only one source of information.
 
-SoundBrain should understand:
+PHASENOX should understand:
 
 -   Audio
 -   Spectrograms

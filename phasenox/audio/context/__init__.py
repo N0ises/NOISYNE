@@ -1,4 +1,4 @@
-"""NØISYNE audio context package.
+"""PHASENOX audio context package.
 
 Heavy exports are loaded lazily via ``__getattr__`` so that importing
 ``phasenox.audio.context.models`` does not pull in CLAP or transformers at import time.

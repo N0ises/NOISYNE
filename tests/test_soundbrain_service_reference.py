@@ -9,7 +9,7 @@ from phasenox.application.audio_review_service import (
     AudioReviewResult,
     AudioReviewService,
 )
-from phasenox.application.soundbrain_service import (
+from phasenox.application.phasenox_service import (
     AnalysisRequest,
     PhasenoxService,
 )

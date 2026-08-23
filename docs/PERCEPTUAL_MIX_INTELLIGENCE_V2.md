@@ -1,4 +1,4 @@
-# NOISYNE V2 Perceptual Mix Intelligence
+# PHASENOX V2 Perceptual Mix Intelligence
 
 ## Scope
 
@@ -220,7 +220,7 @@ criteria over one precomputed context result; no signal analysis occurs in that 
 - **PRIORITY != PSYCHOACOUSTIC SEVERITY**
 - **MIX INTELLIGENCE != MIX QUALITY SCORE**
 - **ISSUE != RECOMMENDATION**
-- **NOISYNE V2 DOES NOT MODIFY AUDIO IN SPRINT 10**
+- **PHASENOX V2 DOES NOT MODIFY AUDIO IN SPRINT 10**
 
 There is no universal severity, subjective label inference, source attribution, recommendation text,
 EQ/dynamics/stereo/mastering advice, LLM, RAG, model invocation, autonomous mixing, DAW control, or

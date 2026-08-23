@@ -1,4 +1,4 @@
-"""NØISYNE audio analysis package.
+"""PHASENOX audio analysis package.
 
 Heavy exports are loaded lazily via ``__getattr__`` so that importing
 ``phasenox.audio.analysis.models`` does not pull in the full analyzer at import time.

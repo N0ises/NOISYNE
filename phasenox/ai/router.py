@@ -9,7 +9,7 @@ class BrainRouter:
     High-level AI router.
 
     This class will become the single entry point
-    for all AI capabilities in NØISYNE.
+    for all AI capabilities in PHASENOX.
     """
 
     def route(

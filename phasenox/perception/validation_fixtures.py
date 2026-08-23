@@ -8,7 +8,7 @@ import numpy as np
 from .validation_contracts import FixtureKind, ValidationFixtureProvider
 
 
-class NoisyneValidationFixtureProvider(ValidationFixtureProvider):
+class PhasenoxValidationFixtureProvider(ValidationFixtureProvider):
     """Deterministic, offline fixture generator for Sprint 12 validation."""
 
     def generate(
@@ -341,6 +341,9 @@ class NoisyneValidationFixtureProvider(ValidationFixtureProvider):
         }
 
 
+NoisyneValidationFixtureProvider = PhasenoxValidationFixtureProvider
+
 __all__ = [
     "NoisyneValidationFixtureProvider",
+    "PhasenoxValidationFixtureProvider",
 ]

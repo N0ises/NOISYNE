@@ -1,4 +1,4 @@
-# NØISYNE Audio Processing Defaults
+# PHASENØX Audio Processing Defaults
 # Safe defaults for deterministic DSP and feature extraction.
 # These values are used when callers do not provide explicit parameters.
 

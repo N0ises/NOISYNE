@@ -1,4 +1,4 @@
-"""NØISYNE audio package.
+"""PHASENOX audio package.
 
 Heavy exports are loaded lazily via ``__getattr__`` so that importing
 submodules like ``phasenox.audio.io.models`` does not pull in torch or

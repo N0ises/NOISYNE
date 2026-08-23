@@ -82,7 +82,7 @@ class ReferenceReportBuilder:
 
         lines: list[str] = []
 
-        lines.append("# NØISYNE Reference Report")
+        lines.append("# PHASENØX Reference Report")
         lines.append("")
 
         lines.append("## Overall")

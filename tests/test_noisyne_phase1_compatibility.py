@@ -94,7 +94,7 @@ class TestCliIdentity:
 
     def test_help_shows_product_identity(self):
         output = self._capture_help(["--help"])
-        assert "NØISYNE" in output
+        assert "PHASENØX" in output
 
     def test_top_level_usage_uses_phasenox(self):
         output = self._capture_help(["--help"])
@@ -112,7 +112,7 @@ class TestCliIdentity:
 
 
 class TestReportIdentity:
-    """Generated reference reports use the current NØISYNE product identity."""
+    """Generated reference reports use the current PHASENØX product identity."""
 
     def _minimal_report(self) -> ReferenceReport:
         comparison = ReferenceComparison(
@@ -142,7 +142,7 @@ class TestReportIdentity:
     def test_markdown_title_uses_noisyne(self):
         report = self._minimal_report()
         markdown = ReferenceReportBuilder().build_markdown(report)
-        assert markdown.startswith("# NØISYNE Reference Report")
+        assert markdown.startswith("# PHASENØX Reference Report")
 
 
 class TestNamespaceCompatibility:

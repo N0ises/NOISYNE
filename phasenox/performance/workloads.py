@@ -146,7 +146,7 @@ class ReferenceComparisonWorkload:
 
 
 def build_workload_callables() -> dict[str, tuple[PerformanceWorkload, Callable[[], Any]]]:
-    """Return a small set of short, deterministic NØISYNE workload callables.
+    """Return a small set of short, deterministic PHASENOX workload callables.
 
     Only short-duration workloads are included here so that normal unit tests
     stay fast.  Longer benchmarks are available through the workload classes

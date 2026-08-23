@@ -1,5 +1,5 @@
-# NØISYNE Model Registry
-# Every AI model used by NØISYNE is configured here.
+# PHASENØX Model Registry
+# Every AI model used by PHASENØX is configured here.
 # Model names are resolved by ModelRepository: first as a local folder under
 # models/, then as a Hugging Face model ID or remote source.
 # Business logic must never hardcode model names.

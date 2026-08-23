@@ -68,7 +68,7 @@ from phasenox.perception.validation_contracts import (
     ValidationStatus,
     ValidationSummary,
 )
-from phasenox.perception.validation_fixtures import NoisyneValidationFixtureProvider
+from phasenox.perception.validation_fixtures import PhasenoxValidationFixtureProvider
 from phasenox.perception.validation_matrix import PerceptualValidationMatrix
 
 # =============================================================================
@@ -225,10 +225,10 @@ class TestScientificClaimMatrix:
 
 class TestDeterministicValidationFixtures:
     @pytest.fixture
-    def provider(self) -> NoisyneValidationFixtureProvider:
-        return NoisyneValidationFixtureProvider()
+    def provider(self) -> PhasenoxValidationFixtureProvider:
+        return PhasenoxValidationFixtureProvider()
 
-    def test_silence(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_silence(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(FixtureKind.SILENCE, 48000, 1.0, 2)
         assert fixture["sample_rate_hz"] == 48000
         assert fixture["sample_count"] == 48000
@@ -239,13 +239,13 @@ class TestDeterministicValidationFixtures:
         assert np.all(arr == 0.0)
         assert fixture["expected_peak_absolute"] == 0.0
 
-    def test_zero_energy(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_zero_energy(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(FixtureKind.ZERO_ENERGY, 48000, 0.5, 1)
         arr = fixture["array"]
         assert np.all(arr == 0.0)
         assert fixture["expected_total_energy"] == 0.0
 
-    def test_single_sine(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_single_sine(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(FixtureKind.SINGLE_SINE, 48000, 1.0, 1, frequency_hz=1000.0)
         arr = fixture["array"]
         assert arr.shape == (48000, 1)
@@ -253,7 +253,7 @@ class TestDeterministicValidationFixtures:
         assert fixture["expected_peak_absolute"] == 1.0
         assert math.isclose(fixture["expected_rms"], 1.0 / math.sqrt(2.0), rel_tol=1e-12)
 
-    def test_known_amplitude_sine(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_known_amplitude_sine(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(
             FixtureKind.KNOWN_AMPLITUDE_SINE, 48000, 1.0, 2, frequency_hz=500.0, amplitude=0.25
         )
@@ -262,7 +262,7 @@ class TestDeterministicValidationFixtures:
         assert fixture["amplitude"] == 0.25
         assert fixture["expected_peak_absolute"] == 0.25
 
-    def test_two_tone(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_two_tone(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(
             FixtureKind.TWO_TONE,
             48000,
@@ -277,20 +277,20 @@ class TestDeterministicValidationFixtures:
         assert arr.shape == (48000, 1)
         assert fixture["expected_peak_absolute"] == pytest.approx(0.8, abs=1e-12)
 
-    def test_known_digital_gain(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_known_digital_gain(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(FixtureKind.KNOWN_DIGITAL_GAIN, 48000, 1.0, 1, gain_db=6.0)
         assert fixture["gain_db"] == 6.0
         expected_linear = 10.0 ** (6.0 / 20.0)
         assert math.isclose(fixture["linear_gain"], expected_linear, rel_tol=1e-12)
         assert math.isclose(fixture["expected_peak_absolute"], expected_linear, rel_tol=1e-12)
 
-    def test_known_sample_peak(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_known_sample_peak(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(FixtureKind.KNOWN_SAMPLE_PEAK, 48000, 1.0, 2, peak=-0.75)
         arr = fixture["array"]
         assert np.all(arr == -0.75)
         assert fixture["expected_peak_absolute"] == 0.75
 
-    def test_known_spectral_shift(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_known_spectral_shift(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(
             FixtureKind.KNOWN_SPECTRAL_SHIFT,
             48000,
@@ -301,29 +301,29 @@ class TestDeterministicValidationFixtures:
         )
         assert fixture["expected_centroid_delta_hz"] == 1000.0
 
-    def test_deterministic_erb_energy(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_deterministic_erb_energy(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(
             FixtureKind.DETERMINISTIC_ERB_ENERGY, 48000, 1.0, 1, frequency_hz=1500.0
         )
         assert fixture["expected_dominant_erb_band_contains_hz"] == 1500.0
 
-    def test_identical_source_reference(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_identical_source_reference(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(FixtureKind.IDENTICAL_SOURCE_REFERENCE, 48000, 1.0, 2)
         assert fixture["expected_all_deltas_zero"] is True
 
-    def test_exact_playback_transfer(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_exact_playback_transfer(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(FixtureKind.EXACT_PLAYBACK_TRANSFER, 48000, 1.0, 2)
         assert fixture["expected_output_peak_match"] is True
         assert np.array_equal(fixture["fir_taps"], np.array([1.0]))
 
-    def test_exact_policy_boundary(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_exact_policy_boundary(self, provider: PhasenoxValidationFixtureProvider) -> None:
         fixture = provider.generate(
             FixtureKind.EXACT_POLICY_BOUNDARY, 48000, 1.0, 1, threshold=0.5, operator="greater_than"
         )
         assert fixture["threshold"] == 0.5
         assert fixture["value"] > fixture["threshold"]
 
-    def test_fixture_reproducibility(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_fixture_reproducibility(self, provider: PhasenoxValidationFixtureProvider) -> None:
         # Same parameters must produce identical arrays
         f1 = provider.generate(FixtureKind.SINGLE_SINE, 48000, 1.0, 2, frequency_hz=1000.0)
         f2 = provider.generate(FixtureKind.SINGLE_SINE, 48000, 1.0, 2, frequency_hz=1000.0)
@@ -382,7 +382,7 @@ class TestNumericTolerancePolicy:
 
 
 class TestRepeatabilityDeterminism:
-    def test_same_input_same_result(self, provider: NoisyneValidationFixtureProvider) -> None:
+    def test_same_input_same_result(self, provider: PhasenoxValidationFixtureProvider) -> None:
         f1 = provider.generate(FixtureKind.SINGLE_SINE, 48000, 1.0, 1, frequency_hz=1000.0)
         f2 = provider.generate(FixtureKind.SINGLE_SINE, 48000, 1.0, 1, frequency_hz=1000.0)
         assert np.array_equal(f1["array"], f2["array"])
@@ -459,31 +459,31 @@ class TestRepeatabilityDeterminism:
 
 class TestBoundaryInvalidInputs:
     def test_empty_data_rejected(self) -> None:
-        provider = NoisyneValidationFixtureProvider()
+        provider = PhasenoxValidationFixtureProvider()
         with pytest.raises(ValueError):
             provider.generate(FixtureKind.SILENCE, 48000, 0.0, 0)
 
     def test_zero_energy_signal(self) -> None:
-        provider = NoisyneValidationFixtureProvider()
+        provider = PhasenoxValidationFixtureProvider()
         fixture = provider.generate(FixtureKind.ZERO_ENERGY, 48000, 1.0, 1)
         arr = fixture["array"]
         assert arr.size > 0
         assert np.all(arr == 0.0)
 
     def test_mono_vs_stereo(self) -> None:
-        provider = NoisyneValidationFixtureProvider()
+        provider = PhasenoxValidationFixtureProvider()
         mono = provider.generate(FixtureKind.SINGLE_SINE, 48000, 1.0, 1)
         stereo = provider.generate(FixtureKind.SINGLE_SINE, 48000, 1.0, 2)
         assert mono["array"].shape[1] == 1
         assert stereo["array"].shape[1] == 2
 
     def test_unusual_valid_sample_rate(self) -> None:
-        provider = NoisyneValidationFixtureProvider()
+        provider = PhasenoxValidationFixtureProvider()
         fixture = provider.generate(FixtureKind.SINGLE_SINE, 22050, 1.0, 1)
         assert fixture["sample_rate_hz"] == 22050
 
     def test_invalid_sample_rate_rejected(self) -> None:
-        provider = NoisyneValidationFixtureProvider()
+        provider = PhasenoxValidationFixtureProvider()
         with pytest.raises(ValueError):
             provider.generate(FixtureKind.SINGLE_SINE, -48000, 1.0, 1)
 
@@ -1029,5 +1029,5 @@ class TestExistingContractRegression:
 
 
 @pytest.fixture
-def provider() -> NoisyneValidationFixtureProvider:
-    return NoisyneValidationFixtureProvider()
+def provider() -> PhasenoxValidationFixtureProvider:
+    return PhasenoxValidationFixtureProvider()

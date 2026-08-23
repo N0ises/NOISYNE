@@ -1,4 +1,4 @@
-# NØISYNE V2 — Knowledge / Memory / Personalization Foundation
+# PHASENØX V2 — Knowledge / Memory / Personalization Foundation
 
 ## Sprint 13
 
@@ -10,7 +10,7 @@
 
 ## 1. Purpose
 
-Sprint 13 establishes the **knowledge / memory / personalization foundation** for NØISYNE V2.
+Sprint 13 establishes the **knowledge / memory / personalization foundation** for PHASENØX V2.
 
 It is **not** an autonomous learning system.  It is **not** a source of scientific truth.  It provides deterministic, provenance-preserving contracts and storage abstractions that future reasoning and product personalization can consume without contaminating Sprint 12 validation truth.
 
@@ -25,7 +25,7 @@ These categories remain distinct in contracts, storage, retrieval, and reasoning
 ## 2. Architecture
 
 ```
-NØISYNE V2 backend
+PHASENØX V2 backend
 │
 ├── Sprint 12 perceptual validation truth  (authoritative, immutable)
 │
@@ -228,7 +228,7 @@ RAG must not:
 - Bypass Sprint 11 source-truth validation.
 - Create final scientific claims without provenance.
 
-Existing RAG infrastructure (`noisyne/rag/`) is **not** rewritten.  Sprint 13 contracts provide a clean integration surface for future safe consumption.
+Existing RAG infrastructure (`phasenox/rag/`) is **not** rewritten.  Sprint 13 contracts provide a clean integration surface for future safe consumption.
 
 ---
 
@@ -301,16 +301,16 @@ User consent is required by default.
 
 ## 16. Files Added
 
-- `noisyne/perception/knowledge_contracts.py` — Sprint 13 public contracts.
-- `noisyne/perception/knowledge_store.py` — `MemoryStore` protocol and `InMemoryMemoryStore` backend.
+- `phasenox/perception/knowledge_contracts.py` — Sprint 13 public contracts.
+- `phasenox/perception/knowledge_store.py` — `MemoryStore` protocol and `InMemoryMemoryStore` backend.
 - `tests/test_sprint13_knowledge_memory.py` — Sprint 13 focused tests.
 - `docs/KNOWLEDGE_MEMORY_PERSONALIZATION_V2.md` — This document.
 
 ### Modified files
 
-- `noisyne/perception/__init__.py` — exports new Sprint 13 contracts and fills in missing Sprint 12 exports.
-- `noisyne/perception/validation_matrix.py` — adds Sprint 13 claim-matrix records.
-- `noisyne/runtime/capabilities.py` — registers new Sprint 13 capabilities.
+- `phasenox/perception/__init__.py` — exports new Sprint 13 contracts and fills in missing Sprint 12 exports.
+- `phasenox/perception/validation_matrix.py` — adds Sprint 13 claim-matrix records.
+- `phasenox/runtime/capabilities.py` — registers new Sprint 13 capabilities.
 
 No frozen Sprint 0–12 runtime logic was modified.
 

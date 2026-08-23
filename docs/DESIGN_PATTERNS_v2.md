@@ -1,5 +1,5 @@
 
-# SoundBrain Design Patterns
+# PHASENOX Design Patterns
 
 Version: 2.0
 
@@ -10,7 +10,7 @@ Status: ACTIVE
 # Purpose
 
 This document defines the approved architectural patterns used throughout
-SoundBrain. New code should reuse these patterns instead of inventing new ones.
+PHASENOX. New code should reuse these patterns instead of inventing new ones.
 
 ---
 

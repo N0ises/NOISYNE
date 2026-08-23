@@ -1,4 +1,4 @@
-"""NØISYNE application service layer.
+"""PHASENOX application service layer.
 
 Sprint 15 exposes the V2 application surface directly. V1 services remain
 available lazily via ``__getattr__`` so that importing ``phasenox.application``
@@ -50,9 +50,11 @@ def __getattr__(name: str):
         "PhasenoxService",
         "NoisyneService",
     ):
-        from phasenox.application import noisyne_service as _noisyne_service
+        from phasenox.application import phasenox_service as _phasenox_service
 
-        return getattr(_noisyne_service, name)
+        if name == "NoisyneService":
+            return _phasenox_service.PhasenoxService
+        return getattr(_phasenox_service, name)
     if name == "SoundBrainService":
         from phasenox.application import soundbrain_service as _soundbrain_service
 

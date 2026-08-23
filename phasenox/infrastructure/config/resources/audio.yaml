@@ -1,4 +1,4 @@
-# NØISYNE Audio Processing Defaults
+# PHASENØX Audio Processing Defaults
 audio:
   sample_rate: 48000
   clap_target_sample_rate: 48000

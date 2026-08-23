@@ -1,10 +1,10 @@
-# NØISYNE
+# PHASENØX
 
 > **Audio Intelligence System**
 
-NØISYNE is an AI platform for professional audio engineering.
+PHASENØX is an AI platform for professional audio engineering.
 
-Unlike traditional analyzers that only report measurements, NØISYNE
+Unlike traditional analyzers that only report measurements, PHASENØX
 is designed to perceive, understand, reason, explain, automate, and
 eventually create audio using modern AI, DSP, psychoacoustics, and
 engineering knowledge.
@@ -17,7 +17,7 @@ Build the world's most capable Audio Intelligence System.
 
 ------------------------------------------------------------------------
 
-# What Makes NØISYNE Different
+# What Makes PHASENØX Different
 
 Traditional software answers:
 
@@ -25,7 +25,7 @@ Traditional software answers:
 -   Is there clipping?
 -   What is the peak?
 
-NØISYNE answers:
+PHASENØX answers:
 
 -   Why does the mix sound this way?
 -   Should anything actually be changed?
@@ -180,7 +180,7 @@ phasenox --help
 ```
 
 ```python
-from phasenox.application import NoisyneService
+from phasenox.application import PhasenoxService
 ```
 
 The `brain` namespace and `SoundBrainService` remain supported compatibility

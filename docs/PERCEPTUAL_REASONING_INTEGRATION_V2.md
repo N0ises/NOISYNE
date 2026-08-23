@@ -1,15 +1,15 @@
-# NOISYNE V2 Perceptual Reasoning Integration
+# PHASENOX V2 Perceptual Reasoning Integration
 
 ## Scope and architecture
 
-Sprint 11 adds a grounded explanation layer inside the existing NOISYNE V2 backend:
+Sprint 11 adds a grounded explanation layer inside the existing PHASENOX V2 backend:
 
 `MixIntelligenceResult -> source digest -> fact extraction -> constrained provider selection ->
 grounding validator -> canonical renderer -> PerceptualReasoningResult`
 
 The Sprint 10 result, its exact policy and criteria, issue evidence, assumptions, limitations, and
 evidence references remain authoritative. A provider can select approved statement templates and
-fact IDs. It cannot supply accepted prose or change transported facts. NOISYNE validates every
+fact IDs. It cannot supply accepted prose or change transported facts. PHASENOX validates every
 selection and renders the final text deterministically.
 
 Explicit boundaries:
@@ -20,7 +20,7 @@ Explicit boundaries:
 - **ISSUE != AUDIBLE DEFECT**
 - **PRIORITY != SEVERITY**
 - **REVIEW SUGGESTION != DSP INSTRUCTION**
-- **NOISYNE DOES NOT MODIFY AUDIO IN SPRINT 11**
+- **PHASENOX DOES NOT MODIFY AUDIO IN SPRINT 11**
 
 ## Research and safety boundary
 

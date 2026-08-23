@@ -1,12 +1,12 @@
-# NØISYNE V2 Calibrated Loudness Foundation
+# PHASENØX V2 Calibrated Loudness Foundation
 
 Version: 1.1
 
 Status: Sprint 3 foundation implemented; psychoacoustic algorithm blocked
 
-Canonical runtime: `noisyne.perception.loudness`
+Canonical runtime: `phasenox.perception.loudness`
 
-Transport contracts: `noisyne.perception.loudness_contracts`
+Transport contracts: `phasenox.perception.loudness_contracts`
 
 ## Scientific Decision
 
@@ -14,7 +14,7 @@ ISO 532-3:2023, first edition, is the selected future primary method for
 general music and time-varying sound. Its scope includes stationary and
 time-varying tones, noises, complex sounds, musical sounds, speech and impact
 sounds. It also explicitly excludes calculating one overall loudness value for
-a time-varying signal longer than five seconds. This matches NØISYNE's need for
+a time-varying signal longer than five seconds. This matches PHASENØX's need for
 time-dependent loudness semantics better than choosing a stationary method
 merely because it is easier to implement.
 

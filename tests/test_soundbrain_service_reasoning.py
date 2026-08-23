@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from phasenox.application.soundbrain_service import (
+from phasenox.application.phasenox_service import (
     AnalysisRequest,
     PhasenoxService,
 )

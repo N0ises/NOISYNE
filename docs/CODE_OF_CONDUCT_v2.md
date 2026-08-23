@@ -9,7 +9,7 @@ Status: ACTIVE
 
 # Our Commitment
 
-SoundBrain is an open, professional engineering project dedicated to building
+PHASENOX is an open, professional engineering project dedicated to building
 an Audio Intelligence System through collaboration, scientific thinking and
 mutual respect.
 
@@ -48,7 +48,7 @@ The following behaviors are not acceptable:
 
 # Engineering Culture
 
-SoundBrain values:
+PHASENOX values:
 
 - Curiosity
 - Scientific reasoning

@@ -17,7 +17,7 @@ class EvaluationMetric:
 
 @dataclass(frozen=True, slots=True)
 class EvaluationResult:
-    """Result of evaluating a single NØISYNE output."""
+    """Result of evaluating a single PHASENOX output."""
 
     evaluation_id: str
     metrics: list[EvaluationMetric]

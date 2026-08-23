@@ -1,4 +1,4 @@
-# NØISYNE V2 Perceptual Descriptor Foundation
+# PHASENØX V2 Perceptual Descriptor Foundation
 
 Version: 1.0.0
 Status: Sprint 5 implemented foundation
@@ -27,14 +27,14 @@ method and are emitted only when that complete method is implemented.
 | `width` | Informal engineering term | No general validated operational definition selected | Spatial hearing and presentation; inter-channel metrics may support later evidence | none | Requires a defined presentation/listening model | Unavailable | Stereo correlation or side/mid energy is not perceived width |
 
 The executable taxonomy, including limitations and prohibited claims, is the
-`descriptor_taxonomy()` contract in `noisyne/perception/descriptor_contracts.py`.
+`descriptor_taxonomy()` contract in `phasenox/perception/descriptor_contracts.py`.
 
 ## Standards research and implementation gate
 
 DIN Media lists DIN 45692:2009-08 as a current, 14-page German standard with WAV
 material, available only by purchase. Its public description identifies a
 weighted first moment of a DIN 45631 loudness-tonality pattern. The complete
-method and supplied WAV material were not available. NOISYNE also lacks the
+method and supplied WAV material were not available. PHASENOX also lacks the
 validated Zwicker specific-loudness prerequisite. No acum output is implemented.
 
 DIN Media lists DIN 38455:2024-11 as a current, 44-page German standard with EXE

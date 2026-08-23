@@ -25,7 +25,7 @@ def _to_serializable(value: Any) -> Any:
 
 class WorkflowAdapter(ABC):
     """
-    Abstract contract for exporting NØISYNE results to an external workflow.
+    Abstract contract for exporting PHASENOX results to an external workflow.
 
     Implementations in this sprint are deterministic placeholders. They do not
     communicate with any DAW, API, or external process.

@@ -36,8 +36,8 @@ def _default_reference_output_directory(audio_path: str | Path) -> Path:
 
 
 def _cmd_analyze(args: argparse.Namespace) -> int:
-    """Run the V1 NØISYNE analysis workflow through PhasenoxService."""
-    from phasenox.application.noisyne_service import (
+    """Run the V1 PHASENOX analysis workflow through PhasenoxService."""
+    from phasenox.application.phasenox_service import (
         AnalysisRequest,
         PhasenoxService,
     )
@@ -79,7 +79,7 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
 
 def _cmd_reference(args: argparse.Namespace) -> int:
     """Compare one or more reference audio files against the current mix."""
-    from phasenox.application.noisyne_service import (
+    from phasenox.application.phasenox_service import (
         AnalysisRequest,
         PhasenoxService,
     )
@@ -118,7 +118,7 @@ def _cmd_reference(args: argparse.Namespace) -> int:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="phasenox",
-        description="NØISYNE — AI-powered Audio Intelligence Platform",
+        description="PHASENØX — AI-powered Audio Intelligence Platform",
     )
     subparsers = parser.add_subparsers(
         dest="command",

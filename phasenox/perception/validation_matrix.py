@@ -228,7 +228,7 @@ _SPRINT5_SHARPNESS = MethodValidationRecord(
     ],
     known_limitations=[
         "The complete paid German standard and WAV material are not available locally",
-        "NOISYNE has no validated ISO 532-1 specific-loudness engine",
+        "PHASENOX has no validated ISO 532-1 specific-loudness engine",
     ],
 )
 

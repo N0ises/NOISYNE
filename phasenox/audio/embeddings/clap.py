@@ -19,7 +19,7 @@ from phasenox.runtime import ModelRuntime
 
 class CLAPEmbedding(AudioEmbeddingModel):
     """
-    Canonical CLAP audio embedding provider for NØISYNE.
+    Canonical CLAP audio embedding provider for PHASENOX.
 
     New code should use this class. The legacy ``CLAPAudioEmbeddingModel`` in
     ``phasenox.audio.intelligence.embeddings`` is kept for backward compatibility

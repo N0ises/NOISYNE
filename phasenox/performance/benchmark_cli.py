@@ -268,7 +268,7 @@ def _run_benchmarks(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="NØISYNE V2 Sprint 14 performance benchmark")
+    parser = argparse.ArgumentParser(description="PHASENOX V2 Sprint 14 performance benchmark")
     parser.add_argument(
         "--workloads",
         nargs="+",

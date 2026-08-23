@@ -46,7 +46,7 @@ class ExportBundle:
         manifest = self.directory / "manifest.json"
         payload = {
             "format": "ChatGPT Export V2",
-            "product": "NOISYNE",
+            "product": "PHASENOX",
             "distribution": "phasenox",
             "project": str(self.project),
             "git_commit": self._git_value("rev-parse", "HEAD"),

@@ -1,4 +1,4 @@
-# NØISYNE
+# PHASENØX
 
 > A modular AI-powered Audio Intelligence Platform.
 
@@ -11,9 +11,9 @@
 
 # Overview
 
-NØISYNE is a modular artificial intelligence platform for professional audio analysis, understanding, reasoning, and recommendation.
+PHASENØX is a modular artificial intelligence platform for professional audio analysis, understanding, reasoning, and recommendation.
 
-Unlike traditional audio analyzers that only measure technical metrics, NØISYNE combines deterministic signal processing, machine learning, semantic embeddings, retrieval systems, and large language models into a unified architecture capable of understanding audio from both engineering and musical perspectives.
+Unlike traditional audio analyzers that only measure technical metrics, PHASENØX combines deterministic signal processing, machine learning, semantic embeddings, retrieval systems, and large language models into a unified architecture capable of understanding audio from both engineering and musical perspectives.
 
 The project is designed around clean architecture principles where every subsystem has a single responsibility and can evolve independently.
 
@@ -23,7 +23,7 @@ The project is designed around clean architecture principles where every subsyst
 
 Create one of the most complete open modular platforms for Audio Intelligence.
 
-NØISYNE aims to become an engineering platform capable of:
+PHASENØX aims to become an engineering platform capable of:
 
 - Audio Analysis
 - Audio Understanding
@@ -98,7 +98,7 @@ Models are replaceable without changing the pipeline.
 # Main Components
 
 ```
-noisyne/
+phasenox/
 │
 ├── runtime/
 ├── audio/
@@ -123,7 +123,7 @@ noisyne/
 ```
 <repository-directory>/
 
-noisyne/
+phasenox/
 tests/
 docs/
 configs/
@@ -239,20 +239,20 @@ pip install -r requirements-dev.txt
 Canonical product and compatibility identities:
 
 ```text
-Product: NØISYNE
-ASCII identity: NOISYNE
+Product: PHASENØX
+ASCII identity: PHASENOX
 Distribution: phasenox
 Canonical Python package: phasenox
 Legacy Python package: brain (compatibility only)
 Canonical CLI: phasenox
-Canonical service: NoisyneService
-Legacy service: SoundBrainService (compatibility alias)
+Canonical service: PhasenoxService
+Legacy services: NoisyneService, SoundBrainService (compatibility aliases)
 ```
 
 New integrations should use canonical imports:
 
 ```python
-from phasenox.application import NoisyneService
+from phasenox.application import PhasenoxService
 ```
 
 Existing `brain.*` imports remain supported during the compatibility period.
@@ -266,7 +266,7 @@ phasenox --help
 Application-root precedence is `PHASENOX_ROOT`, then the legacy
 `NOISYNE_ROOT`, then `SOUNDBRAIN_ROOT`, then automatic structural detection.
 
-The product and distribution are NØISYNE/phasenox.
+The product and distribution are PHASENØX/phasenox.
 
 ```text
 Repository: N0ises/NOISYNE
@@ -308,7 +308,7 @@ Main documents include:
 
 # Development Philosophy
 
-NØISYNE follows an Architecture First development model.
+PHASENØX follows an Architecture First development model.
 
 Every new feature must satisfy the following principles:
 
@@ -352,4 +352,4 @@ Hamid Haddadi
 
 ---
 
-NØISYNE is an ongoing long-term engineering project focused on building a scalable, modular, and production-ready Audio Intelligence platform.
+PHASENØX is an ongoing long-term engineering project focused on building a scalable, modular, and production-ready Audio Intelligence platform.

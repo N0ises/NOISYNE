@@ -1,9 +1,9 @@
 
-# Contributing to SoundBrain
+# Contributing to PHASENOX
 
-Thank you for contributing to SoundBrain.
+Thank you for contributing to PHASENOX.
 
-SoundBrain is an Audio Intelligence System built with an architecture-first philosophy.
+PHASENOX is an Audio Intelligence System built with an architecture-first philosophy.
 Every contribution should improve the long-term quality of the platform.
 
 ---
@@ -114,4 +114,4 @@ Large redesigns should not be merged without review.
 
 # Final Principle
 
-Every commit should leave SoundBrain in a better state than before.
+Every commit should leave PHASENOX in a better state than before.

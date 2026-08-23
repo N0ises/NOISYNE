@@ -1,6 +1,6 @@
-# Contributing to NØISYNE
+# Contributing to PHASENØX
 
-Thank you for your interest in contributing to NØISYNE.
+Thank you for your interest in contributing to PHASENØX.
 
 ## Development Workflow
 
@@ -86,4 +86,4 @@ test: add runtime validation tests
 
 ---
 
-Thank you for helping improve NØISYNE.
+Thank you for helping improve PHASENØX.

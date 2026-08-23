@@ -1,4 +1,4 @@
-# NØISYNE V2 Architecture
+# PHASENØX V2 Architecture
 
 Version: 2.0
 
@@ -8,7 +8,7 @@ Status: ACTIVE
 
 ## System Boundary
 
-NØISYNE is an Audio Intelligence System. The V2 workstream adds Perceptual
+PHASENØX is an Audio Intelligence System. The V2 workstream adds Perceptual
 Intelligence to the frozen V1 Professional Audio Intelligence backend. V2
 estimates perception and translation risk, links conclusions to evidence and
 returns non-destructive recommendations. Autonomous mixing is V3, not V2.
@@ -95,9 +95,9 @@ No tracked Desktop implementation belongs to the V2 backend baseline. Desktop
 V2 integration begins only in Sprint 17 and retains this boundary:
 
 ```text
-NØISYNE Desktop
+PHASENØX Desktop
     -> V2ApplicationAdapter
-    -> NØISYNE V2 backend
+    -> PHASENØX V2 backend
 ```
 
 The adapter shields the Desktop from backend domain evolution and binds only to
@@ -108,12 +108,12 @@ the stable service/API and async operation contracts established in Sprints
 
 ## DAW and Ableton Boundary
 
-The current `noisyne.integration` package owns implemented deterministic export
+The current `phasenox.integration` package owns implemented deterministic export
 contracts. It does not connect to, read from or control any DAW.
 
 Sprint 20 may add only an Ableton launch/connect smoke bridge and a local
 health/version/status handshake. It must remain outside Ableton's real-time
-audio thread and tolerate NØISYNE start/stop/restart and project save/reopen.
+audio thread and tolerate PHASENØX start/stop/restart and project save/reopen.
 Track manipulation, parameter changes, automation writes, session control and
 autonomous mixing are outside V2.
 

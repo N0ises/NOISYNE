@@ -9,7 +9,7 @@ from phasenox.application.audio_review_service import (
     AudioReviewResult,
     AudioReviewService,
 )
-from phasenox.application.soundbrain_service import (
+from phasenox.application.phasenox_service import (
     AnalysisRequest,
     PhasenoxService,
 )
@@ -122,7 +122,7 @@ def test_soundbrain_service_module_import_does_not_load_torch():
 
     script = (
         "import sys\n"
-        "from phasenox.application.soundbrain_service import AnalysisRequest\n"
+        "from phasenox.application.phasenox_service import AnalysisRequest\n"
         "print('torch' in sys.modules, 'transformers' in sys.modules)\n"
     )
 

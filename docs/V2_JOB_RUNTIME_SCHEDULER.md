@@ -14,7 +14,7 @@ Desktop V2 adapter.
 ## 1. Architecture
 
 ```text
-noisyne/runtime/jobs/
+phasenox/runtime/jobs/
     contracts.py   # JobState, JobSnapshot, JobRequest, JobResult, etc.
     registry.py    # in-memory JobRegistry + bounded JobHistory
     executor.py    # JobExecutor: runs one PhasenoxV2Service call
@@ -29,7 +29,7 @@ noisyne/runtime/jobs/
 - `JobExecutor` translates a Sprint 15 `ApplicationRequest` into a `JobResult`
   and records per-stage outcomes.
 - Heavy imports (`torch`, `onnxruntime`, Qt, audio devices) are deferred until
-  a job actually runs; importing `noisyne.runtime.jobs` remains lightweight.
+  a job actually runs; importing `phasenox.runtime.jobs` remains lightweight.
 
 ---
 
@@ -173,14 +173,14 @@ Sprint 16.
 ## 10. Public API
 
 ```python
-from noisyne.runtime.jobs import (
+from phasenox.runtime.jobs import (
     JobScheduler,
     JobState,
     ResourceProfile,
     PauseCapability,
     CancellationCapability,
 )
-from noisyne.application import PhasenoxV2Service, ApplicationRequest, OperationType
+from phasenox.application import PhasenoxV2Service, ApplicationRequest, OperationType
 
 scheduler = JobScheduler(PhasenoxV2Service(), max_workers=2)
 scheduler.start()
@@ -200,7 +200,7 @@ which is useful when each worker thread needs its own service instance.
 
 ## 11. Lightweight Import Guarantee
 
-Importing `noisyne.runtime.jobs` does **not** initialize:
+Importing `phasenox.runtime.jobs` does **not** initialize:
 
 - torch
 - onnxruntime sessions

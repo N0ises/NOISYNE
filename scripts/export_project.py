@@ -112,7 +112,7 @@ def main():
         encoding="utf-8",
     ) as output:
 
-        output.write("NOISYNE PROJECT EXPORT\n")
+        output.write("PHASENOX PROJECT EXPORT\n")
 
         output.write("Architecture Review Package\n\n")
 

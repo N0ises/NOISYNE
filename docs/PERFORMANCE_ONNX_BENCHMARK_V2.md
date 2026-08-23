@@ -1,7 +1,7 @@
-# NØISYNE V2 — Performance Baseline and ONNX Runtime Benchmark
+# PHASENØX V2 — Performance Baseline and ONNX Runtime Benchmark
 
 Sprint 14 establishes a **truthful, machine-specific performance baseline** for the
-NØISYNE V2 backend.  It does **not** claim universal speed-ups, it does **not** make
+PHASENØX V2 backend.  It does **not** claim universal speed-ups, it does **not** make
 ONNX or GPU the default, and it does **not** implement scheduling, UI, or model
 download management.
 
@@ -16,15 +16,15 @@ compatibility **and** output-equivalence checks against a trusted canonical runt
 
 ## 1. What Sprint 14 adds
 
-- Strict JSON-safe performance contracts in `noisyne.performance.contracts`.
+- Strict JSON-safe performance contracts in `phasenox.performance.contracts`.
 - Environment snapshot that reports only what it can actually measure.
 - Deterministic benchmark methodology (warmup, repeated timed samples,
   cold/warm separation, median/mean/p95 aggregation).
-- Representative NØISYNE workload wrappers (auditory frontend, brightness correlate,
+- Representative PHASENØX workload wrappers (auditory frontend, brightness correlate,
   reference comparison).
 - Runtime availability, equivalence, and selection foundation.
 - Optional PyTorch → ONNX fixture-model export and comparison.
-- A developer-facing benchmark entry point: `python -m noisyne.performance`.
+- A developer-facing benchmark entry point: `python -m phasenox.performance`.
 - Three conservative capability records:
   - `performance_benchmark_foundation`
   - `runtime_selection_foundation`
@@ -252,8 +252,8 @@ Benchmark results must not be reused across incompatible environments.
 ## 15. Optional developer benchmark entry point
 
 ```bash
-python -m noisyne.performance --help
-python -m noisyne.performance --no-fixture --output benchmark.json
+python -m phasenox.performance --help
+python -m phasenox.performance --no-fixture --output benchmark.json
 ```
 
 The CLI:
@@ -274,7 +274,7 @@ ONNX Runtime, ONNX, and `psutil` are optional extras:
 performance = ["onnxruntime", "onnx", "psutil"]
 ```
 
-Core NØISYNE V2 does not require ONNX or CUDA packages.
+Core PHASENØX V2 does not require ONNX or CUDA packages.
 
 ---
 
@@ -338,7 +338,7 @@ product messaging:
 
 Sprint 15.5 extends the Sprint 14 foundation to validate the ONNX Runtime
 **CUDA execution path** on the current development machine.  It does **not**
-convert production NØISYNE models to ONNX and does **not** make GPU execution
+convert production PHASENØX models to ONNX and does **not** make GPU execution
 the default or mandatory.
 
 ### 21.1 Environment observed during Sprint 15.5
@@ -405,7 +405,7 @@ Measured with the Sprint 14 tiny fixture model on this machine only:
 | ONNX Runtime | CUDA | ~92 µs | ~5,500 /s |
 
 These numbers are **machine-specific and fixture-specific only**.  They do not
-predict performance for production NØISYNE models or other hardware.
+predict performance for production PHASENØX models or other hardware.
 
 ### 21.4 Fixture equivalence results
 
@@ -462,7 +462,7 @@ Verify the *active* provider, not only the advertised list:
 ```bash
 # Example for the CUDA 12.6 environment validated in Sprint 15.5
 pip install onnxruntime-gpu==1.19.2
-python -c "from noisyne.performance.fixture_model import _ensure_cuda_dll_paths; \
+python -c "from phasenox.performance.fixture_model import _ensure_cuda_dll_paths; \
            _ensure_cuda_dll_paths(); \
            import onnxruntime as ort; \
            s = ort.InferenceSession('model.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider']); \
@@ -490,7 +490,7 @@ They are **not** marked `Production/Ready`.
 
 ## 23. Files added / changed
 
-- `noisyne/performance/` package
+- `phasenox/performance/` package
   - `__init__.py`, `__main__.py`
   - `_common.py`
   - `contracts.py`
@@ -500,7 +500,7 @@ They are **not** marked `Production/Ready`.
   - `fixture_model.py`
   - `workloads.py`
   - `benchmark_cli.py`
-- `noisyne/runtime/capabilities.py` — three new capabilities
+- `phasenox/runtime/capabilities.py` — three new capabilities
 - `pyproject.toml` — `[project.optional-dependencies] performance`
 - `tests/test_sprint14_performance_baseline.py`
 - `docs/PERFORMANCE_ONNX_BENCHMARK_V2.md`

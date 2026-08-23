@@ -1,12 +1,12 @@
-# NØISYNE V2 Auditory Frontend
+# PHASENØX V2 Auditory Frontend
 
 Version: 1.0
 
 Status: Sprint 2 implemented
 
-Canonical runtime: `noisyne.perception.auditory`
+Canonical runtime: `phasenox.perception.auditory`
 
-Transport contracts: `noisyne.perception.auditory_contracts`
+Transport contracts: `phasenox.perception.auditory_contracts`
 
 ## Decision
 
@@ -38,7 +38,7 @@ critical-masking threshold, or loudness method.
 
 ## Input and Level Policy
 
-The frontend accepts the existing `noisyne.audio.io.models.AudioData`; it does
+The frontend accepts the existing `phasenox.audio.io.models.AudioData`; it does
 not load files and does not introduce another audio-data abstraction. The
 canonical shape is `(frames,)` for mono or `(frames, channels)` for
 multichannel audio. Samples must be finite, real numeric values, and metadata

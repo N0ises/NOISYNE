@@ -367,10 +367,10 @@ def test_v1_alias_not_loaded_by_default() -> None:
     """The canonical V1 service export stays lazy until attribute access."""
     code = (
         "import sys; import phasenox.application; "
-        "assert 'phasenox.application.noisyne_service' not in sys.modules; "
+        "assert 'phasenox.application.phasenox_service' not in sys.modules; "
         "assert 'PhasenoxService' in dir(phasenox.application); "
         "assert phasenox.application.PhasenoxService is not None; "
-        "assert 'phasenox.application.noisyne_service' in sys.modules"
+        "assert 'phasenox.application.phasenox_service' in sys.modules"
     )
     subprocess.run([sys.executable, "-c", code], check=True)
 

@@ -12,7 +12,7 @@ def test_package_metadata_and_console_scripts_are_canonical():
 
     assert metadata["project"]["name"] == "phasenox"
     assert metadata["project"]["version"] == "1.0.0"
-    assert metadata["project"]["description"].startswith("NØISYNE")
+    assert metadata["project"]["description"].startswith("PHASENØX")
     assert metadata["project"]["scripts"] == {"phasenox": "phasenox.cli:main"}
     assert metadata["tool"]["setuptools"]["packages"]["find"]["include"] == [
         "phasenox*",
@@ -25,7 +25,7 @@ def test_current_docs_present_canonical_interfaces_first():
     contributing = (PROJECT_ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
 
     for expected in (
-        "Product: NØISYNE",
+        "Product: PHASENØX",
         "Distribution: phasenox",
         "Canonical Python package: phasenox",
         "Legacy Python package: brain (compatibility only)",
@@ -86,5 +86,5 @@ def test_export_tool_groups_canonical_and_compatibility_packages(tmp_path):
     assert not (output / "brain" / "audio.txt").exists()
 
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["product"] == "NOISYNE"
+    assert manifest["product"] == "PHASENOX"
     assert manifest["distribution"] == "phasenox"

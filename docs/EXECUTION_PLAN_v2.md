@@ -1,4 +1,4 @@
-# NØISYNE V2 Execution Plan
+# PHASENØX V2 Execution Plan
 
 Version: 2.0
 
@@ -93,7 +93,7 @@ autonomy, or production ONNX adoption.
 | 14 | Performance baseline + ONNX benchmark spike | Evidence for adopt/defer decision; no assumed adoption |
 | 15 | V2 PhasenoxV2Service / capability contract | Stable V2 application boundary |
 | 16 | Local API + async job/progress contract | Versioned local API and cancellation/progress semantics |
-| 17 | Desktop V2 integration | `NØISYNE Desktop -> V2ApplicationAdapter -> V2 backend` |
+| 17 | Desktop V2 integration | `PHASENØX Desktop -> V2ApplicationAdapter -> V2 backend` |
 | 18 | Desktop identity / user-data compatibility | Migration-safe identity and paths |
 | 19 | Desktop packaging / clean-machine candidate | Repeatable packaged candidate |
 | 20 | Ableton launch bridge smoke integration | Launch/connect and health/version/status only |
@@ -135,8 +135,8 @@ not import Desktop code. Desktop V2 consumes the backend through
 stable.
 
 The Sprint 20 Ableton bridge is a late smoke integration only. It may load a
-Max for Live surface/device, launch or connect to the local NØISYNE service and
-show health/version/status. It must tolerate NØISYNE restarts and project
+Max for Live surface/device, launch or connect to the local PHASENØX service and
+show health/version/status. It must tolerate PHASENØX restarts and project
 save/reopen and must never run heavy analysis on Ableton's real-time thread.
 
 Full DAW read/control and user-confirmed or unattended actions belong to later

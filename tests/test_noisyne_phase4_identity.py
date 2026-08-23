@@ -36,10 +36,10 @@ def test_current_generated_identity_is_noisyne():
     )
     engineer = SimpleNamespace(score=100.0, strengths=[], issues=[], recommendations=[])
 
-    assert "NØISYNE Analysis" in AnalysisReport().build(analysis)
-    assert "NØISYNE Engineer" in EngineerReport().build(engineer)
-    assert "You are NØISYNE." in PromptBuilder.SYSTEM_PROMPT
-    assert "You are NØISYNE." in SYSTEM_PROMPT
+    assert "PHASENØX Analysis" in AnalysisReport().build(analysis)
+    assert "PHASENØX Engineer" in EngineerReport().build(engineer)
+    assert "You are PHASENØX." in PromptBuilder.SYSTEM_PROMPT
+    assert "You are PHASENØX." in SYSTEM_PROMPT
 
 
 def test_persisted_vector_identity_remains_legacy_compatible():
@@ -60,5 +60,5 @@ def test_developer_scripts_do_not_require_soundbrain_repository_basename():
 
 def test_project_export_uses_canonical_identity():
     text = (PROJECT_ROOT / "scripts" / "export_project.py").read_text(encoding="utf-8")
-    assert "NOISYNE PROJECT EXPORT" in text
+    assert "PHASENOX PROJECT EXPORT" in text
     assert "SOUNDBRAIN PROJECT EXPORT" not in text

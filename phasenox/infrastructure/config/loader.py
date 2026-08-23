@@ -114,12 +114,12 @@ def _load_yaml(name: str) -> dict[str, Any]:
     configuration problems fail fast instead of silently falling back to defaults.
     """
     if yaml is None:
-        raise RuntimeError("PyYAML is required to load NOISYNE configuration.")
+        raise RuntimeError("PyYAML is required to load PHASENOX configuration.")
     resource = resources.files("phasenox.infrastructure.config").joinpath(
         "resources", f"{name}.yaml"
     )
     if not resource.is_file():
-        raise FileNotFoundError(f"Required NOISYNE configuration resource is missing: {name}.yaml")
+        raise FileNotFoundError(f"Required PHASENOX configuration resource is missing: {name}.yaml")
     text = resource.read_text(encoding="utf-8")
     if not text.strip():
         return {}

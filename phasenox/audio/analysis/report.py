@@ -12,7 +12,7 @@ class AnalysisReport:
 
         lines = [
             "",
-            "========== NØISYNE Analysis ==========",
+            "========== PHASENØX Analysis ==========",
             "",
             f"Tempo               : {analysis.tempo:.2f} BPM",
             f"Pitch               : {analysis.pitch}",

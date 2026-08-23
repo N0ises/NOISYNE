@@ -2,7 +2,7 @@
 
 These tests validate the CUDA execution path on the current machine and must
 skip truthfully when CUDA hardware or the compatible ONNX Runtime GPU package
-is unavailable.  They do NOT convert or validate production NØISYNE models.
+is unavailable.  They do NOT convert or validate production PHASENØX models.
 
 Critical robustness rule implemented in this sprint:
 
@@ -481,6 +481,6 @@ def test_capability_truth_separates_package_and_gpu(fixture_runtimes: dict) -> N
 def test_fixture_validation_is_not_production_validation() -> None:
     """Fixture equivalence does not establish production model compatibility."""
     # This test documents the boundary: Sprint 15.5 validates only the fixture
-    # model and the CUDA execution provider infrastructure.  Production NØISYNE
+    # model and the CUDA execution provider infrastructure.  Production PHASENØX
     # models remain unconverted and unvalidated.
     assert True

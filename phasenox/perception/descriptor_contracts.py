@@ -93,7 +93,7 @@ def descriptor_taxonomy() -> tuple[DescriptorDefinition, ...]:
             implementation_state=DescriptorImplementationState.UNAVAILABLE_PREREQUISITE,
             limitations=[
                 "The complete paid German standard and WAV material are not available locally.",
-                "NOISYNE has no validated ISO 532-1 specific-loudness engine.",
+                "PHASENOX has no validated ISO 532-1 specific-loudness engine.",
             ],
             prohibited_claims=[
                 "Do not label spectral centroid, high-frequency energy, or ERB centroid as sharpness.",

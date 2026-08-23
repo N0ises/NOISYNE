@@ -1,4 +1,4 @@
-# NØISYNE V2 Playback Profile Foundation
+# PHASENØX V2 Playback Profile Foundation
 
 Version: 1.0.0
 Status: Implemented (Sprint 6)

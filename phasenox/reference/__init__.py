@@ -1,4 +1,4 @@
-"""NØISYNE reference comparison package.
+"""PHASENOX reference comparison package.
 
 Heavy exports are loaded lazily via ``__getattr__`` so that importing
 ``phasenox.reference.models`` does not pull in the full engine stack at import time.

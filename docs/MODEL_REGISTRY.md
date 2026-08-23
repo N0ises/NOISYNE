@@ -1,4 +1,4 @@
-# SoundBrain Model Registry
+# PHASENOX Model Registry
 
 Version: 1.0
 
@@ -8,7 +8,7 @@ Status: ACTIVE
 
 # Purpose
 
-This document defines every AI model used by SoundBrain.
+This document defines every AI model used by PHASENOX.
 
 Models are treated as replaceable infrastructure components.
 

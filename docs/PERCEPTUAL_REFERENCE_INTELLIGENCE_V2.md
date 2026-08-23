@@ -1,4 +1,4 @@
-# NOISYNE V2 Perceptual Reference Intelligence
+# PHASENOX V2 Perceptual Reference Intelligence
 
 ## Scope and scientific boundary
 

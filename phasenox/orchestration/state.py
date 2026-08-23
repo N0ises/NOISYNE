@@ -17,7 +17,7 @@ class State:
     question: str = ""
 
     # ------------------------------------------------------------------
-    # V1 NØISYNE Request / Response
+    # V1 PHASENOX Request / Response
     # ------------------------------------------------------------------
 
     audio_path: str | Path | None = None

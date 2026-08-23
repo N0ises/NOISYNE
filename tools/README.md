@@ -3,7 +3,7 @@
 This tool creates review-friendly exports for large codebases. The default output
 folder is `exports/`; it is automatically excluded from later scans.
 
-## NØISYNE developer-tool standard
+## PHASENØX developer-tool standard
 
 All development-only commands live in `tools/`. Each tool has one descriptive
 entry-point file (for example, `lint_project.py`) and may keep its reusable logic
@@ -45,13 +45,13 @@ py -3 tools/export_project.py --search AudioEncoder --full
 ```
 
 `--module embeddings` matches any file whose path contains `embeddings`, so a
-directory such as `noisyne/audio/embeddings/` is exported by itself.
+directory such as `phasenox/audio/embeddings/` is exported by itself.
 
 ## Output
 
 `--full` produces `tree.txt`, `requirements.txt`, `statistics.json`,
 `architecture.json`, `api_manifest.json`, the `root.txt`/`scripts.txt`/`docs.txt`
-groups, a file for each standard `noisyne` module, the explicit `brain`
+groups, a file for each standard `phasenox` module, the explicit `brain`
 compatibility report, and reports for unused modules, duplicate symbols, circular
 imports, and the import graph. Every text file includes its generation time;
 module files also contain file contents, a summary, and an end marker.

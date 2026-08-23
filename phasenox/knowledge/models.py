@@ -124,7 +124,7 @@ class BestPracticeKnowledge:
 
 @dataclass(frozen=True, slots=True)
 class KnowledgeBundle:
-    """Complete versioned knowledge bundle for the NØISYNE runtime."""
+    """Complete versioned knowledge bundle for the PHASENOX runtime."""
 
     version: str
     engineering: EngineeringRuleBase

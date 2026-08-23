@@ -1,4 +1,4 @@
-# NØISYNE Product and V2 Roadmap
+# PHASENØX Product and V2 Roadmap
 
 Version: 2.0
 
@@ -12,7 +12,7 @@ Canonical distribution and Python namespace: `phasenox`
 
 ## Current Baseline
 
-NØISYNE V1 is the frozen Professional Audio Intelligence release candidate.
+PHASENØX V1 is the frozen Professional Audio Intelligence release candidate.
 Its backend and Desktop release-candidate work are complete and remain isolated
 from V2 development. The V1 backend provides deterministic audio analysis,
 engineering, reference, mix and plugin recommendations, reporting, evaluation,
@@ -23,7 +23,7 @@ The V1 Desktop exists as a frozen release candidate on the isolated
 it is not part of the V2 backend branch.
 
 The repository rename is complete. New code and active documentation use
-NØISYNE/NOISYNE, `N0ises/NOISYNE` and `phasenox`. The legacy `brain` namespace,
+PHASENØX/PHASENOX, `N0ises/NOISYNE` and `phasenox`. The legacy `brain` namespace,
 `SoundBrainService`, `SOUNDBRAIN_ROOT`, `soundbrain` engine
 alias and `soundbrain` Chroma collection remain intentional compatibility
 contracts.
@@ -109,7 +109,7 @@ modify the frozen Desktop branch.
 
 ## V2 DAW and Ableton Boundary
 
-The existing `noisyne.integration` adapters are implemented workflow export
+The existing `phasenox.integration` adapters are implemented workflow export
 contracts. They create deterministic JSON, text and Markdown files and do not
 communicate with a DAW. Contract implementation is not runtime DAW availability.
 
@@ -117,9 +117,9 @@ Sprint 20 is limited to this smoke path:
 
 ```text
 Ableton Live
-    -> NØISYNE Max for Live device/surface
+    -> PHASENØX Max for Live device/surface
     -> launch or connect
-    -> local NØISYNE service
+    -> local PHASENØX service
     -> health / version / status handshake
 ```
 

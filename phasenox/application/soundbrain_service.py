@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from phasenox.application.noisyne_service import (
+from phasenox.application.phasenox_service import (
     AnalysisRequest,
     AnalysisResponse,
     PhasenoxService,

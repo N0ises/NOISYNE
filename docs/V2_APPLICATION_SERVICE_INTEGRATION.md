@@ -1,4 +1,4 @@
-# NØISYNE V2 — Application Service Integration Foundation
+# PHASENØX V2 — Application Service Integration Foundation
 
 Sprint 15 introduces the first public V2 application/service integration layer.
 It does **not** add new perception science, new DSP, a live LLM, RAG, memory
@@ -39,14 +39,14 @@ PhasenoxV2Service
 ```
 
 All heavy modules are imported lazily inside methods. Importing
-`noisyne.application` does not initialize torch, ONNX sessions, LLM clients,
+`phasenox.application` does not initialize torch, ONNX sessions, LLM clients,
 network connections, Qt, or audio devices.
 
 ---
 
 ## 3. Public contracts
 
-Contracts live in `noisyne.application.contracts`:
+Contracts live in `phasenox.application.contracts`:
 
 | Contract | Purpose |
 |----------|---------|
@@ -196,7 +196,7 @@ Result status mapping:
 
 The canonical V1 `PhasenoxService` export and compatibility aliases
 (`NoisyneService`, `SoundBrainService`, `AnalysisRequest`, `AnalysisResponse`)
-remain available through `noisyne.application.__getattr__`
+remain available through `phasenox.application.__getattr__`
 but are not imported by default. New V2 code should use `PhasenoxV2Service` and
 the Sprint 15 contracts.
 

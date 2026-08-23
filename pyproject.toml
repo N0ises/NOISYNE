@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "phasenox"
 version = "1.0.0"
-description = "NØISYNE modular audio intelligence platform."
+description = "PHASENØX modular audio intelligence platform."
 readme = "docs/README_v2.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }

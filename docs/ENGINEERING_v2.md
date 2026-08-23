@@ -1,4 +1,4 @@
-# SoundBrain Engineering Guide
+# PHASENOX Engineering Guide
 
 Version: 2.0
 

@@ -1,4 +1,4 @@
-# NØISYNE V2 Perceptual Context Foundation
+# PHASENØX V2 Perceptual Context Foundation
 
 Status: Sprint 8 implemented foundation. This is not a verification, production,
 standard-conformance, recommendation, or intelligence claim.
@@ -25,7 +25,7 @@ pass that policy and appropriate Sprint 7 evidence to the unchanged `Translation
 
 - **ITU-R BS.1116-3 (02/2015), in force:** reviewed for the fact that rigorous subjective
   assessment explicitly controls programme material, reproduction devices, monitors/headphones,
-  listening rooms and fields, listening levels, arrangements, and listener panels. NØISYNE does
+  listening rooms and fields, listening levels, arrangements, and listener panels. PHASENØX does
   not implement its grading, listener selection, statistical procedure, reference level, or claim
   BS.1116 conformance.
 - **EBU Tech 3276, 2nd edition (May 1998):** reviewed as critical-listening and control-room
@@ -38,7 +38,7 @@ pass that policy and appropriate Sprint 7 evidence to the unchanged `Translation
   operational/technical assessment. It supplies no consumer preference or engineering rule.
 - **ITU-R BS.1534-3 (10/2015), MUSHRA, in force:** reviewed only for explicit listener, programme
   material, experimental, and listening-condition context and the boundary between objective
-  code and subjective validation. NØISYNE implements no MUSHRA scores, anchors, hidden
+  code and subjective validation. PHASENØX implements no MUSHRA scores, anchors, hidden
   references, panels, or quality prediction.
 - **ITU-R BS.1770-5 (11/2023):** reviewed only to distinguish an identified programme-loudness
   measurement specification from a free-text delivery label. Sprint 8 adds no loudness algorithm,

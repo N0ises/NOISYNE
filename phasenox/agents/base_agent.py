@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class BaseAgent(ABC):
     """
-    Base interface for every SoundBrain agent.
+    Base interface for every PHASENOX agent.
     """
 
     def __init__(self, name: str):
@@ -15,4 +15,3 @@ class BaseAgent(ABC):
         """
         Execute the agent.
         """
-        pass

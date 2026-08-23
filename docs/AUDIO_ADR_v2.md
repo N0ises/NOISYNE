@@ -10,7 +10,7 @@ Status: ACTIVE
 
 This document defines the permanent architectural rules for the Audio Domain.
 
-The objective is to ensure that SoundBrain evolves into an Audio Intelligence
+The objective is to ensure that PHASENOX evolves into an Audio Intelligence
 System without requiring redesign of the audio foundation.
 
 ---

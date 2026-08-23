@@ -237,4 +237,4 @@ def test_built_distribution_identity_and_fresh_install(external_tmp_path: Path) 
         cwd=tmp_path,
     )
     assert result.stdout.startswith("usage: phasenox")
-    assert "N\u00d8ISYNE" in result.stdout
+    assert "PHASEN\u00d8X" in result.stdout

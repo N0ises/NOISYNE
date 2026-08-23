@@ -1,4 +1,4 @@
-"""NØISYNE deterministic Plugin Intelligence.
+"""PHASENOX deterministic Plugin Intelligence.
 
 The decision logic in this package is category-first and brand-blind.
 Concrete plugin products are only read from the registry.

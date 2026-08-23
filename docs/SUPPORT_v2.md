@@ -10,13 +10,13 @@ Status: ACTIVE
 # Purpose
 
 This document explains how users, contributors, researchers and developers can
-receive help regarding SoundBrain.
+receive help regarding PHASENOX.
 
 ---
 
 # Project Scope
 
-SoundBrain is an Audio Intelligence System focused on professional audio,
+PHASENOX is an Audio Intelligence System focused on professional audio,
 engineering, AI reasoning and future autonomous production workflows.
 
 Support is provided for:
@@ -53,7 +53,7 @@ Many common questions are answered there.
 
 Include:
 
-- SoundBrain version
+- PHASENOX version
 - Operating system
 - Python version
 - Hardware (CPU / GPU)
@@ -110,4 +110,4 @@ Human expertise remains the final authority.
 # Long-Term Goal
 
 Provide a professional support experience suitable for researchers,
-developers and audio engineers building on top of SoundBrain.
+developers and audio engineers building on top of PHASENOX.

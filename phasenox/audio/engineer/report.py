@@ -14,7 +14,7 @@ class EngineerReport:
 
         lines: list[str] = []
 
-        lines.append("========== NØISYNE Engineer ==========")
+        lines.append("========== PHASENØX Engineer ==========")
 
         lines.append("")
 

@@ -1,8 +1,8 @@
-# SoundBrain Vision
+# PHASENOX Vision
 
 ## Project Identity
 
-**SoundBrain** is an **Audio Intelligence System** designed to perceive,
+**PHASENOX** is an **Audio Intelligence System** designed to perceive,
 understand, reason about, create, and manipulate audio using AI, signal
 processing, psychoacoustics, engineering knowledge, and autonomous
 agents.

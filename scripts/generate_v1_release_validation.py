@@ -82,7 +82,7 @@ def main() -> int:
         "metadata": {
             "version": "1.0.0-rc1",
             "timestamp": datetime.now(UTC).isoformat(),
-            "purpose": "SoundBrain V1 release candidate validation",
+            "purpose": "PHASENOX V1 release candidate validation",
         },
         "formatting": run_command([python, "-m", "black", "--check"] + VALIDATED_FILES),
         "lint": run_command([python, "-m", "ruff", "check"] + VALIDATED_FILES),

@@ -1,4 +1,4 @@
-"""NØISYNE audio I/O package.
+"""PHASENOX audio I/O package.
 
 Heavy exports are loaded lazily via ``__getattr__`` so that importing
 ``phasenox.audio.io.models`` does not pull in backend providers at import time.

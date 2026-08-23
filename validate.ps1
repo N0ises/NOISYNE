@@ -1,5 +1,5 @@
 # -----------------------------
-# NØISYNE Validation Runner
+# PHASENØX Validation Runner
 # -----------------------------
 
 $musicFolder = "E:\Build\Music"

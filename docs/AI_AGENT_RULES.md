@@ -1,4 +1,4 @@
-# SoundBrain AI Agent Rules
+# PHASENOX AI Agent Rules
 
 These rules apply to every implementation sprint.
 
