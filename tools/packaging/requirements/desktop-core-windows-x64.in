@@ -1,0 +1,11 @@
+# Python runtime is pinned separately to CPython 3.12.10.
+# PySide6-Essentials supplies the PySide6 namespace and QtCore/Gui/Widgets
+# without the Qt Addons payload (QML, Quick, PDF, WebEngine, and related modules).
+PySide6-Essentials==6.11.2
+shiboken6==6.11.2
+numpy==2.5.2
+scipy==1.18.1
+librosa==1.0.0
+soundfile==0.14.0
+pyloudnorm==0.2.0
+PyYAML==6.0.3

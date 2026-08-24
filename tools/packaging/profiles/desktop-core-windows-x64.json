@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "profile": "desktop-core",
+  "platform": "windows",
+  "architecture": "x64",
+  "python": "3.12.10",
+  "application": {
+    "display_name": "PHASENØX",
+    "ascii_name": "PHASENOX",
+    "desktop_id": "phasenox.desktop",
+    "entry_module": "phasenox/ui/__main__.py",
+    "executable": "PHASENOX.exe",
+    "bundle_pattern": "PHASENOX-{version}-win-x64",
+    "installer_pattern": "PHASENOX-Setup-{version}-win-x64.exe"
+  },
+  "promised_workflows": [
+    "shell_navigation",
+    "task_center_supported_jobs",
+    "local_deterministic_audio_analysis",
+    "deterministic_reference_comparison",
+    "report_preview_export",
+    "read_only_settings_runtime",
+    "deterministic_core_intelligence"
+  ],
+  "unavailable_capabilities": [
+    "knowledge_rag",
+    "semantic_model_analysis",
+    "llm_reasoning",
+    "cpu_ml",
+    "gpu_cuda",
+    "model_download"
+  ],
+  "forbidden_distributions": [
+    "torch",
+    "torchaudio",
+    "onnx",
+    "onnxruntime",
+    "onnxruntime-gpu",
+    "chromadb",
+    "pyarrow",
+    "transformers",
+    "sentence-transformers",
+    "accelerate"
+  ],
+  "forbidden_module_roots": [
+    "torch",
+    "torchaudio",
+    "onnx",
+    "onnxruntime",
+    "chromadb",
+    "pyarrow",
+    "transformers",
+    "sentence_transformers",
+    "accelerate"
+  ],
+  "forbidden_binary_patterns": [
+    "*cuda*.dll",
+    "*cudnn*.dll",
+    "*cublas*.dll",
+    "*torch*.dll",
+    "*onnx*.dll"
+  ],
+  "qt_modules": ["QtCore", "QtGui", "QtWidgets"],
+  "qt_plugins": ["platforms/qwindows.dll", "imageformats/qico.dll", "imageformats/qjpeg.dll", "imageformats/qsvg.dll"],
+  "signing_status": "UNSIGNED",
+  "size_budget_bytes": 734003200
+}
