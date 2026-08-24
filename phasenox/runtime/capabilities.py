@@ -552,10 +552,12 @@ registry.register(
 registry.register(
     Capability(
         name="daw_integration",
-        description="Sprint 8+ DAW plugin and automation integration",
-        status=CapabilityStatus.PLANNED,
-        requirements="DAW-specific adapters and automation APIs",
-        reason_unavailable="No runtime DAW integration implemented in V1",
+        description="Optional Ableton rendered-export integration",
+        status=CapabilityStatus.VERIFIED,
+        requirements="Explicit external helper and a user-rendered Ableton WAV export",
+        reason_unavailable=(
+            "The optional Ableton helper is not installed or configured by Desktop Core."
+        ),
         tested_in_freeze=False,
     )
 )

@@ -322,3 +322,14 @@ print(json.dumps({name: name in sys.modules for name in (
         text=True,
     )
     assert not any(json.loads(completed.stdout).values())
+
+
+def test_daw_capability_records_verified_optional_boundary() -> None:
+    from phasenox.runtime.capabilities import CapabilityStatus, registry
+
+    capability = registry.get("daw_integration")
+    assert capability is not None
+    assert capability.status is CapabilityStatus.VERIFIED
+    assert "external helper" in capability.requirements.lower()
+    assert "not installed" in (capability.reason_unavailable or "").lower()
+    assert capability.tested_in_freeze is False

@@ -98,7 +98,7 @@ class V2ApplicationAdapter:
             elif capability.name in hidden_capabilities:
                 availability = Availability.UNAVAILABLE
                 reason_code = "not_exposed_in_desktop"
-                reason = "This capability is not exposed in Sprint 17B Desktop."
+                reason = "This capability is not exposed in PHASENOX Desktop."
                 readiness_source = "desktop_feature_policy"
             elif capability.name in readiness_required:
                 availability = Availability.UNAVAILABLE
@@ -156,7 +156,9 @@ class V2ApplicationAdapter:
                 continue
             try:
                 states.append(
-                    "available" if importlib.util.find_spec(module_name) is not None else "unavailable"
+                    "available"
+                    if importlib.util.find_spec(module_name) is not None
+                    else "unavailable"
                 )
             except (ImportError, ModuleNotFoundError, ValueError):
                 states.append("unknown")

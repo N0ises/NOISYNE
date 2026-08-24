@@ -86,6 +86,10 @@ def test_adapter_capability_truth_never_equates_importability_with_readiness() -
     assert snapshots["rag_retrieval"].readiness_source == "readiness_required"
     assert snapshots["audio_intelligence"].availability is Availability.UNAVAILABLE
     assert snapshots["audio_intelligence"].readiness_source == "lifecycle"
+    assert snapshots["daw_integration"].lifecycle is CapabilityLifecycle.VERIFIED
+    assert snapshots["daw_integration"].availability is Availability.UNAVAILABLE
+    assert snapshots["daw_integration"].reason_code == "not_exposed_in_desktop"
+    assert snapshots["daw_integration"].readiness_source == "desktop_feature_policy"
     assert all(
         item.availability is not Availability.AVAILABLE
         for item in snapshots.values()

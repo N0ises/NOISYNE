@@ -87,7 +87,7 @@ the start of V2. Machine availability must be evaluated separately.
 | Mix Intelligence | Production | Deterministic V1 root-cause/priority/chain recommendations |
 | Plugin Intelligence | Production | Deterministic recommendations; no plugin control |
 | Memory Learning | Planned | Runtime registry records no V1 learning loop |
-| DAW Integration | Planned | No runtime DAW integration exists |
+| DAW Integration | Verified | Optional rendered-WAV helper workflow verified with Ableton Live 11.2.7; not installed or exposed by Desktop Core |
 
 The previous broad claims that Audio Intelligence, Memory & Personalization and
 DAW Integration were all Production did not match this runtime registry.
@@ -105,7 +105,7 @@ with a successful runtime availability probe.
 | V1 PhasenoxService | Production | Canonical facade; `NoisyneService` and `SoundBrainService` retained for compatibility |
 | Workflow Integration Contracts | Implemented | Deterministic JSON/text/Markdown exports only |
 | DAW Integration Contracts | Implemented | Adapter interfaces and file exports; no DAW communication |
-| Ableton Launch Bridge | Planned (Sprint 20) | Launch/connect plus health/version/status smoke handshake only |
+| Ableton Rendered-Export Bridge | Verified (Sprint 21) | External helper, authenticated loopback bridge, user-rendered WAV handoff and deterministic Core analysis verified with Ableton Live 11.2.7 only; other versions unverified |
 | DAW Session Read/Control | Future | Outside V2 |
 | User-Confirmed DAW Actions | Future | Outside V2; later-version safety/action work |
 | Autonomous Mixing | Future / V3 | Not a V2 capability |
