@@ -1,0 +1,54 @@
+name: PHASENOX CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phasenox-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-identity-and-distribution:
+    name: Windows identity and distribution
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install focused validation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build pytest PyYAML
+
+      - name: Validate canonical identity and compatibility
+        run: >-
+          python -m pytest -q -p no:faulthandler
+          tests/test_github_configuration.py
+          tests/test_noisyne_phase6_repository_freeze.py
+          tests/test_phasenox_release_alignment.py
+          tests/test_desktop_core_packaging.py
+
+      - name: Validate distribution build and fresh install
+        run: >-
+          python -m pytest -q -p no:faulthandler
+          tests/test_phasenox_distribution.py
+
+      - name: Build canonical wheel and source distribution
+        run: python -m build
