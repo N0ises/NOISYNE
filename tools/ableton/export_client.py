@@ -11,6 +11,7 @@ from phasenox.integration.ableton_client import (
     AbletonClientError,
     AbletonExportClient,
     default_handoff_path,
+    detect_running_ableton,
     read_handoff,
 )
 
@@ -24,6 +25,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--poll-seconds", type=float, default=0.5)
     parser.add_argument("--include-existing", action="store_true")
     parser.add_argument("--once", action="store_true")
+    parser.add_argument("--allow-no-ableton", action="store_true", help=argparse.SUPPRESS)
     return parser
 
 
@@ -31,6 +33,13 @@ def main() -> int:
     args = _parser().parse_args()
     if args.poll_seconds < 0.1:
         raise SystemExit("--poll-seconds must be at least 0.1")
+    processes = detect_running_ableton()
+    if not processes and not args.allow_no_ableton:
+        print(json.dumps({"state": "error", "code": "ableton_not_running"}), flush=True)
+        return 2
+    if len(processes) > 1:
+        print(json.dumps({"state": "error", "code": "multiple_ableton_instances"}), flush=True)
+        return 2
     client = AbletonExportClient(
         read_handoff(args.handoff or default_handoff_path()),
         daw_version=args.daw_version,
@@ -42,6 +51,7 @@ def main() -> int:
                 "state": handshake.get("state"),
                 "client": handshake.get("client_name"),
                 "daw_version": handshake.get("daw_version"),
+                "ableton_pid": processes[0].pid if processes else None,
             },
             sort_keys=True,
         ),

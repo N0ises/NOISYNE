@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import ctypes
 import json
 import os
 import stat
+import sys
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -23,6 +25,28 @@ HANDOFF_SCHEMA_VERSION = 1
 HANDOFF_FILENAME = "ableton-bridge-v1.json"
 CLIENT_VERSION = "1.0.0"
 MAX_HANDOFF_BYTES = 8 * 1024
+_ABLETON_PROCESS_PREFIX = "Ableton Live "
+
+
+@dataclass(frozen=True, slots=True)
+class AbletonProcess:
+    pid: int
+    executable_name: str
+
+
+class _ProcessEntry32W(ctypes.Structure):
+    _fields_ = [
+        ("dwSize", ctypes.c_ulong),
+        ("cntUsage", ctypes.c_ulong),
+        ("th32ProcessID", ctypes.c_ulong),
+        ("th32DefaultHeapID", ctypes.c_void_p),
+        ("th32ModuleID", ctypes.c_ulong),
+        ("cntThreads", ctypes.c_ulong),
+        ("th32ParentProcessID", ctypes.c_ulong),
+        ("pcPriClassBase", ctypes.c_long),
+        ("dwFlags", ctypes.c_ulong),
+        ("szExeFile", ctypes.c_wchar * 260),
+    ]
 
 
 class AbletonClientError(RuntimeError):
@@ -108,6 +132,35 @@ def write_handoff(
     finally:
         temporary.unlink(missing_ok=True)
     return handoff
+
+
+def detect_running_ableton() -> tuple[AbletonProcess, ...]:
+    """Return main Ableton Live processes through the read-only Windows process API."""
+    if sys.platform != "win32":
+        return ()
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    snapshot = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)
+    invalid_handle = ctypes.c_void_p(-1).value
+    if snapshot == invalid_handle:
+        raise AbletonClientError("process_probe_failed", "Ableton process discovery failed.")
+    kernel32.Process32FirstW.argtypes = [ctypes.c_void_p, ctypes.POINTER(_ProcessEntry32W)]
+    kernel32.Process32FirstW.restype = ctypes.c_long
+    kernel32.Process32NextW.argtypes = [ctypes.c_void_p, ctypes.POINTER(_ProcessEntry32W)]
+    kernel32.Process32NextW.restype = ctypes.c_long
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    try:
+        entry = _ProcessEntry32W()
+        entry.dwSize = ctypes.sizeof(_ProcessEntry32W)
+        processes: list[AbletonProcess] = []
+        available = bool(kernel32.Process32FirstW(snapshot, ctypes.byref(entry)))
+        while available:
+            name = entry.szExeFile
+            if name.startswith(_ABLETON_PROCESS_PREFIX) and name.endswith(".exe"):
+                processes.append(AbletonProcess(int(entry.th32ProcessID), name))
+            available = bool(kernel32.Process32NextW(snapshot, ctypes.byref(entry)))
+        return tuple(processes)
+    finally:
+        kernel32.CloseHandle(snapshot)
 
 
 def read_handoff(path: Path) -> AbletonBridgeHandoff:
@@ -373,7 +426,9 @@ __all__ = [
     "AbletonBridgeHandoff",
     "AbletonClientError",
     "AbletonExportClient",
+    "AbletonProcess",
     "default_handoff_path",
+    "detect_running_ableton",
     "discard_handoff",
     "read_handoff",
     "write_handoff",

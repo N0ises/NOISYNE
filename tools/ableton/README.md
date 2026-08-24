@@ -18,13 +18,13 @@ The helper:
 Start the host with an existing empty export directory:
 
 ```powershell
-python tools/ableton/bridge_host.py --export-root C:\path\to\temporary\exports
+python -m tools.ableton.bridge_host --export-root C:\path\to\temporary\exports
 ```
 
 In a second terminal, start the helper:
 
 ```powershell
-python tools/ableton/export_client.py --daw-version 11.2.7 --project "Disposable Set"
+python -m tools.ableton.export_client --daw-version 11.2.7 --project "Disposable Set"
 ```
 
 Then render a disposable WAV from Ableton into that exact folder. The helper

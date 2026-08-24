@@ -6,6 +6,7 @@ from .ableton_client import (
     AbletonBridgeHandoff,
     AbletonClientError,
     AbletonExportClient,
+    AbletonProcess,
 )
 from .base import BaseWorkflowAdapter, WorkflowAdapter
 from .cubase import CubaseAdapter
@@ -34,6 +35,7 @@ __all__ = [
     "AbletonBridgeServer",
     "AbletonClientError",
     "AbletonExportClient",
+    "AbletonProcess",
     "AdapterFactory",
     "BaseWorkflowAdapter",
     "CubaseAdapter",
