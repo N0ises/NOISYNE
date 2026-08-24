@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from phasenox.ui.data_location import (
     read_data_root_pointer,
     resolve_data_root,
     validate_data_root,
+    validate_data_root_bounded,
     write_data_root_pointer,
 )
 
@@ -180,6 +182,27 @@ def test_read_only_root_is_reported_without_probe_writes(
 
     assert validate_data_root(root) is DataRootAvailability.READ_ONLY
     assert tuple(root.iterdir()) == ()
+
+
+def test_external_validation_has_a_time_bound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import phasenox.ui.data_location as module
+
+    release = threading.Event()
+
+    def blocked_validation(_path: Path, *, require_writable: bool = True):
+        del require_writable
+        release.wait(1)
+        return DataRootAvailability.AVAILABLE
+
+    monkeypatch.setattr(module, "validate_data_root", blocked_validation)
+    try:
+        result = validate_data_root_bounded(tmp_path, timeout_seconds=0.01)
+    finally:
+        release.set()
+
+    assert result is DataRootAvailability.VALIDATION_TIMEOUT
 
 
 def test_legacy_packaged_root_is_preserved_without_creation(tmp_path: Path) -> None:

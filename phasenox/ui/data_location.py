@@ -6,6 +6,7 @@ import json
 import os
 import stat
 import sys
+import threading
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -39,6 +40,7 @@ class DataRootAvailability(StrEnum):
     NOT_READABLE = "not_readable"
     READ_ONLY = "read_only"
     UNSAFE = "unsafe"
+    VALIDATION_TIMEOUT = "validation_timeout"
     TEMPORARY = "temporary"
     UNSELECTED = "unselected"
 
@@ -208,6 +210,26 @@ def validate_data_root(path: Path, *, require_writable: bool = True) -> DataRoot
     return DataRootAvailability.AVAILABLE
 
 
+def validate_data_root_bounded(
+    path: Path,
+    *,
+    require_writable: bool = True,
+    timeout_seconds: float = 2.0,
+) -> DataRootAvailability:
+    """Bound potentially slow removable/network filesystem validation."""
+    result: list[DataRootAvailability] = []
+
+    def validate() -> None:
+        result.append(validate_data_root(path, require_writable=require_writable))
+
+    worker = threading.Thread(target=validate, name="data-root-validation", daemon=True)
+    worker.start()
+    worker.join(timeout=max(0.0, timeout_seconds))
+    if worker.is_alive():
+        return DataRootAvailability.VALIDATION_TIMEOUT
+    return result[0] if result else DataRootAvailability.UNAVAILABLE
+
+
 def resolve_data_root(
     *,
     pointer_path: Path,
@@ -267,7 +289,7 @@ def resolve_data_root(
         )
 
     source, path, explicit, pointer_source = candidates[0]
-    availability = validate_data_root(path, require_writable=require_writable)
+    availability = validate_data_root_bounded(path, require_writable=require_writable)
     conflicts = tuple(
         f"{other_source.value}={other_path}"
         for other_source, other_path, _explicit, _pointer_source in candidates[1:]
@@ -347,5 +369,6 @@ __all__ = [
     "read_data_root_pointer",
     "resolve_data_root",
     "validate_data_root",
+    "validate_data_root_bounded",
     "write_data_root_pointer",
 ]
