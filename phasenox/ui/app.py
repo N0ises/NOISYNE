@@ -16,6 +16,7 @@ from .brand_resources import application_icon
 from .contracts import DesktopApplicationAdapter, ProductMetadata, RuntimeStatus, UiError
 from .design_system.theme import apply_theme
 from .errors import ExceptionBoundary, unexpected_error
+from .first_launch import recover_data_root_interactively
 from .job_gateway import DesktopJobGateway
 from .logging_setup import configure_logging
 from .main_window import MainWindow
@@ -151,6 +152,11 @@ def run(
         temporary=options.temporary_session,
         session_choice=(SessionChoice(options.session_choice) if options.session_choice else None),
     )
+    if startup.mode is DesktopStartupMode.RECOVERY_REQUIRED:
+        startup = recover_data_root_interactively(
+            startup,
+            application_version=metadata.version,
+        )
     if startup.mode is DesktopStartupMode.RECOVERY_REQUIRED:
         intents = ", ".join(item.value for item in startup.recovery_intents)
         print(

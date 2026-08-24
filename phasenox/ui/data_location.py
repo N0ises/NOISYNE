@@ -18,7 +18,9 @@ ORGANIZATION_NAME = "PHASENOX"
 LEGACY_DESKTOP_IDENTITY = "soundbrain.desktop"
 CANONICAL_DESKTOP_IDENTITY = "phasenox.desktop"
 DATA_ROOT_POINTER_SCHEMA = 1
+INSTALLER_HANDOFF_SCHEMA = 1
 MAX_POINTER_BYTES = 16 * 1024
+MAX_INSTALLER_HANDOFF_BYTES = 16 * 1024
 
 
 class DataRootSource(StrEnum):
@@ -68,6 +70,14 @@ class DataRootPointer:
     selection_source: DataRootSource
     selected_at: datetime
     schema_version: int = DATA_ROOT_POINTER_SCHEMA
+
+
+@dataclass(frozen=True, slots=True)
+class InstallerDataRootHandoff:
+    candidate_path: Path
+    installer_version: str
+    created_at: datetime
+    schema_version: int = INSTALLER_HANDOFF_SCHEMA
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,6 +148,63 @@ def desktop_state_locations(organization_root: Path | None = None) -> DesktopSta
 
 def data_root_pointer_path(canonical_root: Path) -> Path:
     return canonical_root / "state" / "data-root.json"
+
+
+def installer_handoff_path(canonical_root: Path) -> Path:
+    return canonical_root / "state" / "installer-data-root.json"
+
+
+def read_installer_handoff(path: Path) -> tuple[InstallerDataRootHandoff | None, str | None]:
+    """Read a bounded installer suggestion without selecting or creating its target."""
+    try:
+        if path.stat().st_size > MAX_INSTALLER_HANDOFF_BYTES:
+            return None, "handoff_too_large"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if (
+            not isinstance(payload, dict)
+            or payload.get("schema_version") != INSTALLER_HANDOFF_SCHEMA
+        ):
+            raise ValueError("unsupported installer handoff schema")
+        raw_path = payload.get("candidate_path")
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            raise ValueError("installer candidate path is empty")
+        installer_version = payload.get("installer_version")
+        if not isinstance(installer_version, str) or not installer_version.strip():
+            raise ValueError("installer version is empty")
+        created_at = datetime.fromisoformat(str(payload.get("created_at")))
+        if created_at.tzinfo is None:
+            raise ValueError("installer handoff timestamp must include a timezone")
+        return (
+            InstallerDataRootHandoff(
+                normalize_path(raw_path),
+                installer_version.strip(),
+                created_at,
+            ),
+            None,
+        )
+    except FileNotFoundError:
+        return None, None
+    except (OSError, UnicodeDecodeError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        return None, f"{type(exc).__name__}: {exc}"
+
+
+def write_installer_handoff(path: Path, handoff: InstallerDataRootHandoff) -> None:
+    """Write a pending suggestion; this never writes the authoritative pointer."""
+    payload = {
+        "schema_version": INSTALLER_HANDOFF_SCHEMA,
+        "candidate_path": str(normalize_path(handoff.candidate_path)),
+        "installer_version": handoff.installer_version,
+        "created_at": handoff.created_at.astimezone(UTC).isoformat(),
+    }
+    _atomic_json_write(path, payload)
+
+
+def discard_installer_handoff(path: Path) -> None:
+    """Remove a consumed small-state handoff without touching Data Root or its pointer."""
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        return
 
 
 def read_data_root_pointer(path: Path) -> tuple[DataRootPointer | None, str | None]:
@@ -353,6 +420,7 @@ _DATA_ROOT_RECOVERY = (
 __all__ = [
     "CANONICAL_DESKTOP_IDENTITY",
     "DATA_ROOT_POINTER_SCHEMA",
+    "INSTALLER_HANDOFF_SCHEMA",
     "LEGACY_DESKTOP_IDENTITY",
     "ORGANIZATION_NAME",
     "DataRootAvailability",
@@ -361,14 +429,19 @@ __all__ = [
     "DataRootSelection",
     "DataRootSource",
     "DesktopStateLocations",
+    "InstallerDataRootHandoff",
     "RecoveryIntent",
     "data_root_pointer_path",
     "desktop_state_locations",
+    "discard_installer_handoff",
+    "installer_handoff_path",
     "normalize_path",
     "organization_state_root",
     "read_data_root_pointer",
+    "read_installer_handoff",
     "resolve_data_root",
     "validate_data_root",
     "validate_data_root_bounded",
     "write_data_root_pointer",
+    "write_installer_handoff",
 ]

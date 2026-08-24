@@ -67,6 +67,7 @@ def prepare_desktop_startup(
     environ: Mapping[str, str] | None = None,
     frozen: bool | None = None,
     requested_data_root: Path | None = None,
+    requested_data_root_source: DataRootSource = DataRootSource.USER,
     temporary: bool = False,
     session_choice: SessionChoice | None = None,
 ) -> DesktopStartupResolution:
@@ -95,7 +96,7 @@ def prepare_desktop_startup(
             )
         write_data_root_pointer(
             pointer_path,
-            DataRootPointer(requested, DataRootSource.USER, datetime.now(UTC)),
+            DataRootPointer(requested, requested_data_root_source, datetime.now(UTC)),
         )
 
     is_frozen = bool(getattr(sys, "frozen", False)) if frozen is None else frozen

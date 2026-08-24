@@ -87,5 +87,12 @@
     "phasenox-wordmark.svg"
   ],
   "signing_status": "UNSIGNED",
+  "installer": {
+    "technology": "Inno Setup",
+    "tool_version": "7.1.0-x64",
+    "app_id": "{A6B2A61D-05B0-4CE7-85A3-C443B36D703B}",
+    "privileges": "lowest",
+    "uninstall_policy": "application-only"
+  },
   "size_budget_bytes": 734003200
 }
