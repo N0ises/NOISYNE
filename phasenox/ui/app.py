@@ -230,6 +230,7 @@ def run(
                 options.packaging_probe,
                 metadata,
                 adapter=application_adapter,
+                state_root=state_layout.root,
                 audio_path=options.packaged_analysis,
                 report_path=options.packaged_analysis_report,
             ),

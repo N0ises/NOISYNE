@@ -32,6 +32,7 @@ def run_packaging_probe(
     metadata: ProductMetadata,
     *,
     adapter: DesktopApplicationAdapter | None = None,
+    state_root: Path | None = None,
     audio_path: Path | None = None,
     report_path: Path | None = None,
 ) -> Path:
@@ -69,7 +70,7 @@ def run_packaging_probe(
     if missing_brand_assets:
         raise RuntimeError(f"Packaged brand assets are missing: {missing_brand_assets}")
 
-    data_directory = user_data_directory()
+    data_directory = state_root or user_data_directory()
     data_directory.mkdir(parents=True, exist_ok=True)
     install_directory = Path(sys.executable).resolve().parent
     resolved_data_directory = data_directory.resolve()
@@ -81,7 +82,7 @@ def run_packaging_probe(
     sentinel = data_directory / "packaging-probe.tmp"
     sentinel.write_text("writable", encoding="utf-8")
     sentinel.unlink()
-    layout = desktop_path_layout()
+    layout = desktop_path_layout(state_root)
     missing_directories = tuple(
         str(path) for path in layout.writable_directories if not path.is_dir()
     )
