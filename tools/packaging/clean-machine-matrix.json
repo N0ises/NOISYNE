@@ -3,11 +3,11 @@
   "authority": "PHASENOX Sprint 19A packaging/installer audit",
   "execution_environment": "disposable Windows x64 VM or Windows Sandbox",
   "claim_policy": "Rows remain EXTERNAL_ACCEPTANCE_PENDING/NOT_EXECUTED until evidence is produced on a separate clean Windows host.",
-  "last_reviewed_utc": "2026-08-24T12:00:00Z",
+  "last_reviewed_utc": "2026-08-24T12:10:49Z",
   "candidate": {
-    "git_sha": "7123116aa0d5f48adcbaa671b91d6530db2d3a34",
-    "installer_sha256": "0026e42b2101f2bf404cd4f7f7ec4e65749e4f590114449e01249b26f9f00fa4",
-    "executable_sha256": "9caedfefeb10b5e0cb39fa8b16b301cb757d337fadb419f744d418483aa22744"
+    "git_sha": "72954adb2347a94b602198e3f4f252ea2a05a24b",
+    "installer_sha256": "30d6fbb0bc9548c045e549589db38dea981c92270aaa5c5d888cb2f0e94f617b",
+    "executable_sha256": "763ce5ad34dfdafb97bffd6252aa8419760fae0f1f514b5014611ba70e3fc7b2"
   },
   "infrastructure_audit": {
     "environment_id": "external-windows-host-not-executed",
