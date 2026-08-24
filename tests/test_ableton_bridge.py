@@ -105,6 +105,20 @@ def test_payload_limit_is_enforced_before_parsing(tmp_path: Path) -> None:
         server.stop()
 
 
+def test_malformed_json_is_rejected_without_server_failure(bridge: AbletonBridgeServer) -> None:
+    request = Request(
+        f"{bridge.status().endpoint}/handshake",
+        data=b"{not-json",
+        method="POST",
+        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"},
+    )
+    with pytest.raises(HTTPError) as exc_info:
+        urlopen(request, timeout=5)
+    assert exc_info.value.code == HTTPStatus.BAD_REQUEST
+    assert json.loads(exc_info.value.read())["error"] == "malformed_json"
+    assert call(bridge, "GET", "/health")[0] == HTTPStatus.OK
+
+
 def test_version_mismatch_never_claims_connected(bridge: AbletonBridgeServer) -> None:
     code, payload = call(
         bridge,
@@ -245,6 +259,19 @@ def test_export_path_validation(
     )
     assert code >= 400
     assert payload["error"] == expected_error
+
+
+def test_directory_named_wav_is_rejected(bridge: AbletonBridgeServer, tmp_path: Path) -> None:
+    (tmp_path / "directory.wav").mkdir()
+    assert handshake(bridge)[0] == HTTPStatus.OK
+    code, payload = call(
+        bridge,
+        "POST",
+        "/exports",
+        {"relative_path": "directory.wav", "project": {"name": "Set"}},
+    )
+    assert code == HTTPStatus.BAD_REQUEST
+    assert payload["error"] == "unsafe_path"
 
 
 def test_export_requires_completed_handshake(bridge: AbletonBridgeServer) -> None:

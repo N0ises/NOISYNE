@@ -6,6 +6,7 @@ import json
 import socket
 import subprocess
 import sys
+import threading
 import wave
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
@@ -18,6 +19,7 @@ from phasenox.integration.ableton_client import (
     AbletonBridgeHandoff,
     AbletonClientError,
     AbletonExportClient,
+    detect_running_ableton,
     discard_handoff,
     read_handoff,
     write_handoff,
@@ -219,6 +221,38 @@ def test_wrong_token_and_closed_bridge_map_to_safe_errors(tmp_path: Path) -> Non
     assert exc_info.value.code == "bridge_unavailable"
 
 
+def test_client_timeout_is_bounded(tmp_path: Path) -> None:
+    listener = socket.socket()
+    listener.bind(("127.0.0.1", 0))
+    listener.listen(1)
+    release = threading.Event()
+
+    def stall() -> None:
+        connection, _address = listener.accept()
+        with connection:
+            release.wait(timeout=2)
+
+    worker = threading.Thread(target=stall, daemon=True)
+    worker.start()
+    now = datetime.now(UTC)
+    handoff = AbletonBridgeHandoff(
+        endpoint=f"http://127.0.0.1:{listener.getsockname()[1]}/v1",
+        token=TOKEN,
+        export_root=tmp_path,
+        created_at=now,
+        expires_at=now + timedelta(hours=1),
+    )
+    client = AbletonExportClient(handoff, daw_version="11.2.7", timeout_seconds=0.05)
+    try:
+        with pytest.raises(AbletonClientError) as exc_info:
+            client.handshake()
+        assert exc_info.value.code == "bridge_unavailable"
+    finally:
+        release.set()
+        listener.close()
+        worker.join(timeout=2)
+
+
 def test_watcher_ignores_baseline_and_detects_direct_wav_only(tmp_path: Path) -> None:
     existing = tmp_path / "existing.wav"
     _write_wav(existing)
@@ -291,6 +325,54 @@ def test_disconnect_reconnect_and_bridge_restart_soak(tmp_path: Path) -> None:
     assert len(ports) == 10
 
 
+def test_disconnect_and_shutdown_wait_for_active_analysis(tmp_path: Path) -> None:
+    audio = tmp_path / "active.wav"
+    second_audio = tmp_path / "second.wav"
+    _write_wav(audio)
+    _write_wav(second_audio, frames=2048)
+    entered = threading.Event()
+    release = threading.Event()
+
+    def blocking(request: object) -> DawAnalysisResult:
+        entered.set()
+        assert release.wait(timeout=10)
+        return _completed(request)
+
+    gateway = DawAnalysisGateway(blocking)
+    server = AbletonBridgeServer(
+        tmp_path,
+        token=TOKEN,
+        stable_seconds=0,
+        analysis_gateway=gateway,
+    )
+    server.start()
+    client = AbletonExportClient(_handoff(server, tmp_path), daw_version="11.2.7")
+    client.handshake()
+    client.submit_export(audio, project_name="Disposable")
+    queued = client.submit_export(audio, project_name="Disposable")
+    request_id = str(queued["request_id"])
+    assert entered.wait(timeout=2)
+    client.submit_export(second_audio, project_name="Disposable")
+    second_queued = client.submit_export(second_audio, project_name="Disposable")
+    second_request_id = str(second_queued["request_id"])
+    assert client.disconnect()["state"] == "bridge_available"
+
+    shutdown = threading.Thread(target=server.stop, daemon=True)
+    shutdown.start()
+    shutdown.join(timeout=0.1)
+    assert shutdown.is_alive()
+    release.set()
+    shutdown.join(timeout=5)
+    assert not shutdown.is_alive()
+    assert server.status().state is DawConnectionState.STOPPED
+    result = gateway.result(request_id)
+    assert result is not None
+    assert result.state is DawAnalysisState.COMPLETED
+    second_result = gateway.result(second_request_id)
+    assert second_result is not None
+    assert second_result.state is DawAnalysisState.COMPLETED
+
+
 def test_client_and_gateway_imports_remain_lightweight() -> None:
     script = """
 import json
@@ -308,3 +390,11 @@ print(json.dumps({name: name in sys.modules for name in (
         text=True,
     )
     assert not any(json.loads(completed.stdout).values())
+
+
+def test_process_probe_returns_only_main_ableton_processes() -> None:
+    processes = detect_running_ableton()
+    assert all(item.pid > 0 for item in processes)
+    assert all(item.executable_name.startswith("Ableton Live ") for item in processes)
+    assert all("Scanner" not in item.executable_name for item in processes)
+    assert all("Index" not in item.executable_name for item in processes)
