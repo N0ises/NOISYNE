@@ -100,7 +100,7 @@ class MagnitudeResponseEvidence:
             ) from exc
         if np.any(~np.isfinite(result)) or np.any(result <= 0.0):
             raise ValueError(
-                "magnitude-to-amplitude conversion must produce finite, positive values"
+                "magnitude-to-amplitude conversion is not representable as a positive float64"
             )
         if np.asarray(frequency_hz).ndim == 0:
             return float(result)
