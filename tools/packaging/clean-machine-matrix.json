@@ -3,6 +3,18 @@
   "authority": "PHASENOX Sprint 19A packaging/installer audit",
   "execution_environment": "disposable Windows x64 VM or Windows Sandbox",
   "claim_policy": "Rows remain BLOCKED/NOT_EXECUTED until evidence is produced outside the developer workstation.",
+  "last_reviewed_utc": "2026-08-24T00:00:00Z",
+  "candidate": {
+    "git_sha": "b7908b921a7227d19e85d765588f5375e1b08a34",
+    "installer_sha256": "1139223984428a875102e5245e099cda043eb2033a6aba32c3f96b14bc61629e",
+    "executable_sha256": "5103e8598956c1af40f6f5b8203c5f281872987fcc9b4dca2fb939500c6376df"
+  },
+  "infrastructure_audit": {
+    "environment_id": "developer-workstation-not-certification-eligible",
+    "result": "BLOCKED",
+    "evidence": "docs/PHASENOX_SPRINT19C_CLEAN_MACHINE_CERTIFICATION_REPORT.md",
+    "notes": "Windows Sandbox absent; Hyper-V, VMware, VirtualBox, Docker, and clean Windows CI runner unavailable. Developer workstation evidence cannot certify rows."
+  },
   "rows": [
     {"id": "no-python", "status": "BLOCKED", "result": "NOT_EXECUTED"},
     {"id": "no-repository-state", "status": "BLOCKED", "result": "NOT_EXECUTED"},

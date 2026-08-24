@@ -82,6 +82,8 @@ def test_clean_machine_rows_do_not_claim_developer_workstation_passes() -> None:
     assert len(matrix["rows"]) >= 18
     assert all(row["status"] == "BLOCKED" for row in matrix["rows"])
     assert all(row["result"] == "NOT_EXECUTED" for row in matrix["rows"])
+    assert matrix["candidate"]["git_sha"] == ("b7908b921a7227d19e85d765588f5375e1b08a34")
+    assert matrix["infrastructure_audit"]["result"] == "BLOCKED"
 
 
 def test_no_legacy_product_artifact_names() -> None:
@@ -96,3 +98,12 @@ def test_no_legacy_product_artifact_names() -> None:
         assert "soundbrain.exe" not in text
         assert "noisyne-setup" not in text
         assert "soundbrain-setup" not in text
+
+
+def test_clean_machine_harness_preserves_native_argument_boundaries() -> None:
+    script = (REPOSITORY / "tools/release/validate_windows_install.ps1").read_text(encoding="utf-8")
+    assert "ProcessStartInfo" in script
+    assert "ArgumentList.Add" in script
+    assert "ExpectedInstallerSha256" in script
+    assert "Confirm-FirstLaunchDataRoot" in script
+    assert "Start-Process -FilePath $Executable -ArgumentList" not in script
