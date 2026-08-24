@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)] [string]$ExpectedVersion,
     [Parameter(Mandatory)] [string]$ExpectedInstallerSha256,
     [string]$InstallRoot = "$env:LOCALAPPDATA\Programs\PHASENOX",
+    [string]$DataRoot = "",
     [string]$EvidenceDirectory = "$env:TEMP\phasenox-clean-machine-evidence",
     [string]$AudioFixture = "",
     [string]$PreviousInstaller = "",
@@ -73,7 +74,10 @@ function Test-InternetConnectivity {
     })
 }
 
-function Confirm-FirstLaunchDataRoot([Diagnostics.Process]$Process) {
+function Confirm-FirstLaunchDataRoot(
+    [Diagnostics.Process]$Process,
+    [string]$CandidatePath
+) {
     Add-Type -AssemblyName UIAutomationClient
     Add-Type -AssemblyName UIAutomationTypes
     $root = [Windows.Automation.AutomationElement]::RootElement
@@ -89,6 +93,31 @@ function Confirm-FirstLaunchDataRoot([Diagnostics.Process]$Process) {
         if ($null -eq $window) { Start-Sleep -Milliseconds 250 }
     }
     if ($null -eq $window) { throw "First-launch Data Location dialog did not appear" }
+    if ($CandidatePath) {
+        $editCondition = [Windows.Automation.PropertyCondition]::new(
+            [Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [Windows.Automation.ControlType]::Edit
+        )
+        $edit = $window.FindFirst([Windows.Automation.TreeScope]::Descendants, $editCondition)
+        if ($null -eq $edit) { throw "Data Location path field was not found" }
+        $value = $edit.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern)
+        $value.SetValue([IO.Path]::GetFullPath($CandidatePath))
+        if (-not (Test-Path -LiteralPath $CandidatePath)) {
+            $checkboxCondition = [Windows.Automation.PropertyCondition]::new(
+                [Windows.Automation.AutomationElement]::NameProperty,
+                "Create this folder if it does not exist"
+            )
+            $checkbox = $window.FindFirst(
+                [Windows.Automation.TreeScope]::Descendants,
+                $checkboxCondition
+            )
+            if ($null -eq $checkbox) { throw "Create-missing Data Root checkbox was not found" }
+            $toggle = $checkbox.GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern)
+            if ($toggle.Current.ToggleState -ne [Windows.Automation.ToggleState]::On) {
+                $toggle.Toggle()
+            }
+        }
+    }
     $buttonCondition = [Windows.Automation.AndCondition]::new(
         [Windows.Automation.PropertyCondition]::new(
             [Windows.Automation.AutomationElement]::ControlTypeProperty,
@@ -110,14 +139,15 @@ function Invoke-PackagedProbe(
     [string]$ProbePath,
     [string]$Fixture,
     [string]$ReportPath,
-    [bool]$ConfirmFirstLaunch
+    [bool]$ConfirmFirstLaunch,
+    [string]$CandidatePath = ""
 ) {
     $arguments = @("--packaging-probe", $ProbePath)
     if ($Fixture) {
         $arguments += @("--packaged-analysis", $Fixture, "--packaged-analysis-report", $ReportPath)
     }
     $process = Start-NativeProcess $Executable $arguments
-    if ($ConfirmFirstLaunch) { Confirm-FirstLaunchDataRoot $process }
+    if ($ConfirmFirstLaunch) { Confirm-FirstLaunchDataRoot $process $CandidatePath }
     if (-not $process.WaitForExit(180000)) {
         $process.Kill($true)
         throw "PHASENOX packaging probe timed out"
@@ -195,16 +225,22 @@ try {
     $firstProbePath = Join-Path $evidenceRoot "first-launch-probe.json"
     $analysisReport = Join-Path $evidenceRoot "analysis-report.json"
     $firstProbe = Invoke-PackagedProbe `
-        $executable $firstProbePath $AudioFixture $analysisReport $RequireCleanUserState
+        $executable $firstProbePath $AudioFixture $analysisReport `
+        $RequireCleanUserState $DataRoot
     if (-not (Test-Path -LiteralPath $pointerPath)) {
         throw "First launch did not commit the canonical Data Root pointer"
     }
     if (Test-Path -LiteralPath $handoffPath) {
         throw "Consumed installer handoff remains after successful confirmation"
     }
+    $pointer = Get-Content -LiteralPath $pointerPath -Raw | ConvertFrom-Json
+    if ($DataRoot -and
+        [IO.Path]::GetFullPath($pointer.path) -ne [IO.Path]::GetFullPath($DataRoot)) {
+        throw "Committed Data Root does not match the explicitly selected path"
+    }
     $pointerAfterFirstLaunch = Get-PointerBytes $pointerPath
     $secondProbe = Invoke-PackagedProbe `
-        $executable (Join-Path $evidenceRoot "second-launch-probe.json") "" "" $false
+        $executable (Join-Path $evidenceRoot "second-launch-probe.json") "" "" $false ""
     if ((Get-PointerBytes $pointerPath) -ne $pointerAfterFirstLaunch) {
         throw "Second launch changed the Data Root pointer"
     }
@@ -218,7 +254,8 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Unable to make install payload read-only" }
         try {
             $readOnlyProbe = Invoke-PackagedProbe `
-                $executable (Join-Path $evidenceRoot "read-only-install-probe.json") "" "" $false
+                $executable (Join-Path $evidenceRoot "read-only-install-probe.json") `
+                "" "" $false ""
         } finally {
             & icacls.exe (Split-Path -Parent $installPath) /restore $aclBackup /c | Out-Null
         }
@@ -296,6 +333,7 @@ try {
             pointer = $pointerPath
             pointer_before = $beforePointer
             pointer_after = $pointerAfterFirstLaunch
+            selected_data_root = $pointer.path
         }
         install_exit_code = $installExit
         installed_version = $installedVersion

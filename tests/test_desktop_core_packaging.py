@@ -106,4 +106,6 @@ def test_clean_machine_harness_preserves_native_argument_boundaries() -> None:
     assert "ArgumentList.Add" in script
     assert "ExpectedInstallerSha256" in script
     assert "Confirm-FirstLaunchDataRoot" in script
+    assert '[string]$DataRoot = ""' in script
+    assert "ValuePattern" in script
     assert "Start-Process -FilePath $Executable -ArgumentList" not in script
