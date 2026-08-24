@@ -7,6 +7,7 @@ import hashlib
 import importlib.metadata
 import json
 import re
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -73,6 +74,7 @@ def main() -> int:
     verification = json.loads(args.bundle_verification.read_text(encoding="utf-8"))
     context = json.loads(args.build_context.read_text(encoding="utf-8-sig"))
     packages = locked_packages(args.runtime_lock)
+    version = args.bundle.name.removeprefix("PHASENOX-").removesuffix("-win-x64")
 
     sbom_path = evidence / "PHASENOX-desktop-core.cdx.json"
     components = [
@@ -90,13 +92,13 @@ def main() -> int:
         {
             "bomFormat": "CycloneDX",
             "specVersion": "1.6",
-            "serialNumber": f"urn:uuid:{hashlib.sha256(context['git_sha'].encode()).hexdigest()[:32]}",
+            "serialNumber": f"urn:uuid:{uuid.UUID(hex=hashlib.sha256(context['git_sha'].encode()).hexdigest()[:32])}",
             "version": 1,
             "metadata": {
                 "component": {
                     "type": "application",
                     "name": "PHASENOX Desktop Core",
-                    "version": profile.get("version", "1.0.0"),
+                    "version": version,
                 }
             },
             "components": components,
@@ -114,7 +116,6 @@ def main() -> int:
         },
     )
 
-    version = args.bundle.name.removeprefix("PHASENOX-").removesuffix("-win-x64")
     manifest_path = evidence / "PHASENOX-release-manifest.json"
     manifest = {
         "schema_version": 1,
