@@ -1,4 +1,4 @@
-"""Canonical desktop product identity with stable user-data compatibility."""
+"""Canonical Desktop product identity."""
 
 from __future__ import annotations
 
@@ -8,9 +8,7 @@ from phasenox.resources.branding import ASCII_NAME, DISPLAY_NAME
 
 from .contracts import ProductMetadata
 
-# Deliberately retained in Sprint 17B: changing this value changes Qt's
-# AppLocalDataLocation and would silently split existing Desktop user state.
-DESKTOP_APPLICATION_ID = "soundbrain.desktop"
+DESKTOP_APPLICATION_ID = "phasenox.desktop"
 
 
 def _installed_version() -> str:
@@ -21,7 +19,7 @@ def _installed_version() -> str:
 
 
 def default_product_metadata() -> ProductMetadata:
-    """Return canonical PHASENOX identity and the stable Desktop application ID."""
+    """Return canonical PHASENOX product and Desktop identity."""
     return ProductMetadata(
         display_name=DISPLAY_NAME,
         application_title=DISPLAY_NAME,

@@ -20,11 +20,17 @@ from .job_gateway import DesktopJobGateway
 from .logging_setup import configure_logging
 from .main_window import MainWindow
 from .packaging_probe import run_packaging_probe
-from .paths import prepare_packaged_runtime, session_state_path
+from .paths import initialize_desktop_state
 from .presentation import build_shell_view_state
 from .presentation_state import NotificationLevel, PresentationState
 from .presentation_store import PresentationStore
 from .session_persistence import SessionPersistenceBinding, SessionRepository
+from .startup import (
+    DesktopStartupMode,
+    SessionChoice,
+    activate_backend_root,
+    prepare_desktop_startup,
+)
 from .state import ApplicationLifecycle, ApplicationStateStore
 from .worker_binding import WorkerStateBinding
 from .workers import WorkerExecutor
@@ -54,15 +60,37 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="Write the packaging probe analysis report to this path.",
     )
+    parser.add_argument(
+        "--data-root",
+        type=Path,
+        help="Explicitly select an existing PHASENOX Data Root for this user.",
+    )
+    parser.add_argument(
+        "--temporary-session",
+        action="store_true",
+        help="Start without persistent backend services or a fallback Data Root.",
+    )
+    parser.add_argument(
+        "--session-choice",
+        choices=tuple(item.value for item in SessionChoice),
+        help="Explicitly recover from the legacy or canonical Desktop session.",
+    )
     return parser
 
 
-def create_application(metadata: ProductMetadata) -> QApplication:
+def create_qt_runtime() -> QApplication:
     application = QApplication.instance()
     if application is None:
         application = QApplication([sys.argv[0]])
     if not isinstance(application, QApplication):
         raise TypeError("A non-GUI QCoreApplication already exists.")
+    return application
+
+
+def apply_application_identity(
+    application: QApplication, metadata: ProductMetadata
+) -> QApplication:
+    """Make canonical identity authoritative after startup resolution."""
 
     QCoreApplication.setApplicationName(metadata.application_id)
     application.setApplicationDisplayName(metadata.display_name)
@@ -75,6 +103,11 @@ def create_application(metadata: ProductMetadata) -> QApplication:
         application.setWindowIcon(icon)
     apply_theme(application)
     return application
+
+
+def create_application(metadata: ProductMetadata) -> QApplication:
+    """Create an already-resolved application for embedding and focused tests."""
+    return apply_application_identity(create_qt_runtime(), metadata)
 
 
 def build_main_window(
@@ -111,16 +144,36 @@ def run(
     options = _parser().parse_args(argv)
     application_adapter = adapter or V2ApplicationAdapter()
     metadata = application_adapter.product_metadata()
-    application = create_application(metadata)
-    try:
-        prepare_packaged_runtime()
-    except OSError as exc:
-        # The shell can still surface session/path errors through its resilience
-        # layer; retain a safe stderr diagnostic for pre-window failures.
-        print(f"PHASENØX could not initialize its user-data directories: {exc}", file=sys.stderr)
-    configure_logging()
+    application = create_qt_runtime()
+    startup = prepare_desktop_startup(
+        application_version=metadata.version,
+        requested_data_root=options.data_root,
+        temporary=options.temporary_session,
+        session_choice=(SessionChoice(options.session_choice) if options.session_choice else None),
+    )
+    if startup.mode is DesktopStartupMode.RECOVERY_REQUIRED:
+        intents = ", ".join(item.value for item in startup.recovery_intents)
+        print(
+            f"PHASENØX startup blocked: {startup.reason or 'recovery is required'}"
+            f" Available actions: {intents}",
+            file=sys.stderr,
+        )
+        return 2
+    application = apply_application_identity(application, metadata)
+    if startup.mode is DesktopStartupMode.TEMPORARY:
+        print(
+            "PHASENØX temporary session mode: persistent backend services are disabled.",
+            file=sys.stderr,
+        )
+        return 0
 
-    repository = session_repository or SessionRepository(session_state_path())
+    activate_backend_root(startup)
+    state_layout = initialize_desktop_state(startup.locations.canonical_root)
+    configure_logging(state_layout.root)
+
+    if startup.active_session_path is None:  # pragma: no cover - guarded by startup mode
+        raise RuntimeError("Persistent startup did not select a Desktop session.")
+    repository = session_repository or SessionRepository(startup.active_session_path)
     loaded = repository.load()
     presentation_store = PresentationStore(PresentationState.from_session(loaded.session))
     if loaded.warning:

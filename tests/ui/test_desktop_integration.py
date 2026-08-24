@@ -17,13 +17,13 @@ from phasenox.ui.presentation_state import NAVIGATION_ORDER, PageId
 from phasenox.ui.state import ApplicationStateStore
 
 
-def test_canonical_product_identity_and_stable_user_data_id() -> None:
+def test_canonical_product_and_desktop_identity() -> None:
     metadata = default_product_metadata()
 
     assert metadata.display_name == DISPLAY_NAME == "PHASENØX"
     assert metadata.ascii_name == "PHASENOX"
     assert metadata.technical_identity == "PHASENOX"
-    assert metadata.application_id == DESKTOP_APPLICATION_ID == "soundbrain.desktop"
+    assert metadata.application_id == DESKTOP_APPLICATION_ID == "phasenox.desktop"
     assert WORDMARK_RHYTHM == "PHASE   NØX"
 
 
