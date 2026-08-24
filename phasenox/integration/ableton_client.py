@@ -344,26 +344,30 @@ class AbletonExportClient:
                 "Content-Type": "application/json",
             },
         )
-        try:
-            with urlopen(request, timeout=self._timeout_seconds) as response:
-                response_payload = json.loads(response.read(DEFAULT_MAX_PAYLOAD_BYTES + 1))
-        except HTTPError as exc:
+        for attempt in range(2):
             try:
-                error_payload = json.loads(exc.read(DEFAULT_MAX_PAYLOAD_BYTES + 1))
-                error_code = error_payload.get("error", "bridge_error")
-            except (AttributeError, json.JSONDecodeError):
-                error_code = "bridge_error"
-            raise AbletonClientError(
-                str(error_code), "The PHASENOX bridge rejected the request."
-            ) from exc
-        except (TimeoutError, URLError, OSError) as exc:
-            raise AbletonClientError(
-                "bridge_unavailable", "The PHASENOX bridge is unavailable."
-            ) from exc
-        except json.JSONDecodeError as exc:
-            raise AbletonClientError(
-                "malformed_response", "The bridge returned malformed data."
-            ) from exc
+                with urlopen(request, timeout=self._timeout_seconds) as response:
+                    response_payload = json.loads(response.read(DEFAULT_MAX_PAYLOAD_BYTES + 1))
+                break
+            except HTTPError as exc:
+                try:
+                    error_payload = json.loads(exc.read(DEFAULT_MAX_PAYLOAD_BYTES + 1))
+                    error_code = error_payload.get("error", "bridge_error")
+                except (AttributeError, json.JSONDecodeError):
+                    error_code = "bridge_error"
+                raise AbletonClientError(
+                    str(error_code), "The PHASENOX bridge rejected the request."
+                ) from exc
+            except (TimeoutError, URLError, OSError) as exc:
+                if attempt == 0:
+                    continue
+                raise AbletonClientError(
+                    "bridge_unavailable", "The PHASENOX bridge is unavailable."
+                ) from exc
+            except json.JSONDecodeError as exc:
+                raise AbletonClientError(
+                    "malformed_response", "The bridge returned malformed data."
+                ) from exc
         if not isinstance(response_payload, dict):
             raise AbletonClientError("malformed_response", "The bridge response is invalid.")
         return response_payload

@@ -11,6 +11,8 @@ import wave
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Self
+from urllib.error import URLError
 
 import pytest
 
@@ -219,6 +221,43 @@ def test_wrong_token_and_closed_bridge_map_to_safe_errors(tmp_path: Path) -> Non
     with pytest.raises(AbletonClientError) as exc_info:
         valid.handshake()
     assert exc_info.value.code == "bridge_unavailable"
+
+
+def test_disconnect_retries_one_transient_loopback_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    now = datetime.now(UTC)
+    handoff = AbletonBridgeHandoff(
+        endpoint="http://127.0.0.1:32123/v1",
+        token=TOKEN,
+        export_root=tmp_path,
+        created_at=now,
+        expires_at=now + timedelta(hours=1),
+    )
+    client = AbletonExportClient(handoff, daw_version="11.2.7")
+    attempts = 0
+
+    class Response:
+        def __enter__(self) -> Self:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def read(self, _limit: int) -> bytes:
+            return b'{"state":"bridge_available"}'
+
+    def open_request(*_args: object, **_kwargs: object) -> Response:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise URLError("transient loopback failure")
+        return Response()
+
+    monkeypatch.setattr("phasenox.integration.ableton_client.urlopen", open_request)
+
+    assert client.disconnect() == {"state": "bridge_available"}
+    assert attempts == 2
 
 
 def test_client_timeout_is_bounded(tmp_path: Path) -> None:
