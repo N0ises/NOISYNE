@@ -77,13 +77,21 @@ def test_version_and_brand_resource_identity_are_authoritative() -> None:
         assert f'"{fragment}"' in generator
 
 
-def test_clean_machine_rows_do_not_claim_developer_workstation_passes() -> None:
+def test_clean_machine_rows_remain_external_acceptance_pending() -> None:
     matrix = json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
     assert len(matrix["rows"]) >= 18
-    assert all(row["status"] == "BLOCKED" for row in matrix["rows"])
+    assert all(row["status"] == "EXTERNAL_ACCEPTANCE_PENDING" for row in matrix["rows"])
     assert all(row["result"] == "NOT_EXECUTED" for row in matrix["rows"])
-    assert matrix["candidate"]["git_sha"] == ("b7908b921a7227d19e85d765588f5375e1b08a34")
-    assert matrix["infrastructure_audit"]["result"] == "BLOCKED"
+    assert matrix["candidate"] == {
+        "git_sha": "7123116aa0d5f48adcbaa671b91d6530db2d3a34",
+        "installer_sha256": (
+            "0026e42b2101f2bf404cd4f7f7ec4e65749e4f590114449e01249b26f9f00fa4"
+        ),
+        "executable_sha256": (
+            "9caedfefeb10b5e0cb39fa8b16b301cb757d337fadb419f744d418483aa22744"
+        ),
+    }
+    assert matrix["infrastructure_audit"]["result"] == "EXTERNAL_ACCEPTANCE_PENDING"
 
 
 def test_no_legacy_product_artifact_names() -> None:
