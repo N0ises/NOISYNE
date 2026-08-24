@@ -27,7 +27,9 @@ is:
 8. `e532b03` — fix portable single-wheel selection
 9. `36beed4` — verify pinned Inno release metadata
 10. `fd3eb10` — track the authoritative Sprint 19A audit
-11. The commit containing this report records the final Sprint 19B result.
+11. `21c487f` — record the Sprint 19B result
+12. `c5a71a0` — emit the canonical CycloneDX UUID identity
+13. The final report-correction commit records the regenerated evidence hashes.
 
 No commit was pushed.
 
@@ -169,9 +171,9 @@ Canonical SHA-256 values include:
 - `PHASENOX.exe`: `5103e8598956c1af40f6f5b8203c5f281872987fcc9b4dca2fb939500c6376df`
 - installer: `1139223984428a875102e5245e099cda043eb2033a6aba32c3f96b14bc61629e`
 - bundle verification: `89e102164fa8860e77251fc48c1d99a4b9bd899e29e3abdfbd1e05d03ab449b0`
-- CycloneDX SBOM: `03557b3521761742f4c8b5fe347ebca0d29093feb2ac4622ddec2d09d30c6224`
+- CycloneDX SBOM: `76467cca377abb1dd6e6eb95aa26d10e8ff3eeca1ff10d4df8b8db963d0c97e4`
 - license inventory: `62f33c6ff000d86af5befdea7c8d55d64cacb439da4a587cda060d5fb08e191c`
-- release manifest: `0342a4aa0ae0d673942e78f622334428abf8d2282432515b430e4919b6484d73`
+- release manifest: `e8d5769606a3e33ab4d7533465c3f59af7f91d3df34f8c18bed752ea6f0d3cf3`
 
 ## Validation results
 
