@@ -95,7 +95,9 @@ try {
     New-Item -ItemType Directory -Path $wheelOutput | Out-Null
     & $python -m build --wheel --no-isolation --outdir $wheelOutput $source
     if ($LASTEXITCODE -ne 0) { throw "Project wheel build failed" }
-    $wheel = Get-ChildItem -LiteralPath $wheelOutput -Filter "phasenox-*.whl" | Select-Object -Single
+    $wheels = @(Get-ChildItem -LiteralPath $wheelOutput -Filter "phasenox-*.whl")
+    if ($wheels.Count -ne 1) { throw "Expected exactly one project wheel, found $($wheels.Count)" }
+    $wheel = $wheels[0]
     & $python -m pip install --disable-pip-version-check --no-deps $wheel.FullName
     if ($LASTEXITCODE -ne 0) { throw "Project wheel installation failed" }
 
