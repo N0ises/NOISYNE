@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import sys
 import threading
 import time
@@ -118,6 +119,48 @@ def test_lightweight_import() -> None:
     forbidden = {"torch", "onnxruntime", "PySide6", "torchaudio"}
     found = [m for m in new_modules if any(m == f or m.startswith(f + ".") for f in forbidden)]
     assert not found, f"Heavy modules loaded: {found}"
+
+
+def test_job_execution_does_not_initialize_torch() -> None:
+    """Resource snapshots observe an existing runtime without loading one."""
+    code = """
+import sys
+from phasenox.application.contracts import ApplicationRequest, OperationType
+from phasenox.runtime.jobs import JobScheduler, JobState
+
+class Status:
+    value = "success"
+
+class Result:
+    status = Status()
+    payload = {}
+    stages = []
+    errors = []
+
+class Service:
+    def execute(self, request):
+        return Result()
+
+scheduler = JobScheduler(Service(), max_workers=1)
+scheduler.start()
+try:
+    job_id = scheduler.submit(ApplicationRequest(
+        request_id="lightweight-execution",
+        operation=OperationType.CAPABILITY_INSPECT,
+    ))
+    result = scheduler.wait(job_id, timeout=2.0)
+    assert result is not None and result.state is JobState.COMPLETED
+finally:
+    scheduler.shutdown(wait=True)
+print("torch" in sys.modules)
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", code],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.stdout.strip() == "False"
 
 
 def test_submit_is_non_blocking(scheduler: JobScheduler) -> None:

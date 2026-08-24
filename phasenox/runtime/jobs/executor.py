@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import sys
 import threading
 from dataclasses import replace
 from typing import Any
@@ -192,15 +193,18 @@ def _capture_resource_snapshot() -> ResourceSnapshot:
     except Exception:  # noqa: BLE001, S110
         pass
 
-    try:
-        import torch
-
-        if torch.cuda.is_available():
-            gpu_name = str(torch.cuda.get_device_name(0))
-            gpu_total = int(torch.cuda.get_device_properties(0).total_memory)
-            gpu_used = int(torch.cuda.memory_allocated(0))
-    except Exception:  # noqa: BLE001, S110
-        pass
+    # Resource observation must not initialize an optional ML runtime. If a
+    # caller has already loaded torch, report its current CUDA state; otherwise
+    # leave GPU fields unknown.
+    torch = sys.modules.get("torch")
+    if torch is not None:
+        try:
+            if torch.cuda.is_available():
+                gpu_name = str(torch.cuda.get_device_name(0))
+                gpu_total = int(torch.cuda.get_device_properties(0).total_memory)
+                gpu_used = int(torch.cuda.memory_allocated(0))
+        except Exception:  # noqa: BLE001, S110
+            pass
 
     return ResourceSnapshot(
         cpu_percent=cpu_percent,
