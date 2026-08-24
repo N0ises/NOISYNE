@@ -5,13 +5,13 @@ It is external acceptance evidence, not a source-development sprint.
 
 ## Immutable candidate
 
-- Source Git SHA: `72954adb2347a94b602198e3f4f252ea2a05a24b`
+- Source Git SHA: `3adfbab5f5dec7e5c2237febb316bc6b89459e5e`
 - Version: `1.0.0`
 - Installer: `PHASENOX-Setup-1.0.0-win-x64.exe`
 - Installer SHA-256:
-  `30d6fbb0bc9548c045e549589db38dea981c92270aaa5c5d888cb2f0e94f617b`
+  `a30d30a4b92b7060c9e93a230c4bb291e46168b70f5379e8dbeeb3370b2e59c0`
 - Installed executable SHA-256:
-  `763ce5ad34dfdafb97bffd6252aa8419760fae0f1f514b5014611ba70e3fc7b2`
+  `753da4c1336467b8a8fca6d7eb9ee9b7b2cbe1b3045466e1dafdd09e8fa80c48`
 - Signing state: `UNSIGNED`
 
 Stop if either hash differs. Do not substitute another artifact while recording
