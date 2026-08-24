@@ -4,6 +4,7 @@ import hashlib
 import json
 import sqlite3
 import sys
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -56,7 +57,7 @@ def _create_fake_chroma(
 ) -> None:
     path.mkdir(parents=True)
     database = path / "chroma.sqlite3"
-    with sqlite3.connect(database) as connection:
+    with closing(sqlite3.connect(database)) as connection, connection:
         connection.executescript("""
             CREATE TABLE collections(
                 id TEXT PRIMARY KEY,
@@ -110,7 +111,7 @@ def _create_fake_chroma(
 
 def _create_fake_catalog(path: Path, count: int = 2) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(path) as connection:
+    with closing(sqlite3.connect(path)) as connection, connection:
         connection.execute("""
             CREATE TABLE indexed_audio(
                 file_hash TEXT PRIMARY KEY,
