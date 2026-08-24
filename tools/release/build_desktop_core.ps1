@@ -3,6 +3,7 @@ param(
     [string]$OutputRoot = "build/release/desktop-core",
     [string]$RuntimeWheelhouse = "",
     [string]$BuildWheelhouse = "",
+    [string]$InnoCompiler = "",
     [switch]$SkipBundleLaunch
 )
 
@@ -103,6 +104,8 @@ try {
         --repository $source --output $assets
     if ($LASTEXITCODE -ne 0) { throw "Windows resource generation failed" }
     $version = (& $python -c "import tomllib,sys; print(tomllib.load(open(sys.argv[1],'rb'))['project']['version'])" (Join-Path $source "pyproject.toml")).Trim()
+    $versionParts = $version.Split('.')
+    if ($versionParts.Count -lt 3) { throw "Project version must have at least three numeric parts" }
 
     $dist = Join-Path $output "bundle"
     $work = Join-Path $output "pyinstaller-work"
@@ -129,6 +132,34 @@ try {
     & $python @verifyOptions
     if ($LASTEXITCODE -ne 0) { throw "Desktop Core bundle verification failed" }
 
+    if (-not $InnoCompiler) {
+        $candidate = Join-Path ${env:LOCALAPPDATA} "Programs\Inno Setup 7\ISCC.exe"
+        if (Test-Path -LiteralPath $candidate) { $InnoCompiler = $candidate }
+    }
+    if (-not $InnoCompiler) {
+        throw "Pinned Inno Setup 7.1.0-x64 compiler path is required"
+    }
+    $iscc = [IO.Path]::GetFullPath((Join-Path $repository $InnoCompiler))
+    $innoVersion = (Get-Item -LiteralPath $iscc).VersionInfo.ProductVersion
+    if (-not $innoVersion.StartsWith("7.1.0")) {
+        throw "Inno Setup must be 7.1.0-x64, found $innoVersion"
+    }
+    $installerOutput = Join-Path $output "installer"
+    New-Item -ItemType Directory -Path $installerOutput | Out-Null
+    & $iscc /Qp `
+        "/DAppVersion=$version" `
+        "/DAppVersionMajor=$($versionParts[0])" `
+        "/DAppVersionMinor=$($versionParts[1])" `
+        "/DAppVersionPatch=$($versionParts[2])" `
+        "/DBundleDir=$bundle" `
+        "/DWindowsAssets=$assets" `
+        "/DOutputDir=$installerOutput" `
+        (Join-Path $source "tools/packaging/installer/PHASENOX.iss") 2>&1 |
+        Tee-Object -FilePath (Join-Path $evidence "inno-setup.log")
+    if ($LASTEXITCODE -ne 0) { throw "Inno Setup Desktop Core build failed" }
+    $installer = Join-Path $installerOutput "PHASENOX-Setup-$version-win-x64.exe"
+    if (-not (Test-Path -LiteralPath $installer)) { throw "Expected installer was not created" }
+
     $context = [ordered]@{
         schema_version = 1
         profile = "desktop-core"
@@ -140,10 +171,18 @@ try {
         untracked_files_excluded = $untracked
         python = $actualPython
         bundle = $bundle
+        installer = $installer
+        inno_setup = $innoVersion
         signing_status = "UNSIGNED"
     }
-    $context | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $evidence "build-context.json") -Encoding utf8
-    Write-Output "Desktop Core bundle verified: $bundle"
+    $contextPath = Join-Path $evidence "build-context.json"
+    $context | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $contextPath -Encoding utf8
+    & $python (Join-Path $source "tools/release/generate_release_artifacts.py") `
+        --profile $profile --runtime-lock $runtimeLock --bundle-verification $verification `
+        --build-context $contextPath --bundle $bundle --installer $installer `
+        --windows-assets $assets --output $output
+    if ($LASTEXITCODE -ne 0) { throw "Release evidence generation failed" }
+    Write-Output "Desktop Core bundle and installer verified: $bundle"
 } finally {
     Pop-Location
 }
