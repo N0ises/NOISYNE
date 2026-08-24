@@ -61,7 +61,31 @@
     "*onnx*.dll"
   ],
   "qt_modules": ["QtCore", "QtGui", "QtWidgets"],
-  "qt_plugins": ["platforms/qwindows.dll", "imageformats/qico.dll", "imageformats/qjpeg.dll", "imageformats/qsvg.dll"],
+  "qt_plugins": [
+    "iconengines/qsvgicon.dll",
+    "imageformats/qico.dll",
+    "imageformats/qjpeg.dll",
+    "imageformats/qsvg.dll",
+    "platforms/qwindows.dll",
+    "styles/qmodernwindowsstyle.dll"
+  ],
+  "config_resources": ["audio.yaml", "models.yaml", "runtime.yaml"],
+  "branding_resources": [
+    "phasenox-hero-banner.svg",
+    "phasenox-logo-16x16.png",
+    "phasenox-logo-32x32.png",
+    "phasenox-logo-64x64.png",
+    "phasenox-logo-128x128.png",
+    "phasenox-logo-256x256.png",
+    "phasenox-logo-512x512.png",
+    "phasenox-logo-1024x1024.png",
+    "phasenox-master-light.svg",
+    "phasenox-master.svg",
+    "phasenox-symbol-dark.svg",
+    "phasenox-symbol.svg",
+    "phasenox-wordmark-light.svg",
+    "phasenox-wordmark.svg"
+  ],
   "signing_status": "UNSIGNED",
   "size_budget_bytes": 734003200
 }
