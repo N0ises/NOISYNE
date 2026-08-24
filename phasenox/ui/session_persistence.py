@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
 SCHEMA_VERSION = 2
 SUPPORTED_SCHEMA_VERSIONS = frozenset({1, 2})
+MAX_SESSION_BYTES = 1024 * 1024
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +94,14 @@ class SessionRepository:
         except OSError:
             return None
         return backup
+
+
+def validate_session_bytes(raw: bytes, *, max_bytes: int = MAX_SESSION_BYTES) -> SessionState:
+    """Validate session bytes without creating, quarantining, or rewriting files."""
+    if len(raw) > max_bytes:
+        raise ValueError("Desktop session exceeds the supported size limit.")
+    payload = json.loads(raw.decode("utf-8"))
+    return _decode_session(payload)
 
 
 class SessionPersistenceBinding:
@@ -357,4 +366,3 @@ def _string(value: object) -> str:
 def _unique_strings(values: list[object], limit: int = 20) -> tuple[str, ...]:
     strings = (_string(value) for value in values)
     return _unique_items((value for value in strings if value.strip()), str, limit)
-
