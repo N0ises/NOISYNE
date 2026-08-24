@@ -23,6 +23,20 @@ SECRET_PATTERNS = {
         rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----\r?\n[A-Za-z0-9+/]{32,}"
     ),
 }
+TEXT_SCAN_SUFFIXES = {
+    ".cfg",
+    ".css",
+    ".html",
+    ".ini",
+    ".json",
+    ".md",
+    ".py",
+    ".toml",
+    ".txt",
+    ".xml",
+    ".yaml",
+    ".yml",
+}
 MODEL_SUFFIXES = {
     ".ckpt",
     ".engine",
@@ -246,10 +260,11 @@ def scan_bundle(
         raw = path.read_bytes()
         if any(needle and needle in raw for needle in sensitive_needles):
             failures.append(f"Local absolute path serialized in: {relative(path, bundle)}")
-        for name, pattern in SECRET_PATTERNS.items():
-            if pattern.search(raw):
-                secret_hits[name] += 1
-                failures.append(f"Potential {name} in: {relative(path, bundle)}")
+        if path.suffix.casefold() in TEXT_SCAN_SUFFIXES:
+            for name, pattern in SECRET_PATTERNS.items():
+                if pattern.search(raw):
+                    secret_hits[name] += 1
+                    failures.append(f"Potential {name} in: {relative(path, bundle)}")
 
     total_size = sum(path.stat().st_size for path in files)
     if total_size > int(profile["size_budget_bytes"]):

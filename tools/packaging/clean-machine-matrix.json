@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "authority": "PHASENOX Sprint 19A packaging/installer audit",
+  "execution_environment": "disposable Windows x64 VM or Windows Sandbox",
+  "claim_policy": "Rows remain BLOCKED/NOT_EXECUTED until evidence is produced outside the developer workstation.",
+  "rows": [
+    {"id": "no-python", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "no-repository-state", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "default-install", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "custom-install-path-with-spaces", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "custom-data-root", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "non-ascii-user-or-path", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "offline-first-launch", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "no-model-download", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "second-launch", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "same-version-reinstall", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "upgrade-preserves-pointer", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "uninstall-preserves-user-data", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "unavailable-data-root-no-fallback", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "deterministic-analysis", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "reference-workflow", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "report-export", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "task-center-shell", "status": "BLOCKED", "result": "NOT_EXECUTED"},
+    {"id": "no-preinstalled-vc-runtime", "status": "BLOCKED", "result": "NOT_EXECUTED"}
+  ]
+}
