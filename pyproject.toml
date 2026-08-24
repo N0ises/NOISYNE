@@ -84,6 +84,10 @@ py-modules = ["main"]
 [project.scripts]
 phasenox = "phasenox.cli:main"
 
+[project.urls]
+Repository = "https://github.com/N0ises/PHASENOX"
+Issues = "https://github.com/N0ises/PHASENOX/issues"
+
 [tool.setuptools.package-data]
 "phasenox.infrastructure.config" = ["resources/*.yaml"]
 "phasenox.resources.branding" = ["*.png", "*.svg"]

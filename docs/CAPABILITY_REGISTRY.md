@@ -13,7 +13,7 @@ disabled, tested and composed. Runtime capability lifecycle truth is defined by
 `phasenox/runtime/capabilities.py`; this document explains that registry and
 records product-level capabilities that do not yet have runtime entries.
 
-The repository is `N0ises/NOISYNE`; the canonical distribution and Python
+The repository is `N0ises/PHASENOX`; the canonical distribution and Python
 namespace are `phasenox`. Compatibility names remain supported where specified
 by the technical rename freeze.
 

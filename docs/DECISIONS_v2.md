@@ -17,7 +17,7 @@ freeze.
 ## Decision 001 — Project Identity
 
 PHASENØX is an Audio Intelligence System, distributed as `phasenox` from
-`N0ises/NOISYNE`. It is not merely an audio analyzer or mixing assistant.
+`N0ises/PHASENOX`. It is not merely an audio analyzer or mixing assistant.
 
 Status: Accepted
 

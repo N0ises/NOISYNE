@@ -205,7 +205,7 @@ For development from a source checkout:
 Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/N0ises/PHASENOX.git <repository-directory>
 cd <repository-directory>
 ```
 
@@ -269,12 +269,12 @@ Application-root precedence is `PHASENOX_ROOT`, then the legacy
 The product and distribution are PHASENØX/phasenox.
 
 ```text
-Repository: N0ises/NOISYNE
+Repository: N0ises/PHASENOX
 Repository rename: completed
-Canonical origin: https://github.com/N0ises/NOISYNE.git
+Canonical origin: https://github.com/N0ises/PHASENOX.git
 ```
 
-The canonical repository URL and local `origin` now use the final NOISYNE
+The canonical repository URL and local `origin` now use the PHASENOX
 repository identity directly and do not rely on the legacy redirect.
 
 ---
@@ -293,7 +293,7 @@ Complete project documentation is available inside the `docs/` directory.
 
 Main documents include:
 
-- [Technical Rename Freeze](docs/NOISYNE_TECHNICAL_RENAME_FREEZE.md)
+- [Technical Identity Freeze](docs/PHASENOX_TECHNICAL_IDENTITY_FREEZE.md)
 - Architecture
 - Vision
 - Engineering Guidelines

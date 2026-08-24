@@ -5,6 +5,18 @@ from phasenox.infrastructure.config.loader import get_application_root
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FREEZE_DOCUMENT = PROJECT_ROOT / "docs" / "NOISYNE_TECHNICAL_RENAME_FREEZE.md"
+CURRENT_FREEZE_DOCUMENT = PROJECT_ROOT / "docs" / "PHASENOX_TECHNICAL_IDENTITY_FREEZE.md"
+
+CURRENT_REPOSITORY_DOCUMENTS = (
+    PROJECT_ROOT / "README.md",
+    PROJECT_ROOT / "docs" / "ARCHITECTURE_v2.md",
+    PROJECT_ROOT / "docs" / "CAPABILITY_REGISTRY.md",
+    PROJECT_ROOT / "docs" / "DECISIONS_v2.md",
+    PROJECT_ROOT / "docs" / "EXECUTION_PLAN_v2.md",
+    PROJECT_ROOT / "docs" / "MODULE_MAP.md",
+    CURRENT_FREEZE_DOCUMENT,
+    PROJECT_ROOT / "docs" / "ROADMAP_v2.md",
+)
 
 
 def test_final_identity_matrix_records_canonical_and_compatibility_contracts():
@@ -26,14 +38,20 @@ def test_final_identity_matrix_records_canonical_and_compatibility_contracts():
 
 def test_repository_docs_report_completed_canonical_rename():
     readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
-    freeze = FREEZE_DOCUMENT.read_text(encoding="utf-8")
+    freeze = CURRENT_FREEZE_DOCUMENT.read_text(encoding="utf-8")
 
-    assert "Repository: N0ises/NOISYNE" in readme
+    assert "Repository: N0ises/PHASENOX" in readme
     assert "Repository rename: completed" in readme
-    assert "Canonical origin: https://github.com/N0ises/NOISYNE.git" in readme
-    assert "Repository rename: **COMPLETE**" in freeze
-    assert "Canonical repository: `N0ises/NOISYNE`" in freeze
-    assert "Canonical origin: `https://github.com/N0ises/NOISYNE.git`" in freeze
+    assert "Canonical origin: https://github.com/N0ises/PHASENOX.git" in readme
+    assert "| Repository identity | `N0ises/PHASENOX` |" in freeze
+
+
+def test_current_repository_documents_have_no_stale_repository_identity():
+    for path in CURRENT_REPOSITORY_DOCUMENTS:
+        text = path.read_text(encoding="utf-8")
+        assert "N0ises/NOISYNE" not in text, path
+        assert "github.com/N0ises/NOISYNE" not in text, path
+        assert "N0ises/PHASENOX" in text, path
 
 
 def test_setup_docs_do_not_require_repository_basename():
@@ -42,6 +60,9 @@ def test_setup_docs_do_not_require_repository_basename():
         assert "cd SoundBrain" not in text
         assert "cd NOISYNE" not in text
         assert "cd <repository-directory>" in text or relative_path == "CONTRIBUTING.md"
+
+    readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
+    assert "git clone https://github.com/N0ises/PHASENOX.git <repository-directory>" in readme
 
 
 def test_application_root_uses_structure_in_arbitrary_repository_directory(tmp_path, monkeypatch):

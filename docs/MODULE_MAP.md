@@ -4,7 +4,7 @@ Version: 2.0
 
 Status: ACTIVE
 
-Repository: `N0ises/NOISYNE`
+Repository: `N0ises/PHASENOX`
 
 Canonical package: `phasenox/`
 

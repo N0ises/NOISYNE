@@ -50,6 +50,10 @@ def test_package_metadata_and_console_scripts_are_canonical():
     assert metadata["project"]["version"] == "1.0.0"
     assert metadata["project"]["description"].startswith("PHASENØX")
     assert metadata["project"]["scripts"] == {"phasenox": "phasenox.cli:main"}
+    assert metadata["project"]["urls"] == {
+        "Repository": "https://github.com/N0ises/PHASENOX",
+        "Issues": "https://github.com/N0ises/PHASENOX/issues",
+    }
     assert metadata["tool"]["setuptools"]["packages"]["find"]["include"] == [
         "phasenox*",
         "brain",

@@ -4,7 +4,7 @@ Version: 2.0
 
 Status: ACTIVE
 
-Repository: `N0ises/NOISYNE`
+Repository: `N0ises/PHASENOX`
 
 ---
 
@@ -26,7 +26,7 @@ service, corpus or dependency is absent.
 
 | Area | Repository truth | Lifecycle note |
 | --- | --- | --- |
-| Identity | Distribution/namespace `phasenox`; repository `N0ises/NOISYNE` | Rename complete |
+| Identity | Distribution/namespace `phasenox`; repository `N0ises/PHASENOX` | Rename complete |
 | V1 application | `phasenox.application.PhasenoxService`; compatibility `NoisyneService`, `SoundBrainService` | Production V1 facade |
 | Product surface | `phasenox/cli.py`; canonical `phasenox` command only | CLI production |
 | Runtime capabilities | `phasenox/runtime/capabilities.py` | Authoritative runtime lifecycle metadata |

@@ -262,6 +262,6 @@ def test_freeze_document_records_the_canonical_and_compatibility_matrix() -> Non
         "`brain.*`, resolving to the same canonical `phasenox.*` module objects",
         "| Persisted vector collection | `soundbrain` |",
         "| Engine compatibility keys | `noisyne`, `soundbrain` |",
-        "| Repository identity | `N0ises/NOISYNE` |",
+        "| Repository identity | `N0ises/PHASENOX` |",
     ):
         assert required in text

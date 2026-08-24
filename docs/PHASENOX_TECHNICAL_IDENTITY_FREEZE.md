@@ -65,7 +65,7 @@ These are compatibility boundaries, not alternate implementations.
 | Application-root environment fallback | `NOISYNE_ROOT`, then `SOUNDBRAIN_ROOT` |
 | Persisted vector collection | `soundbrain` |
 | Engine compatibility keys | `noisyne`, `soundbrain` |
-| Repository identity | `N0ises/NOISYNE` |
+| Repository identity | `N0ises/PHASENOX` |
 
 Application-root precedence is frozen as `PHASENOX_ROOT`, `NOISYNE_ROOT`,
 `SOUNDBRAIN_ROOT`, then automatic discovery.
