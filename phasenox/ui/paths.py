@@ -1,4 +1,4 @@
-"""Qt-backed desktop path resolution."""
+"""Qt-backed active Desktop paths, separate from the backend Data Root."""
 
 from __future__ import annotations
 
@@ -9,21 +9,16 @@ from pathlib import Path
 
 from PySide6.QtCore import QStandardPaths
 
-_BACKEND_ROOT_ENVIRONMENT = "PHASENOX_ROOT"
-
 
 @dataclass(frozen=True, slots=True)
-class DesktopPathLayout:
+class DesktopStateLayout:
     root: Path
     state: Path
     logs: Path
-    cache: Path
-    models: Path
-    reports: Path
 
     @property
     def writable_directories(self) -> tuple[Path, ...]:
-        return (self.root, self.state, self.logs, self.cache, self.models, self.reports)
+        return (self.root, self.state, self.logs)
 
 
 def user_data_directory() -> Path:
@@ -39,31 +34,47 @@ def session_state_path() -> Path:
     return user_data_directory() / "state" / "session-v1.json"
 
 
-def desktop_path_layout(root: Path | None = None) -> DesktopPathLayout:
+def desktop_state_layout(root: Path | None = None) -> DesktopStateLayout:
     selected_root = root or user_data_directory()
-    return DesktopPathLayout(
+    return DesktopStateLayout(
         root=selected_root,
         state=selected_root / "state",
         logs=selected_root / "logs",
-        cache=selected_root / "data" / "cache",
-        # runtime.yaml intentionally keeps V1's ../Models convention.
-        models=selected_root.parent / "Models",
-        reports=selected_root / "reports",
     )
 
 
-def initialize_user_directories(root: Path | None = None) -> DesktopPathLayout:
-    """Create the minimal writable Desktop layout; safe to call repeatedly."""
-    layout = desktop_path_layout(root)
+def initialize_desktop_state(root: Path | None = None) -> DesktopStateLayout:
+    """Create only the canonical small-state layout; safe to call repeatedly."""
+    layout = desktop_state_layout(root)
     for directory in layout.writable_directories:
         directory.mkdir(parents=True, exist_ok=True)
     return layout
 
 
-def prepare_packaged_runtime(root: Path | None = None) -> DesktopPathLayout | None:
-    """Redirect relative runtime paths outside the read-only application bundle."""
+def prepare_packaged_runtime(root: Path | None = None) -> DesktopStateLayout | None:
+    """Initialize small state only after a backend root has been selected."""
     if not getattr(sys, "frozen", False):
         return None
-    layout = desktop_path_layout(root)
-    os.environ.setdefault(_BACKEND_ROOT_ENVIRONMENT, str(layout.root.resolve()))
-    return initialize_user_directories(layout.root)
+    if not os.environ.get("PHASENOX_ROOT", "").strip():
+        raise RuntimeError("Packaged startup requires an explicit PHASENOX Data Root.")
+    return initialize_desktop_state(root)
+
+
+# Compatibility names for Sprint 17 callers. They now describe small Desktop
+# state only and deliberately have no backend cache/model/report fields.
+DesktopPathLayout = DesktopStateLayout
+desktop_path_layout = desktop_state_layout
+initialize_user_directories = initialize_desktop_state
+
+
+__all__ = [
+    "DesktopPathLayout",
+    "DesktopStateLayout",
+    "desktop_path_layout",
+    "desktop_state_layout",
+    "initialize_desktop_state",
+    "initialize_user_directories",
+    "prepare_packaged_runtime",
+    "session_state_path",
+    "user_data_directory",
+]
