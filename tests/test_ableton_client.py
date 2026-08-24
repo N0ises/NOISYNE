@@ -223,7 +223,7 @@ def test_wrong_token_and_closed_bridge_map_to_safe_errors(tmp_path: Path) -> Non
     assert exc_info.value.code == "bridge_unavailable"
 
 
-def test_disconnect_retries_one_transient_loopback_failure(
+def test_disconnect_retries_bounded_transient_loopback_failures(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     now = datetime.now(UTC)
@@ -250,14 +250,14 @@ def test_disconnect_retries_one_transient_loopback_failure(
     def open_request(*_args: object, **_kwargs: object) -> Response:
         nonlocal attempts
         attempts += 1
-        if attempts == 1:
+        if attempts < 3:
             raise URLError("transient loopback failure")
         return Response()
 
     monkeypatch.setattr("phasenox.integration.ableton_client.urlopen", open_request)
 
     assert client.disconnect() == {"state": "bridge_available"}
-    assert attempts == 2
+    assert attempts == 3
 
 
 def test_client_timeout_is_bounded(tmp_path: Path) -> None:

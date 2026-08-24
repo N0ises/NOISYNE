@@ -344,7 +344,7 @@ class AbletonExportClient:
                 "Content-Type": "application/json",
             },
         )
-        for attempt in range(2):
+        for attempt in range(3):
             try:
                 with urlopen(request, timeout=self._timeout_seconds) as response:
                     response_payload = json.loads(response.read(DEFAULT_MAX_PAYLOAD_BYTES + 1))
@@ -359,7 +359,8 @@ class AbletonExportClient:
                     str(error_code), "The PHASENOX bridge rejected the request."
                 ) from exc
             except (TimeoutError, URLError, OSError) as exc:
-                if attempt == 0:
+                if attempt < 2:
+                    time.sleep(0.05 * (attempt + 1))
                     continue
                 raise AbletonClientError(
                     "bridge_unavailable", "The PHASENOX bridge is unavailable."
