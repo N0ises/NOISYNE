@@ -142,10 +142,12 @@ try {
         throw "Pinned Inno Setup 7.1.0-x64 compiler path is required"
     }
     $iscc = [IO.Path]::GetFullPath((Join-Path $repository $InnoCompiler))
-    $innoVersion = (Get-Item -LiteralPath $iscc).VersionInfo.ProductVersion
-    if (-not $innoVersion.StartsWith("7.1.0")) {
-        throw "Inno Setup must be 7.1.0-x64, found $innoVersion"
+    $innoReleaseNotes = Join-Path (Split-Path -Parent $iscc) "whatsnew.htm"
+    if (-not (Test-Path -LiteralPath $innoReleaseNotes) -or
+        -not (Select-String -LiteralPath $innoReleaseNotes -SimpleMatch '<a name="7.1.0"></a>' -Quiet)) {
+        throw "Inno Setup compiler must come from the pinned 7.1.0-x64 installation"
     }
+    $innoVersion = "7.1.0-x64"
     $installerOutput = Join-Path $output "installer"
     New-Item -ItemType Directory -Path $installerOutput | Out-Null
     & $iscc /Qp `
