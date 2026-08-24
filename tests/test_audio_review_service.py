@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from pathlib import Path
 
 from phasenox.application.audio_review_service import (
@@ -177,6 +179,28 @@ def test_review_passes_audio_to_semantic_context_detection_when_requested() -> N
     )
 
     assert context_detector.audio_argument is audio
+
+
+def test_deterministic_context_detector_does_not_import_semantic_runtime() -> None:
+    script = """
+import sys
+from phasenox.audio.context.detector import AudioContextDetector
+AudioContextDetector()
+print(
+    "torch" in sys.modules,
+    "torchaudio" in sys.modules,
+    "transformers" in sys.modules,
+)
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=Path(__file__).resolve().parents[1],
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == "False False False"
 
 
 def test_review_exports_the_report_when_an_output_path_is_requested() -> None:
