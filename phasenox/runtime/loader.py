@@ -33,9 +33,7 @@ class ModelLoader:
     ) -> LoadedModelAssets:
         strategy = self._strategies.get(spec.backend)
         if strategy is None:
-            raise UnsupportedBackendError(
-                f"Unsupported model backend: {spec.backend!r}"
-            )
+            raise UnsupportedBackendError(f"Unsupported model backend: {spec.backend!r}")
         source, local = self.repository.resolve(spec.name)
         try:
             return strategy.load(
@@ -46,8 +44,7 @@ class ModelLoader:
                 tokenizer_cls,
                 feature_extractor_cls,
                 local,
+                str(self.repository.cache_dir) if self.repository.cache_dir is not None else None,
             )
         except Exception as exc:
-            raise ModelLoadError(
-                f"Unable to load model '{spec.name}'."
-            ) from exc
+            raise ModelLoadError(f"Unable to load model '{spec.name}'.") from exc

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import gc
+from collections.abc import Mapping
 from threading import RLock
-from typing import Any, Mapping
+from typing import Any
 
 import torch
 
@@ -21,7 +22,7 @@ class ModelRuntime:
     Shared runtime for every AI model.
     """
 
-    _shared: "ModelRuntime | None" = None
+    _shared: ModelRuntime | None = None
     _shared_lock = RLock()
 
     def __init__(
@@ -33,8 +34,10 @@ class ModelRuntime:
         self.device = device or DeviceManager.detect()
         self.cache = ModelCache()
         self.loader = loader or ModelLoader(
-            repository or ModelRepository(
+            repository
+            or ModelRepository(
                 root=str(settings.runtime.model_root),
+                cache_dir=str(settings.runtime.model_cache_dir),
             )
         )
         self._capabilities: CapabilityRegistry = registry
@@ -42,7 +45,7 @@ class ModelRuntime:
         self._model_locks_lock = RLock()
 
     @classmethod
-    def shared(cls) -> "ModelRuntime":
+    def shared(cls) -> ModelRuntime:
         with cls._shared_lock:
             if cls._shared is None:
                 cls._shared = cls()
@@ -135,15 +138,25 @@ class ModelRuntime:
     def available_models(self) -> tuple[ModelSpec, ...]:
         return self.cache.specs()
 
-    def model_info(self, model_name: str | ModelSpec, model_cls: type | None = None, **identity: Any):
-        spec = model_name if isinstance(model_name, ModelSpec) else self._spec_for(model_name, model_cls, **identity)
+    def model_info(
+        self, model_name: str | ModelSpec, model_cls: type | None = None, **identity: Any
+    ):
+        spec = (
+            model_name
+            if isinstance(model_name, ModelSpec)
+            else self._spec_for(model_name, model_cls, **identity)
+        )
         return self.cache.get(spec)
 
-    def processor(self, model_name: str | ModelSpec, model_cls: type | None = None, **identity: Any):
+    def processor(
+        self, model_name: str | ModelSpec, model_cls: type | None = None, **identity: Any
+    ):
         assets = self.model_info(model_name, model_cls, **identity)
         return assets.processor if assets else None
 
-    def tokenizer(self, model_name: str | ModelSpec, model_cls: type | None = None, **identity: Any):
+    def tokenizer(
+        self, model_name: str | ModelSpec, model_cls: type | None = None, **identity: Any
+    ):
         assets = self.model_info(model_name, model_cls, **identity)
         return assets.tokenizer if assets else None
 
@@ -151,11 +164,17 @@ class ModelRuntime:
         with self._model_locks_lock:
             return self._model_locks.setdefault(spec, RLock())
 
-    def _spec_for(self, model_name: str, model_cls: type | None = None, **identity: Any) -> ModelSpec:
+    def _spec_for(
+        self, model_name: str, model_cls: type | None = None, **identity: Any
+    ) -> ModelSpec:
         return ModelSpec(
             backend=identity.get("backend", "transformers"),
             name=model_name,
-            model_class=(f"{model_cls.__module__}.{model_cls.__qualname__}" if model_cls else identity.get("model_class","unknown")),
+            model_class=(
+                f"{model_cls.__module__}.{model_cls.__qualname__}"
+                if model_cls
+                else identity.get("model_class", "unknown")
+            ),
             revision=identity.get("revision"),
             device=str(identity.get("device", self.device)),
             dtype=str(identity.get("dtype", self.dtype)),

@@ -104,3 +104,15 @@ def test_device_map_is_passed_to_loader_without_runtime_placement() -> None:
 
     assert FakeTransformersModel.received_options["device_map"] == "auto"
     assert assets.model.devices == []
+
+
+def test_remote_model_load_uses_explicit_phasenox_cache(tmp_path) -> None:
+    cache_dir = tmp_path / "data-root" / "cache" / "models"
+    runtime = ModelRuntime(
+        loader=ModelLoader(ModelRepository(root=tmp_path / "models", cache_dir=cache_dir)),
+        device=torch.device("cpu"),
+    )
+
+    runtime.load(model_name="remote/model", model_cls=FakeTransformersModel)
+
+    assert FakeTransformersModel.received_options["cache_dir"] == str(cache_dir)

@@ -15,6 +15,7 @@ class LoaderStrategy(Protocol):
         tokenizer_cls: type | None,
         feature_extractor_cls: type | None,
         local: bool,
+        cache_dir: str | None,
     ) -> LoadedModelAssets: ...
 
 
@@ -30,13 +31,18 @@ class TransformersStrategy:
         tokenizer_cls: type | None,
         feature_extractor_cls: type | None,
         local: bool,
+        cache_dir: str | None,
     ) -> LoadedModelAssets:
-        model_options = self._options(spec.model_options, spec, local)
-        asset_options = self._options((), spec, local)
+        model_options = self._options(spec.model_options, spec, local, cache_dir)
+        asset_options = self._options((), spec, local, cache_dir)
         return LoadedModelAssets(
             model=model_cls.from_pretrained(source, **model_options),
-            processor=self._load_asset(processor_cls, source, asset_options, spec.processor_options),
-            tokenizer=self._load_asset(tokenizer_cls, source, asset_options, spec.tokenizer_options),
+            processor=self._load_asset(
+                processor_cls, source, asset_options, spec.processor_options
+            ),
+            tokenizer=self._load_asset(
+                tokenizer_cls, source, asset_options, spec.tokenizer_options
+            ),
             feature_extractor=self._load_asset(feature_extractor_cls, source, asset_options, ()),
         )
 
@@ -45,6 +51,7 @@ class TransformersStrategy:
         options: tuple[tuple[str, Any], ...],
         spec: ModelSpec,
         local: bool,
+        cache_dir: str | None,
     ) -> dict[str, Any]:
         result = dict(options)
         result["trust_remote_code"] = spec.trust_remote_code
@@ -52,6 +59,8 @@ class TransformersStrategy:
             result["revision"] = spec.revision
         if local:
             result["local_files_only"] = True
+        elif cache_dir is not None:
+            result.setdefault("cache_dir", cache_dir)
         return result
 
     def _load_asset(
@@ -78,6 +87,7 @@ class SentenceTransformersStrategy:
         tokenizer_cls: type | None,
         feature_extractor_cls: type | None,
         local: bool,
+        cache_dir: str | None,
     ) -> LoadedModelAssets:
-        options = TransformersStrategy._options(spec.model_options, spec, local)
+        options = TransformersStrategy._options(spec.model_options, spec, local, cache_dir)
         return LoadedModelAssets(model=model_cls(source, **options))

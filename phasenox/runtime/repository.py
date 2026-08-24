@@ -15,8 +15,14 @@ class ModelRepository:
         ...
     """
 
-    def __init__(self, root: str | Path = "models") -> None:
+    def __init__(
+        self,
+        root: str | Path = "models",
+        *,
+        cache_dir: str | Path | None = None,
+    ) -> None:
         self.root = Path(root).expanduser()
+        self.cache_dir = Path(cache_dir).expanduser() if cache_dir is not None else None
 
     def resolve(
         self,
