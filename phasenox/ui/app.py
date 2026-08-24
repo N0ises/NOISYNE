@@ -251,7 +251,9 @@ def run(
     try:
         qt_exit_code = application.exec()
     finally:
-        job_gateway.shutdown(wait=False)
+        # Desktop Core work is deterministic and bounded. Waiting prevents
+        # executor threads from surviving the Qt/application teardown.
+        job_gateway.shutdown(wait=True)
         executor.wait_for_done()
         boundary.uninstall()
         session_binding.save_current()
