@@ -33,6 +33,11 @@ from phasenox.perception.validation_fixtures import (
 )
 from phasenox.report import PhasenoxReport, SoundBrainReport
 from phasenox.runtime.engine_registry import registry
+from phasenox.ui.branding import DESKTOP_APPLICATION_ID
+from phasenox.ui.data_location import (
+    CANONICAL_DESKTOP_IDENTITY,
+    LEGACY_DESKTOP_IDENTITY,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FREEZE_DOCUMENT = PROJECT_ROOT / "docs" / "PHASENOX_TECHNICAL_IDENTITY_FREEZE.md"
@@ -198,6 +203,21 @@ def test_persistence_and_engine_compatibility_identities_are_frozen() -> None:
     assert registry.get("noisyne") is registry.get("soundbrain")
 
 
+def test_desktop_identity_and_migration_compatibility_are_frozen() -> None:
+    assert DESKTOP_APPLICATION_ID == CANONICAL_DESKTOP_IDENTITY == "phasenox.desktop"
+    assert LEGACY_DESKTOP_IDENTITY == "soundbrain.desktop"
+
+    approved_legacy_files = {
+        PROJECT_ROOT / "phasenox" / "ui" / "data_location.py",
+    }
+    active_legacy_files = {
+        path
+        for path in (PROJECT_ROOT / "phasenox" / "ui").rglob("*.py")
+        if "soundbrain.desktop" in path.read_text(encoding="utf-8")
+    }
+    assert active_legacy_files == approved_legacy_files
+
+
 def test_serialized_identity_allowlist_is_unchanged() -> None:
     discovered: set[str] = set()
     for path in (PROJECT_ROOT / "phasenox").rglob("*.py"):
@@ -237,6 +257,8 @@ def test_freeze_document_records_the_canonical_and_compatibility_matrix() -> Non
         "| Canonical service module | `phasenox.application.phasenox_service` |",
         "| CLI | `phasenox` |",
         "| Canonical application-root environment variable | `PHASENOX_ROOT` |",
+        "| Desktop application identifier | `phasenox.desktop` |",
+        "The former `soundbrain.desktop` identity remains approved",
         "`brain.*`, resolving to the same canonical `phasenox.*` module objects",
         "| Persisted vector collection | `soundbrain` |",
         "| Engine compatibility keys | `noisyne`, `soundbrain` |",

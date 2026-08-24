@@ -29,6 +29,7 @@ brand integration, or removal of compatibility boundaries.
 | Validation fixture provider | `PhasenoxValidationFixtureProvider` |
 | CLI | `phasenox` |
 | Canonical application-root environment variable | `PHASENOX_ROOT` |
+| Desktop application identifier | `phasenox.desktop` |
 
 New production code must not import a `noisyne` Python package. The distribution
 must expose only the `phasenox` CLI entry point. The canonical service
@@ -68,6 +69,21 @@ These are compatibility boundaries, not alternate implementations.
 
 Application-root precedence is frozen as `PHASENOX_ROOT`, `NOISYNE_ROOT`,
 `SOUNDBRAIN_ROOT`, then automatic discovery.
+
+### Desktop identity migration compatibility
+
+The canonical Qt application name and Desktop application identifier is
+`phasenox.desktop`. The former `soundbrain.desktop` identity remains approved
+only for deterministic small-state discovery, explicit session recovery, and
+preserving an upgraded packaged installation's unchanged backend Data Root.
+It must not become the normal Desktop identity again, and its directory must
+not be renamed or recursively migrated by the identity cutover.
+
+Desktop Data Root selection is separate from Qt AppLocalData identity. Its
+startup precedence is `PHASENOX_ROOT`, canonical `data-root.json`, an approved
+legacy-upgrade root, `NOISYNE_ROOT`, `SOUNDBRAIN_ROOT`, then explicit first-run
+selection or temporary mode. An unavailable selected root must never cause an
+implicit fallback store on another drive.
 
 ### Serialized identifier allowlist
 

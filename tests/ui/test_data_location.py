@@ -164,6 +164,24 @@ def test_file_is_not_accepted_as_data_root(tmp_path: Path) -> None:
     assert validate_data_root(path) is DataRootAvailability.NOT_DIRECTORY
 
 
+def test_read_only_root_is_reported_without_probe_writes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "read-only"
+    root.mkdir()
+    original_access = os.access
+
+    def access(path: os.PathLike[str], mode: int) -> bool:
+        if Path(path) == root.resolve() and mode == os.W_OK:
+            return False
+        return original_access(path, mode)
+
+    monkeypatch.setattr(os, "access", access)
+
+    assert validate_data_root(root) is DataRootAvailability.READ_ONLY
+    assert tuple(root.iterdir()) == ()
+
+
 def test_legacy_packaged_root_is_preserved_without_creation(tmp_path: Path) -> None:
     legacy = tmp_path / "PHASENOX" / "soundbrain.desktop"
     legacy.mkdir(parents=True)

@@ -104,7 +104,7 @@ adapter = V2ApplicationAdapter()
 adapter.product_metadata()
 adapter.capability_snapshots()
 print(json.dumps({name: name in sys.modules for name in (
-    'torch', 'transformers', 'onnxruntime', 'chromadb'
+    'phasenox.infrastructure.config', 'torch', 'transformers', 'onnxruntime', 'chromadb'
 )}))
 """
     environment = os.environ.copy()
@@ -120,6 +120,7 @@ print(json.dumps({name: name in sys.modules for name in (
     )
 
     assert json.loads(completed.stdout.strip()) == {
+        "phasenox.infrastructure.config": False,
         "torch": False,
         "transformers": False,
         "onnxruntime": False,
