@@ -14,6 +14,13 @@ class DawConnectionState(StrEnum):
     VERSION_MISMATCH = "version_mismatch"
 
 
+class DawAnalysisState(StrEnum):
+    QUEUED = "queued"
+    ANALYZING = "analyzing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 @dataclass(frozen=True, slots=True)
 class DawProjectIdentity:
     name: str
@@ -40,6 +47,20 @@ class DawImportRequest:
     project: DawProjectIdentity
     track: DawTrackIdentity | None
     audio_export: DawAudioExport
+
+
+@dataclass(frozen=True, slots=True)
+class DawAnalysisResult:
+    request_id: str
+    state: DawAnalysisState
+    analysis_id: str | None
+    source: str
+    summary: dict[str, object] | None = None
+    issues_count: int = 0
+    report_available: bool = False
+    limitations: tuple[str, ...] = ()
+    error_code: str | None = None
+    error_message: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,6 +91,8 @@ class DawBridgeError(ValueError):
 
 
 __all__ = [
+    "DawAnalysisResult",
+    "DawAnalysisState",
     "DawAudioExport",
     "DawBridgeCapability",
     "DawBridgeError",

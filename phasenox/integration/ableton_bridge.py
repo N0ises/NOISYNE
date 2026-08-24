@@ -7,6 +7,7 @@ import hmac
 import json
 import os
 import queue
+import re
 import secrets
 import stat
 import threading
@@ -15,10 +16,12 @@ from collections.abc import Callable, Mapping
 from dataclasses import asdict
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PureWindowsPath
 from typing import Any, ClassVar
 
+from .daw_analysis import DawAnalysisGateway
 from .daw_bridge import (
+    DawAnalysisResult,
     DawAudioExport,
     DawBridgeCapability,
     DawBridgeError,
@@ -31,6 +34,8 @@ from .daw_bridge import (
 
 PROTOCOL_VERSION = 1
 ABLETON_CLIENT_NAME = "ableton-m4l"
+ABLETON_EXPORT_HELPER_CLIENT_NAME = "phasenox-ableton-export-helper"
+ABLETON_CLIENT_NAMES = frozenset({ABLETON_CLIENT_NAME, ABLETON_EXPORT_HELPER_CLIENT_NAME})
 DEFAULT_MAX_PAYLOAD_BYTES = 64 * 1024
 DEFAULT_MAX_EXPORT_BYTES = 20 * 1024**3
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 5.0
@@ -66,6 +71,11 @@ class _BridgeRequestHandler(BaseHTTPRequestHandler):
             if method == "GET" and self.path == "/v1/health":
                 self._send(HTTPStatus.OK, self.server.bridge._status_payload())
                 return
+            if method == "GET" and self.path.startswith("/v1/results/"):
+                request_id = self.path.removeprefix("/v1/results/")
+                status, response = self.server.bridge._analysis_result(request_id)
+                self._send(status, response)
+                return
             if method == "POST" and self.path == "/v1/handshake":
                 payload = self._read_json()
                 status, response = self.server.bridge._handshake(payload)
@@ -74,6 +84,10 @@ class _BridgeRequestHandler(BaseHTTPRequestHandler):
             if method == "POST" and self.path == "/v1/exports":
                 payload = self._read_json()
                 status, response = self.server.bridge._submit_export(payload)
+                self._send(status, response)
+                return
+            if method == "POST" and self.path == "/v1/disconnect":
+                status, response = self.server.bridge._disconnect()
                 self._send(status, response)
                 return
             self._send(HTTPStatus.NOT_FOUND, {"error": "not_found"})
@@ -142,6 +156,7 @@ class AbletonBridgeServer:
         max_payload_bytes: int = DEFAULT_MAX_PAYLOAD_BYTES,
         max_export_bytes: int = DEFAULT_MAX_EXPORT_BYTES,
         request_timeout_seconds: float = DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        analysis_gateway: DawAnalysisGateway | None = None,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         if not token:
@@ -156,13 +171,19 @@ class AbletonBridgeServer:
             raise ValueError("Bridge limits must be positive and bounded.")
         if request_timeout_seconds <= 0:
             raise ValueError("request_timeout_seconds must be positive.")
-        self._export_root = Path(export_root).expanduser().resolve(strict=False)
+        expanded_root = Path(export_root).expanduser()
+        self._reject_link_or_reparse(
+            expanded_root,
+            "Symlink and reparse-point roots are rejected.",
+        )
+        self._export_root = expanded_root.resolve(strict=False)
         self._token = token
         self._requested_port = port
         self._stable_seconds = stable_seconds
         self.max_payload_bytes = max_payload_bytes
         self._max_export_bytes = max_export_bytes
         self.request_timeout_seconds = request_timeout_seconds
+        self._analysis_gateway = analysis_gateway
         self._clock = clock
         self._lock = threading.RLock()
         self._httpd: _BridgeHttpServer | None = None
@@ -192,6 +213,12 @@ class AbletonBridgeServer:
             self._validate_export_root()
             httpd = _BridgeHttpServer(("127.0.0.1", self._requested_port), _BridgeRequestHandler)
             httpd.bridge = self
+            try:
+                if self._analysis_gateway is not None:
+                    self._analysis_gateway.start()
+            except Exception:
+                httpd.server_close()
+                raise
             thread = threading.Thread(
                 target=httpd.serve_forever,
                 name="phasenox-ableton-bridge",
@@ -215,6 +242,8 @@ class AbletonBridgeServer:
             httpd.server_close()
         if thread is not None:
             thread.join(timeout=5.0)
+        if self._analysis_gateway is not None:
+            self._analysis_gateway.stop()
         with self._lock:
             self._state = DawConnectionState.STOPPED
             self._client_name = None
@@ -286,7 +315,7 @@ class AbletonBridgeServer:
                 self._reason = f"Protocol {protocol!r} is incompatible with {PROTOCOL_VERSION}."
             raise DawBridgeError("version_mismatch", self._reason)
         client_name = self._bounded_string(payload.get("client_name"), "client_name", 64)
-        if client_name != ABLETON_CLIENT_NAME:
+        if client_name not in ABLETON_CLIENT_NAMES:
             raise DawBridgeError("unsupported_client", "The client identity is not supported.")
         client_version = self._bounded_string(payload.get("client_version"), "client_version", 64)
         daw_version = self._bounded_string(payload.get("daw_version"), "daw_version", 64)
@@ -296,6 +325,15 @@ class AbletonBridgeServer:
             self._daw_version = daw_version
             self._state = DawConnectionState.CONNECTED
             self._reason = None
+        return HTTPStatus.OK, self._status_payload()
+
+    def _disconnect(self) -> tuple[HTTPStatus, dict[str, Any]]:
+        with self._lock:
+            self._client_name = None
+            self._client_version = None
+            self._daw_version = None
+            self._state = DawConnectionState.BRIDGE_AVAILABLE
+            self._reason = "Ableton-side bridge disconnected."
         return HTTPStatus.OK, self._status_payload()
 
     def _submit_export(self, payload: Mapping[str, Any]) -> tuple[HTTPStatus, dict[str, Any]]:
@@ -308,11 +346,12 @@ class AbletonBridgeServer:
             raise DawBridgeError("invalid_export_size", "The WAV export size is outside limits.")
         observation = (metadata.st_size, metadata.st_mtime_ns)
         now = self._clock()
-        previous = self._observations.get(candidate)
-        self._observations[candidate] = (
-            *observation,
-            now if previous is None or previous[:2] != observation else previous[2],
-        )
+        with self._lock:
+            previous = self._observations.get(candidate)
+            self._observations[candidate] = (
+                *observation,
+                now if previous is None or previous[:2] != observation else previous[2],
+            )
         if (
             previous is None
             or previous[:2] != observation
@@ -323,8 +362,9 @@ class AbletonBridgeServer:
         export_id = hashlib.sha256(
             f"{relative_path}\0{metadata.st_size}\0{metadata.st_mtime_ns}".encode()
         ).hexdigest()
-        if export_id in self._accepted_ids:
-            return HTTPStatus.OK, {"status": "duplicate", "export_id": export_id}
+        with self._lock:
+            if export_id in self._accepted_ids:
+                return HTTPStatus.OK, {"status": "duplicate", "export_id": export_id}
         project_payload = payload.get("project") or {}
         track_payload = payload.get("track")
         if not isinstance(project_payload, dict) or (
@@ -358,17 +398,57 @@ class AbletonBridgeServer:
             track,
             DawAudioExport(export_id, candidate, metadata.st_size, metadata.st_mtime_ns),
         )
-        self._accepted_ids.add(export_id)
-        self._imports.put(request)
-        return HTTPStatus.ACCEPTED, {"status": "queued", "export_id": export_id}
+        with self._lock:
+            if export_id in self._accepted_ids:
+                return HTTPStatus.OK, {"status": "duplicate", "export_id": export_id}
+            analysis_result = None
+            if self._analysis_gateway is not None:
+                analysis_result = self._analysis_gateway.submit(request)
+            self._accepted_ids.add(export_id)
+            self._imports.put(request)
+        response: dict[str, Any] = {
+            "status": "queued",
+            "export_id": export_id,
+            "request_id": export_id,
+        }
+        if analysis_result is not None:
+            response["analysis_state"] = analysis_result.state.value
+        return HTTPStatus.ACCEPTED, response
+
+    def _analysis_result(self, request_id: str) -> tuple[HTTPStatus, dict[str, Any]]:
+        if not re.fullmatch(r"[0-9a-f]{64}", request_id):
+            raise DawBridgeError("invalid_request_id", "The analysis request identity is invalid.")
+        if self._analysis_gateway is None:
+            raise DawBridgeError("analysis_unavailable", "DAW analysis is not enabled.")
+        result = self._analysis_gateway.result(request_id)
+        if result is None:
+            return HTTPStatus.NOT_FOUND, {"error": "result_not_found"}
+        return HTTPStatus.OK, self._analysis_payload(result)
+
+    @staticmethod
+    def _analysis_payload(result: DawAnalysisResult) -> dict[str, Any]:
+        payload = asdict(result)
+        payload["state"] = result.state.value
+        payload["limitations"] = list(result.limitations)
+        return payload
 
     def _resolve_export(self, relative_path: str) -> Path:
         pure = PurePath(relative_path)
-        if pure.is_absolute() or ".." in pure.parts or not pure.parts:
+        windows_path = PureWindowsPath(relative_path)
+        if pure.is_absolute() or windows_path.is_absolute() or ".." in pure.parts or not pure.parts:
             raise DawBridgeError(
                 "unsafe_path", "Only relative paths within the export root are accepted."
             )
-        candidate = (self._export_root / pure).resolve(strict=False)
+        unresolved = self._export_root / pure
+        current = self._export_root
+        for part in pure.parts:
+            current /= part
+            if current.exists() or current.is_symlink():
+                self._reject_link_or_reparse(
+                    current,
+                    "Symlink and reparse-point exports are rejected.",
+                )
+        candidate = unresolved.resolve(strict=False)
         if not candidate.is_relative_to(self._export_root):
             raise DawBridgeError("unsafe_path", "The export path escapes the configured root.")
         if candidate.suffix.casefold() != ".wav":
@@ -398,6 +478,18 @@ class AbletonBridgeServer:
             )
 
     @staticmethod
+    def _reject_link_or_reparse(candidate: Path, message: str) -> None:
+        try:
+            metadata = candidate.lstat()
+        except FileNotFoundError:
+            return
+        if stat.S_ISLNK(metadata.st_mode) or bool(
+            getattr(metadata, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        ):
+            raise DawBridgeError("unsafe_path", message)
+
+    @staticmethod
     def _bounded_string(value: object, field: str, limit: int) -> str:
         if not isinstance(value, str) or not value.strip() or len(value) > limit:
             raise DawBridgeError("invalid_field", f"{field} must be a non-empty bounded string.")
@@ -412,6 +504,8 @@ class AbletonBridgeServer:
 
 __all__ = [
     "ABLETON_CLIENT_NAME",
+    "ABLETON_CLIENT_NAMES",
+    "ABLETON_EXPORT_HELPER_CLIENT_NAME",
     "DEFAULT_MAX_EXPORT_BYTES",
     "DEFAULT_MAX_PAYLOAD_BYTES",
     "DEFAULT_REQUEST_TIMEOUT_SECONDS",
